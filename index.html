@@ -1,16 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang='en'>
 <head>
     <meta charset="UTF-8">
     <title>Hello World!</title>
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="./node_modules/bulma/css/bulma.css">
+    <script>window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.js');</script>
+    <script src="./view.js" type="module"></script>
+    
+    <style>
+        textarea:focus { 
+            outline: none !important;
+            border: 0px solid white;
+        }
+
+        textarea {
+            border:0px solid black;
+            margin-left:10%;
+            margin-right:10%;
+            resize:none;
+            width:80%;
+            font-family:'Courier New', Courier, monospace;
+            font-size:16px;
+        }
+
+        #main-container {
+            /* text-align:center; */
+        }
+
+        #display-container {
+            border-left: 1px dashed #cccccc;
+        }
+
+        #toolbar-container {
+            position:relative;
+            width:80%;
+            margin-left:10%;
+            margin-right:10%;
+        }
+
+        .toolbar {
+            border:1px solid red;
+        }
+
+        .toolbar:hover {
+            border:1px solid red;
+        }
+
+        .toolbar:active {
+            outline:none !important;
+            border:1px solid grey;
+        }
+
+        .toolbar:focus {
+            outline:none !important;
+            border:1px solid grey;
+        }
+
+        /* support for inline rendering for long characters */
+        .wrap { 
+            white-space: pre-wrap;      /* CSS3 */   
+            white-space: -moz-pre-wrap; /* Firefox */    
+            white-space: -pre-wrap;     /* Opera <7 */   
+            white-space: -o-pre-wrap;   /* Opera 7 */    
+            word-wrap: break-word;      /* IE */
+        }
+    </style>
+
 </head>
-<body style="background: white;">
-    <h1>Hello World!</h1>
-    <p>
-        We are using node <script>document.write(process.versions.node)</script>,
-        Chrome <script>document.write(process.versions.chrome)</script>,
-        and Electron <script>document.write(process.versions.electron)</script>.
-    </p>
+<body style="background: white;" id="contents">
+
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+                <!-- <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28"> -->
+                &lt;/CodeDown&gt;
+        </div>
+
+        <div class="navbar-menu">
+            <div class="navbar-start">
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <button class="button toolbar" id="toggle-display">display</button>
+                        <button class="button toolbar" id="toggle-presentation">present</button>
+                        <button class="button toolbar" id="toggle-style">style</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <button class="button toolbar" id="delete">delete</button>
+                        <button class="button toolbar" id="export">export</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <section>
+        <div class="container">
+            <div class="columns" id="main-container">
+                <div class="column" id="editor-container">
+                    <textarea id='editor' >Placeholder</textarea>
+                </div>
+                <div class="column content" id='display-container' style="display:none">
+                </div>
+            </div>
+        </div>
+        
+    </section>
+    
 </body>
 </html>
