@@ -92,6 +92,7 @@ let Renderer = function(parser, aes=defaultaes) {
 
         switch(this.current.status) {
             case "NEW":
+                break;
             case "P":
                 this.doc += (`<span class="paragraph">${this.current.context}</span>`);
                 break;
@@ -280,7 +281,8 @@ let Renderer = function(parser, aes=defaultaes) {
     this.renderLatex = function(context) {
         let out = "";
         out += katex.renderToString(context, {
-                throwOnError: false
+                throwOnError: false,
+                output:'html'
         });
         return out;
     }
@@ -306,9 +308,23 @@ let Renderer = function(parser, aes=defaultaes) {
         return out;
     }
 
-    this.renderPage = function() {
+    this.renderPage = function(options={
+        renderStyle:false,
+        renderResource:true,
+    }) {
         this.init();
-        this.doc = this.processStyle() + "\n" +  this.loadResource();
+
+        if (options.renderStyle) {
+            this.doc += this.processStyle();    
+        }
+
+        this.doc += "\n";
+
+        if (options.renderResource) {
+            this.doc += this.loadResource();
+        }
+
+        this.doc += "\n";
 
         while (this.current != undefined) {
             this.renderSingle();

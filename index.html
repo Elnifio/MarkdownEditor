@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./node_modules/bulma/css/bulma.css">
     <script>window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.js');</script>
     <script src="./view.js" type="module"></script>
+    <link rel="stylesheet" href="./node_modules/katex/dist/katex.css">
     
     <style>
         textarea:focus { 
@@ -26,10 +27,13 @@
 
         #main-container {
             /* text-align:center; */
+            overflow:hidden;
+            margin-top:10px;
         }
 
         #display-container {
             border-left: 1px dashed #cccccc;
+            overflow:auto;
         }
 
         #toolbar-container {
@@ -70,7 +74,7 @@
 </head>
 <body style="background: white;" id="contents">
 
-    <nav class="navbar" role="navigation" aria-label="main navigation">
+    <nav class="navbar" role="navigation" aria-label="main navigation" id="toolbars">
         <div class="navbar-brand">
                 <!-- <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28"> -->
                 &lt;/CodeDown&gt;
@@ -105,10 +109,11 @@
                 <div class="column" id="editor-container">
                     <textarea id='editor' >Placeholder</textarea>
                 </div>
-                <div class="column content" id='display-container' style="display:none">
+                <div class="column content wrap" id='display-container' style="display:none">
                 </div>
             </div>
         </div>
+        <div id="footnote" style="width:5px">&nbsp;</div>
         
     </section>
     

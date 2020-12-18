@@ -9,17 +9,23 @@ let View = function() {
     this.editor = document.getElementById("editor");
     this.display = document.getElementById("display-container");
     this.controller  = new Controller(this, this.editor.value);
+    this.toolbars = document.getElementById("toolbars");
 
     this.startTime = new Date();
-
-    this.editor.style.height = `${window.innerHeight > this.editor.scrollHeight?window.innerHeight:this.editor.scrollHeight}px`;
 
     this.update = function(value) {
         this.display.innerHTML = value;
     }
 
+    let height;
+
     this.updateHeights = function() {
-        this.editor.style.height = `${window.innerHeight > this.editor.scrollHeight?window.innerHeight:this.editor.scrollHeight}px`;
+        // this.editor.style.height = `${window.innerHeight > this.editor.scrollHeight?window.innerHeight:this.editor.scrollHeight}px`;
+
+        height = window.innerHeight - this.toolbars.clientHeight;
+        this.editor.style.height = `${height}px`;
+        this.display.style.maxHeight = `${height}px`;
+        this.context.style.maxHeight = `${height}px`;
     }
 
     this.toggleDisplay = function() {
@@ -49,24 +55,30 @@ let View = function() {
     this.editor.addEventListener("input", (e) => {
         this.notifyController();
         this.startTime = new Date();
-        this.updateHeights();
+        // this.updateHeights();
     })
 
     console.log("Init View Success");
 
     this.notifyController();
+    this.updateHeights();
 }
 
 $(() => {
     // $("#editor").css('height', `${window.innerHeight}`);
     console.log("Load Script Success");
     let view = new View();
-    view.toggleDisplay();
+    //view.toggleDisplay();
 
     $('#toggle-display').on('click', (e) => {
         e.preventDefault();
         view.toggleDisplay();
     });
+
+    $("#delete").on("click", (e) => {
+        e.preventDefault();
+        view.stopIter();
+    })
 
 })
 
