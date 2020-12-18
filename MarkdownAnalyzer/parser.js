@@ -545,6 +545,12 @@ let parseITALIC = function(current, cursor) {
         current.status = "AWAITRETURN";
     }
 
+    else if (cursor == "~") {
+        current.next = new Node();
+        current = current.next;
+        current.status = "UNDERLINEITALIC";
+    }
+
     // Else: Add currentent value to the context
     else {
         current.context += cursor;
@@ -567,6 +573,13 @@ let parseWITHINITALIC = function(current, cursor) {
         current.next = new Node();
         current = current.next;
         current.status = "AWAITRETURN";
+    }
+
+    else if (cursor == "~") {
+        current.status = "ITALIC";
+        current.next = new Node();
+        current = current.next;
+        current.status = "UNDERLINEBOLD";
     }
     
     // Else: Other characters encountered
@@ -626,6 +639,12 @@ let parseBOLD = function(current, cursor) {
         current = current.next;
         current.status = "AWAITRETURN";
     } 
+
+    else if (cursor == "~") {
+        current.next = new Node();
+        current = current.next;
+        current.status = "UNDERLINEBOLD";
+    }
     
     // Else: 
     // Append currentent context to node
@@ -992,7 +1011,7 @@ let parseAWAITSPLIT = function(current, cursor, text) {
 
     let trimmed = current.context.replace(/^\s*/g, "");
 
-    if (cursor == "\n") {
+    if (cursor == "\n" || cursor == undefined) {
         if (trimmed.replace(/\s+/g, "").match(/^(\*|\_|\-){3,}/)) {
             current.status = "SPLIT";
             current.next = new Node();
@@ -1025,6 +1044,10 @@ let parseAWAITSPLIT = function(current, cursor, text) {
             else if (cursor == "[") {
                 current.status = "LINK";
             }
+
+            else if (cursor == "~") {
+                current.status = "AWAITTILDA";
+            }
             
             else {
                 current.context = cursor;
@@ -1036,28 +1059,52 @@ let parseAWAITSPLIT = function(current, cursor, text) {
             current.next = new Node();
             current = current.next;
             current.status = "ITALICBOLD";
-            current.context = cursor;
+            if (cursor == "~") {
+                current.status = "UNDERLINEITALICBOLD";
+            } else {
+                current.context = cursor;
+            }
         } else if (trimmed.match(/(\*|\-){1}\s+(\*|\-|\_){2}/)) {
             current.status = "UL";
             current.next = new Node();
             current = current.next;
             current.status = "BOLD";
-            current.context = cursor;
+            if (cursor == "~") {
+                current.status = "UNDERLINEBOLD";
+            } else {
+                current.context = cursor;
+            }
         } else if (trimmed.match(/(\*|\-){1}\s+(\*|\_){1}/)) {
             current.status = "UL";
             current.next = new Node();
             current = current.next;
             current.status = "ITALIC";
-            current.context = cursor;
+            if (cursor == "~") {
+                current.status = "UNDERLINEITALIC";
+            } else {
+                current.context = cursor;
+            }
         } else if (trimmed.match(/^(\*|\_){3}$/)) {
             current.status = "ITALICBOLD";
-            current.context = cursor;
+            if (cursor == "~") {
+                current.status = "UNDERLINEITALICBOLD";
+            } else {
+                current.context = cursor;
+            }
         } else if (trimmed.match(/^(\*|\_){2}$/)) {
             current.status = "BOLD";
-            current.context = cursor;
+            if (cursor == "~") {
+                current.status = "UNDERLINEBOLD";
+            } else {
+                current.context = cursor;
+            }
         } else if (trimmed.match(/^(\*|\_){1}$/)) {
             current.status = "ITALIC";
-            current.context = cursor;
+            if (cursor == "~") {
+                current.status = "UNDERLINEITALIC";
+            } else {
+                current.context = cursor;
+            }
         } else {
             if (cursor == "`") {
                 current.status = "UL";
@@ -1071,6 +1118,13 @@ let parseAWAITSPLIT = function(current, cursor, text) {
                 current.next = new Node();
                 current = current.next;
                 current.status = "LINK";
+            }
+
+            else if (cursor == "~") {
+                current.status = "UL";
+                current.next = new Node();
+                current = current.next;
+                current.status = "AWAITTILDA";
             }
             
             else {
