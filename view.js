@@ -1,8 +1,11 @@
 import Controller from "./control.js";
 
+import defaultaes from './aes.js';
+
 
 let THRESHOLD = 10;
 let REFRESH = 10;
+let OFFSET = 30;
 
 let View = function() {
     this.context = document.getElementById("main-container");
@@ -22,7 +25,7 @@ let View = function() {
     this.updateHeights = function() {
         // this.editor.style.height = `${window.innerHeight > this.editor.scrollHeight?window.innerHeight:this.editor.scrollHeight}px`;
 
-        height = window.innerHeight - this.toolbars.clientHeight;
+        height = window.innerHeight - this.toolbars.clientHeight - OFFSET;
         this.editor.style.height = `${height}px`;
         this.display.style.maxHeight = `${height}px`;
         this.context.style.maxHeight = `${height}px`;
@@ -64,11 +67,31 @@ let View = function() {
     this.updateHeights();
 }
 
+let processStyle = function(aes=defaultaes) {
+    // let out = "<style>";
+    let out = "";
+    for (let i in aes) {
+        out += `.${i} {`;
+        for (let j in aes[i]) {
+            out += `${j}:${aes[i][j]};`;
+        }
+        out += "}";
+    }
+    // out += "</style>";
+    return out;
+}
+
 $(() => {
     // $("#editor").css('height', `${window.innerHeight}`);
     console.log("Load Script Success");
+    $("#display-style").text(processStyle());
+
     let view = new View();
     //view.toggleDisplay();
+
+    $(window).on("resize", () => {
+        view.updateHeights();
+    })
 
     $('#toggle-display').on('click', (e) => {
         e.preventDefault();
