@@ -12,4 +12,11 @@ This branch should fix the following bug:
 ### Feature: Add support for File Systems
 
 - should have directory trees & file systems
-- support for 
+- support for saving & loading files
+
+### Feature: Add support for graphs
+
+- should:
+    1. test graph codes in DrawDataStructure
+    2. convert canvas to jpeg & png
+    3. adjust `parseCode` method for loading the graph
