@@ -5,8 +5,7 @@
  */
 
 import katex from '../node_modules/katex/dist/katex.mjs';
-import Graph from './graph.js';
-import Metagraph from "./metagraph.js";
+import GraphVisual from '../DrawingKits/VisualizationKit/graphVisual.js';
 
 let defaultcanvasaes = {
     width:500,
@@ -58,7 +57,7 @@ let defaultaes = {
 
 let Renderer = function(parser, aes=defaultaes) {
     this.current = parser.head;
-    this.doc = "";
+    this.doc = document.createElement("div");
     this.environment = {
         insideP: false,
         Return: false,
@@ -70,7 +69,7 @@ let Renderer = function(parser, aes=defaultaes) {
     }
 
     this.init = function() {
-        this.doc = "";
+        this.doc = document.createElement("div");
         this.environment = {
             insideP: false,
             Return: false,
@@ -88,30 +87,51 @@ let Renderer = function(parser, aes=defaultaes) {
             this.environment.Return = false;
         }
 
-        let alreadyAdded;
+        let alreadyAdded, newElement;
 
         switch(this.current.status) {
             case "NEW":
                 break;
             case "P":
-                this.doc += (`<span class="paragraph">${this.current.context}</span>`);
+                newElement = document.createElement('span');
+                newElement.setAttribute('class', 'paragraph');
+                newElement.innerHTML = this.current.context;
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph">${this.current.context}</span>`);
                 break;
             case "ITALIC":
-                this.doc += (`<span class="paragraph italic">${this.current.context}</span>`);
+                newElement = document.createElement('span');
+                newElement.setAttribute('class', 'paragraph italic');
+                newElement.innerHTML = this.current.context;
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph italic">${this.current.context}</span>`);
                 break;
             case "BOLD":
-                this.doc += (`<span class="paragraph bold">${this.current.context}</span>`);
+                newElement = document.createElement('span');
+                newElement.setAttribute('class', 'paragraph bold');
+                newElement.innerHTML = this.current.context;
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph bold">${this.current.context}</span>`);
                 break;
             case "ITALICBOLD":
-                this.doc += (`<span class="paragraph bold italic">${this.current.context}</span>`);
+                newElement = document.createElement('span');
+                newElement.setAttribute('class', 'paragraph italic bold');
+                newElement.innerHTML = this.current.context;
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph bold italic">${this.current.context}</span>`);
                 break;
             case "HEADER":
-                this.doc += (`<h${this.current.config.header} class='paragraph header h${this.current.config.header}'>${this.current.context}</h${this.current.config.header}>`);
+                newElement = document.createElement(`h${this.current.config.header}`);
+                newElement.setAttribute('class', `paragraph header h${this.current.config.header}`);
+                newElement.innerHTML = this.current.context;
+                this.doc.append(newElement);
+                // this.doc += (`<h${this.current.config.header} class='paragraph header h${this.current.config.header}'>${this.current.context}</h${this.current.config.header}>`);
                 break;
             case "RETURN":
                 if (!this.environment.Return) {
                     this.environment.Return = true;
-                    this.doc += (`<br />`);
+                    this.doc.append(document.createElement("br"));
+                    // this.doc += (`<br />`);
                 }
 
                 while (this.environment.liststack.length > 0) {
@@ -246,6 +266,7 @@ let Renderer = function(parser, aes=defaultaes) {
                 case "ug":
                     switch(status) {
                         case "init":
+                            new GraphVisual(this.current.context, );
                             break;
                         case "mst":
                             break;
@@ -310,7 +331,7 @@ let Renderer = function(parser, aes=defaultaes) {
 
     this.renderPage = function(options={
         renderStyle:false,
-        renderResource:true,
+        renderResource:false,
     }) {
         this.init();
 

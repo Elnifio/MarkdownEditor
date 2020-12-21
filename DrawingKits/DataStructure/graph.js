@@ -1,6 +1,8 @@
-let DirectedGraph = function() {
+let Graph = function(directed=false) {
     this.in_edges = {};
     this.out_edges = {};
+    this.directed = directed;
+    this.renderWeight = false;
 
     this.insert_node = function(name) {
         if (!this.check_node(name)) {
@@ -58,64 +60,5 @@ let DirectedGraph = function() {
         }
     }
 }
-
-let UndirectedGraph = function() {
-    this.edges = {};
-
-    this.insert_node = function(name) {
-        if (!this.check_node(name)) {
-            this.edges[name] = {};
-        }
-    }
-
-    this.insert_edge = function(s, e, w) {
-        if (this.check_node(s) && this.check_node(e)) {
-            this.edges[s][e] = w;
-            this.edges[e][s] = w;
-        }
-    }
-
-    this.delete_edge = function(s,e) {
-        if (this.check_node(s) && this.check_node(e)) {
-            delete this.edges[s][e];
-            delete this.edges[e][s];
-        }
-    }
-    
-    this.delete_node = function(node) {
-        if (this.check_node(node)) {
-            for (var s in this.edges[node]) {
-                delete this.edges[s][node];
-            }
-            
-            delete this.edges[node];
-        }
-    }
-
-    this.check_node = function(node) {
-        return this.edges[node];
-    }
-
-    this.check_edge = function(s,e) {
-        if (this.check_node(s) && this.check_node(e)) {
-            return (this.edges[s][e] && this.edges[e][s]);
-        } else {
-            return false;
-        }
-    }
-
-    this.get_all_nodes = function() {
-        return Object.keys(this.edges);
-    }
-
-    this.get_connect = function(node) {
-        if (this.check_node) {
-            return this.edges[node];
-        }
-    }
-
-}
-
-let Graph = {DirectedGraph, UndirectedGraph};
 
 export default Graph;

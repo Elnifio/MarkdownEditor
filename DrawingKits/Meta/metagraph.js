@@ -18,9 +18,8 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
     }
 
     if (graph == undefined) {
-        this.graph = this.directed?(new Graph.DirectedGraph()):(new Graph.UndirectedGraph())
+        this.graph = new Graph(directed);
     } else {
-        
         this.graph = graph;
     }
 
@@ -154,11 +153,13 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
 
     this.visualizeGraph = function(highlights={edges:{}, nodes:{}}, configVisual=configMeta) {
         let centers = this.arrangePositions();
+        configVisual.haveLabel = this.graph.renderWeight;
+        let connected, originalColor;
         for (let e in centers) {
-            let connected = this.graph.get_connect(e);
+            connected = this.graph.get_connect(e);
             for (let t in connected) {
-                let originalColor = configVisual.lineColor;
-                if (this.directed) {
+                originalColor = configVisual.lineColor;
+                if (this.graph.directed) {
                     if (highlights.edges[`${e}`]) {
                         if (highlights.edges[`${e}`][`${t}`]) {
                             configVisual.lineColor = highlights.edges[`${e}`][`${t}`];
@@ -178,14 +179,12 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
             }
         }
         for (let e in centers) {
-            let originalColor = {circleFill: configVisual.circleFill, circleBorder: configVisual.circleBorder};
+            originalColor = configVisual.circleBorder;
             if (highlights.nodes[`${e}`]) {
-                configVisual.circleBorder = highlights.nodes[`${e}`].circleBorder;
-                configVisual.circleFill = highlights.nodes[`${e}`].circleFill;
+                configVisual.circleBorder = highlights.nodes[`${e}`];
             }
             this.drawCircle(centers[e].x, centers[e].y, e, configVisual);
-            configVisual.circleBorder = originalColor.circleBorder;
-            configVisual.circleFill = originalColor.circleFill;
+            configVisual.circleBorder = originalColor;
         }
     }
 
