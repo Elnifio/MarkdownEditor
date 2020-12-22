@@ -235,18 +235,111 @@ let Renderer = function(parser, aes=defaultaes) {
                 // this.doc.append(this.renderCode());
                 break;
             case "UL":
+                // handling of special indent value;
                 if (this.current.config.indent == undefined) {this.current.config.indent = 0};
 
-                if (this.environment.liststack[this.environment.liststacklen-1].nodeName.toLowerCase() != "ul") {
+                // if currently not in a UL: either not initialized or inside a "OL" tag
+                if (this.environment.currentlist == undefined || this.environment.currentlist.list.tagName == "OL") {
+                    // create a new ul element;
                     newElement = document.createElement("ul");
-                    this.environment.liststack.push(newElement);
-                    this.environment.lastlist = newElement;
+
+                    // append it to currentdoc, since currentdoc is pointing to our current working position
+                    this.environment.currentdoc.append(newElement);
+
+                    // and if currentlist is a "OL": Update this list to our stack, 
+                    // and replace our currentlist with newly created list
+                    if (this.environment.currentlist != undefined) this.environment.liststack.push({list: this.environment.currentlist.list, indent:this.environment.currentlist.indent});
+                    this.environment.currentlist = {list: newElement, indent: undefined};
+
+                    // and update currentdoc to our document?
+                    this.environment.currentdoc = newElement;
                 }
 
+                // If previous indentation is not initialized: Initialize with current indentation
                 if (this.environment.prevIndent == undefined) {
                     this.environment.prevIndent = this.current.config.indent;
+                    // and create a new <li> tag;
                     newElement = document.createElement('li');
+                    // and switch our current working position to this new <li> tag.
+                    this.environment.currentdoc = newElement;
+                } 
+                
+                // else: initialized indent
+                else {
+
+                // indent larger than current indent: start a new list
+                if (this.environment.prevIndent < this.current.config.indent) {
+                    // start a new list
+                    newElement = document.createElement('ul');
+
+                    // append this new list to our current list;
+                    this.environment.currentlist.append(newElement);
+
+                    // push current list to liststack (archive it);
+                    this.environment.liststack.push({currentlist: this.environment.currentlist, indent: this.environment.prevIndent});
+                    // and switch our current working list to newly created list;
+                    this.environment.currentlist = newElement;
+
+                    // create a new <li> tag
+                    newElement = document.createElement('li');
+                    // append it to our newly created list
+                    this.environment.currentlist.append(newElement);
+                    // and switch our current working node to this tag;
+                    this.environment.currentdoc = newElement;
+                } 
+                
+                // indent smaller than current indent: end current list, 
+                // and go back to our last list with UL
+                else if (this.environment.prevIndent > this.current.config.indent) {
+
+                    // pop our last node
+                    let popResult = this.environment.liststack.pop();
+                    while (popResult.indent > this.current.config.indent) {
+                        popResult = this.environment.liststack.pop();
+                    }
+
+                    // if we cannot find our last node: 
+                    // start a new UL with current indentation
+                    // and this indicates that we have reached our root doc, we adjust our currentdoc to this.doc
+                    if (this.environment.currentlist == undefined) {
+                        this.environment.currentdoc = this.doc;
+                        newElement = document.createElement('ul')
+                        this.environment.currentlist = newElement;
+                        this.environment.currentdoc.append(newElement);
+                    } 
+
+                    // else if our last node is a "OL": 
+                    // end this "OL", and create a new "UL" under current "OL"
+                    else if (this.environment.currentlist.tagName == "OL") {
+                        newElement = document.createElement('ul');
+                        this.environment.currentlist = this.environment.liststack.pop();
+                        // if we hit our root: adjust currentdoc to root 
+                        if (this.environment.currentlist == undefined) {
+                            this.environment.currentdoc = this.doc;
+                            this.environment.currentdoc.append(newElement);
+                            this.environment.currentlist = newElement;
+                        } 
+                        // else: either we are hitting a <ul> or a <ol>, we append a new ul to currentlist
+                        else {
+                            this.environment.currentlist.append(newElement);
+                            this.environment.liststack.push(this.environment.currentlist);
+                            this.environment.currentlist = newElement;
+                        }
+                    }
+
+                    // else: we are hitting a "UL" element
+                    else {
+
+                    }
+
+                    
+                    newElement = document.createElement('li');
+                    this.environment.currentlist.append(newElement);
+                    this.environment.currentdoc = newElement;
                 }
+            }
+            
+            this.environment.prevIndent = this.current.config.indent;
                 
                 // alreadyAdded = false;
                 // if (this.current.config.indent == undefined) {this.current.config.indent = 0}

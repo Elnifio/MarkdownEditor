@@ -30,7 +30,7 @@ let parseGraph = function(values="", directed=false) {
     // General match for expression
     let re = /(?<start>[0-9A-Za-z]+)\-+(?<weight>[0-9]+)?\-*(?<directed>\>)?(?<end>[0-9A-Za-z])?(?<highlight>\:\w+)?/;
 
-    let match, start, end, directed, weight, highlight;
+    let match, start, end, isDirected, weight, highlight;
     let highlights = {edges:{}, nodes:{}};
     values.split('\n').map(x => {
         // match for each sentence

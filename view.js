@@ -17,7 +17,7 @@ let View = function() {
     this.startTime = new Date();
 
     this.update = function(value) {
-        this.display.innerHTML = value;
+        this.display.replaceChild(value, this.display.firstChild);
     }
 
     let height;
@@ -87,7 +87,7 @@ $(() => {
     $("#display-style").text(processStyle());
 
     let view = new View();
-    //view.toggleDisplay();
+    view.toggleDisplay();
 
     $(window).on("resize", () => {
         view.updateHeights();

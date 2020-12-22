@@ -55,9 +55,10 @@ let defaultaes = {
 }
 
 
-let Renderer = function(parser, aes=defaultaes) {
+let Renderer = function(parser, aes=defaultaes, id='renderer') {
     this.current = parser.head;
     this.doc = document.createElement("div");
+    this.doc.setAttribute('id', id);
     this.environment = {
         insideP: false,
         Return: false,
@@ -73,6 +74,7 @@ let Renderer = function(parser, aes=defaultaes) {
 
     this.init = function() {
         this.doc = document.createElement("div");
+        this.doc.setAttribute('id', id);
         this.environment = {
             insideP: false,
             Return: false,
@@ -93,7 +95,10 @@ let Renderer = function(parser, aes=defaultaes) {
             this.environment.Return = false;
         }
 
-        let alreadyAdded, newElement, popResult;
+        let newElement; // this is used as general "newly created element";
+        let cstatus, rstatus;   // this is used in case "UL" and "OL", 
+                                // with one representing current.status 
+                                // and other representing the "reverse option"
 
         switch(this.current.status) {
             case "NEW":
@@ -224,173 +229,284 @@ let Renderer = function(parser, aes=defaultaes) {
                 break;
 
             case "CODEBLOCK":
-                // DO RENDER CODE HERE
-                // this.doc.append(this.renderCode());
+                // TODO: DO RENDER CODE HERE
+                this.environment.currentdoc.append(this.renderCode());
                 // this.environment.currentdoc.append(this.renderCode());
                 break;
 
             case "UL":
-                // handling of special indent value;
-                if (this.current.config.indent == undefined) {this.current.config.indent = 0};
+            case "OL":
+                cstatus = this.current.status;
+                rstatus = (cstatus == "UL")?"OL":"UL";
+                // handling of special values where indent is not defined
+                if (this.current.config.indent == undefined) this.current.config.indent = 0;
 
-                // if currently not in a UL: either not initialized or inside a "OL" tag
-                if (this.environment.currentlist == undefined || this.environment.currentlist.tagName == "OL") {
-                    // create a new ul element;
-                    newElement = document.createElement("ul");
+                // if currentlist is not defined: we are creating a new list;
+                // create a new list with current indent, 
+                // and point our currentlist object to this list, with current indent
+                // append this new list to our document
 
-                    // append it to currentdoc, since currentdoc is pointing to our current working position
+                
+                if (this.environment.currentlist == undefined) {
+                    newElement = document.createElement(cstatus);
+                    // newElement = document.createElement('ul');
+                    this.environment.currentlist = {list:newElement, indent:this.current.config.indent};
                     this.environment.currentdoc.append(newElement);
 
-                    // and if currentlist is a "OL": Update this list to our stack, 
-                    // and replace our currentlist with newly created list
-                    if (this.environment.currentlist != undefined) this.environment.liststack.push({currentlist, indent:this.environment.prevIndent});
-                    this.environment.currentlist = newElement;
-
-                    // and update currentdoc to our document?
-                    this.environment.currentdoc = newElement;
-                }
-
-                // If previous indentation is not initialized: Initialize with current indentation
-                if (this.environment.prevIndent == undefined) {
-                    this.environment.prevIndent = this.current.config.indent;
-                    // and create a new <li> tag;
                     newElement = document.createElement('li');
-                    // and switch our current working position to this new <li> tag.
+                    this.environment.currentlist.list.append(newElement);
                     this.environment.currentdoc = newElement;
                 } 
                 
-                // else: initialized indent
-                else {
+                // else if: currentlist is not UL: we should change according to the indentation;
+                // create a new list with current indent;
+                // else if (this.environment.currentlist.list.tagName != 'ul') {
+                else if (this.environment.currentlist.list.tagName != cstatus) {
+                    newElement = document.createElement(cstatus);
+                    // newElement = document.createElement('ul');
 
-                    // indent larger than current indent: start a new list
-                    if (this.environment.prevIndent < this.current.config.indent) {
-                        // start a new list
-                        newElement = document.createElement('ul');
-
-                        // append this new list to our current list;
-                        this.environment.currentlist.append(newElement);
-
-                        // push current list to liststack (archive it);
-                        this.environment.liststack.push({currentlist: this.environment.currentlist, indent: this.environment.prevIndent});
-                        // and switch our current working list to newly created list;
-                        this.environment.currentlist = newElement;
-
-                        // create a new <li> tag
-                        newElement = document.createElement('li');
-                        // append it to our newly created list
-                        this.environment.currentlist.append(newElement);
-                        // and switch our current working node to this tag;
-                        this.environment.currentdoc = newElement;
-                    } 
-                    
-                    // indent smaller than current indent: end current list, 
-                    // and go back to our last list with UL
-                    else if (this.environment.prevIndent > this.current.config.indent) {
-
-                        // pop our last node
-                        popResult = this.environment.liststack.pop();
-                        while (popResult.indent > this.current.config.indent) {
-                            popResult = this.environment.liststack.pop();
+                    if (this.environment.currentlist.indent > this.current.config.indent) {
+                    // if we have a new indent that is smaller than current working indent: 
+                    // this should be of the following format: 
+                    /*
+                        ...
+                            15. ...
+                            16. ...
+                                - ...
+                                1. ...
+                        - at here, this indent is smaller than our current working indent.
+                        - we should pop from the liststack until we find an indent 
+                        - that is smaller or equal to this new indent
+                    */
+                    // we should first locate an indent that is smaller or equal to current indent (use a while loop)
+                    // and either: 
+                    //      1. if indent is smaller than current indent:
+                    //          - if currently at a ul: we create a new ul element under current ul as a sub-list
+                    //               append li to it, and switch our current doc to this li.
+                    //          - if currently at a ol: we create a new ul element under current ol as a sub-list
+                    //               append li to it, and switch our current doc to this li.
+                    //      2. if indent is equal to current indent: 
+                    //          - if currently at a ul: we create a new li element under this ul
+                    //               and switch our current doc to this li
+                    //          - if currently at a ol: we create a new ul element and pop another item from liststack: 
+                    //              - if newly popped is a list: we append our newly created ul to this list
+                    //              - else if none popped out: current doc switched to this.doc, and we append our newly created ul to here
+                    //              After we finished, we create a new li element under this newly created list, and switch our currentdoc to here
+                    //      3. if currently at undefined (did not find an indent that is smaller or equal to current indent):
+                    //          switch our context to this.doc, create and insert a new ul element under this.doc, and switch to li
+                        while (this.environment.currentlist != undefined && this.environment.currentlist.indent > this.current.config.indent) {
+                            this.environment.currentlist = this.environment.liststack.pop();
                         }
 
-                        // if we cannot find our last node: 
-                        // start a new UL with current indentation
-                        // and this indicates that we have reached our root doc, we adjust our currentdoc to this.doc
+                        // Situation 3
                         if (this.environment.currentlist == undefined) {
                             this.environment.currentdoc = this.doc;
-                            newElement = document.createElement('ul')
-                            this.environment.currentlist = newElement;
                             this.environment.currentdoc.append(newElement);
+                            this.environment.currentlist = {list:newElement, indent:this.current.config.indent};
+                            newElement = document.createElement('li');
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.currentdoc = newElement;
+                        }
+
+                        // Situation 2
+                        else if (this.environment.currentlist.indent == this.current.config.indent) {
+                            // if (this.environment.currentlist.list.tagName == "UL") {
+                            if (this.environment.currentlist.list.tagName == cstatus) {
+                                newElement = document.createElement('li');
+                                this.environment.currentlist.list.append(newElement);
+                                this.environment.currentdoc = newElement;
+                            } 
+                            
+                            // else if (this.environment.currentlist.list.tagName == "OL") {
+                            else if (this.environment.currentlist.list.tagName == rstatus) {
+                                this.environment.currentlist = this.environment.liststack.pop();
+                                if (this.environment.currentlist == undefined) {
+                                    this.environment.currentdoc = this.doc;
+                                    this.environment.currentdoc.append(newElement);
+                                    this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                                    newElement = document.createElement('li');
+                                    this.environment.currentlist.list.append(newElement);
+                                    this.environment.currentdoc = newElement;
+                                } else {
+                                    this.environment.currentlist.list.append(newElement);
+                                    this.environment.liststack.push(this.environment.currentlist);
+                                    this.environment.currentlist = {list:newElement, indent:this.current.config.indent};
+                                    newElement = document.createElement('li');
+                                    this.environment.currentlist.list.append(newElement);
+                                    this.environment.currentdoc = newElement;
+                                }
+                            } else { console.log(`${this.environment.currentlist.list.tagName} not encountered for ${cstatus} with reversing as ${rstatus};`); }
+                        }
+
+                        // Situation 1
+                        else if (this.environment.currentlist.indent < this.current.config.indent) {
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.liststack.push(this.environment.currentlist);
+                            this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                            newElement = document.createElement('li');
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.currentdoc = newElement;
+                        }
+
+                        // error handling
+                        else {
+                            console.log(`unexpected situation occured at ${cstatus} with reverse ${rstatus}`);
+                        }
+                    }
+
+                    else if (this.environment.currentlist.indent < this.current.config.indent) {
+                        // if we have a new indent that is larger than our current indent: 
+                        // we create a new sub-list within our current list
+                        // archive our currentlist, switch currentlist to this newly added list
+                        // add a li to this newly added list, and switch our context to this list
+                        this.environment.currentlist.list.append(newElement);
+                        this.environment.liststack.push(this.environment.currentlist);
+                        this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                        newElement = document.createElement('li');
+                        this.environment.currentlist.list.append(newElement);
+                        this.environment.currentdoc = newElement;
+                    }
+
+                    else {
+                        // if we have a new indent that is equal to our current list:
+                        // since we are currently not inside a UL, we find its parent, 
+                        // and append this new UL to its parent
+                        //      1. If the stack is now empty, we add this newly created list to this.doc, and set currentlist to this list;
+                        //      2. Else: We add this newly created list to this recently removed list, and set currentlist to this newly created list;
+                        this.environment.currentlist = this.environment.liststack.pop();
+                        if (this.environment.currentlist == undefined) {
+                            this.environment.currentdoc = this.doc;
+                            this.environment.currentdoc.append(newElement);
+                            this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                            newElement = document.createElement('li');
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.currentdoc = newElement;
+                        } 
+                        
+                        else {
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.liststack.push(this.environment.currentlist);
+                            this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                            newElement = document.createElement('li');
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.currentdoc = newElement;
+                        }
+                    }
+                }
+                
+                // Else: currentlist is a UL: we should change behavior according to the indentation;
+                else {
+                    // If we have a new indent that is smaller than our current indent: 
+                    // similar as above, we should first locate one with indent smaller than new indent
+                    //      1. If current list is not defined:
+                    //          adjust our currentdoc to this.doc, create a new UL, append this UL to our current doc
+                    //          switch currentlist to this UL
+                    //          add a new li to currentlist, and switch our context to this li
+                    //      2. if current list indent == new indent: 
+                    //          - Since we know that current list is UL: 
+                    //              create a new li, append it to current list;
+                    //      3. if current list indent < new indent: 
+                    //         create a new UL sublist within this new list
+                    if (this.environment.currentlist.indent > this.current.config.indent) {
+                        while (this.environment.currentlist != undefined && this.environment.currentlist.indent > this.current.config.indent) {
+                            this.environment.currentlist = this.environment.liststack.pop();
+                        }
+
+                        // Situation 1:
+                        if (this.environment.currentlist == undefined) {
+                            // newElement = document.createElement('ul');
+                            newElement = document.createElement(cstatus);
+                            this.environment.currentdoc = this.doc;
+                            this.environment.currentdoc.append(newElement);
+                            this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                            newElement = document.createElement('li');
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.currentdoc = newElement;
                         } 
 
-                        // else if our last node is a "OL": 
-                        // end this "OL", and create a new "UL" under current "OL"
-                        else if (this.environment.currentlist.tagName == "OL") {
-                            newElement = document.createElement('ul');
-                            this.environment.currentlist = this.environment.liststack.pop();
-                            // if we hit our root: adjust currentdoc to root 
-                            if (this.environment.currentlist == undefined) {
-                                this.environment.currentdoc = this.doc;
-                                this.environment.currentdoc.append(newElement);
-                                this.environment.currentlist = newElement;
+                        // Situation 2:
+                        else if (this.environment.currentlist.indent == this.current.config.indent) {
+                            if (this.environment.currentlist.list.tagName == cstatus) {
+                                newElement = document.createElement('li');
+                                this.environment.currentlist.list.append(newElement);
+                                this.environment.currentdoc = newElement;
                             } 
-                            // else: either we are hitting a <ul> or a <ol>, we append a new ul to currentlist
-                            else {
-                                this.environment.currentlist.append(newElement);
-                                this.environment.liststack.push(this.environment.currentlist);
-                                this.environment.currentlist = newElement;
+                            
+                            // else if (this.environment.currentlist.list.tagName == "OL") {
+                            else if (this.environment.currentlist.list.tagName == rstatus) {
+                                this.environment.currentlist = this.environment.liststack.pop();
+                                if (this.environment.currentlist == undefined) {
+                                    // newElement = document.createElement("ul");
+                                    newElement = document.createElement(cstatus);
+                                    this.environment.currentdoc = this.doc;
+                                    this.environment.currentdoc.append(newElement);
+                                    this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                                    newElement = document.createElement('li');
+                                    this.environment.currentlist.list.append(newElement);
+                                    this.environment.currentdoc = newElement;
+                                } 
+                                
+                                else {
+                                    // newElement = document.createElement('ul');
+                                    newElement = document.createElement(cstatus);
+                                    this.environment.currentlist.list.append(newElement);
+                                    this.environment.liststack.append(this.environment.currentlist);
+                                    this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                                    newElement = document.createElement('li');
+                                    this.environment.currentlist.list.append(newElement);
+                                    this.environment.currentdoc = newElement;
+                                }
+                            } else {
+                                console.log(`${this.environment.currentlist.list.tagName} not encountered with ${cstatus} and reversing ${rstatus};`);
                             }
                         }
 
-                        // else: we are hitting a "UL" element
-                        else {
-
+                        // Situation 3:
+                        else if (this.environment.currentlist.indent < this.current.config.indent) {
+                            // newElement = document.createElement('ul');
+                            newElement = document.createElement(cstatus);
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.liststack.push(this.environment.currentlist);
+                            this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                            newElement = document.createElement('li');
+                            this.environment.currentlist.list.append(newElement);
+                            this.environment.currentdoc = newElement;
                         }
 
-                        
+                        // error handling
+                        else {
+                            console.log(`unexpected situation occured at ${cstatus} with reversing ${rstatus}`);
+                        }
+
+                    } 
+                    
+                    else if (this.environment.currentlist.indent == this.current.config.indent) {
                         newElement = document.createElement('li');
-                        this.environment.currentlist.append(newElement);
+                        this.environment.currentlist.list.append(newElement);
+                        this.environment.currentdoc = newElement;
+                    }
+
+                    else {
+                        newElement = document.createElement(cstatus);
+                        this.environment.currentlist.list.append(newElement);
+                        this.environment.liststack.push(this.environment.currentlist);
+                        this.environment.currentlist = {list: newElement, indent: this.current.config.indent};
+                        newElement = document.createElement('li');
+                        this.environment.currentlist.list.append(newElement);
                         this.environment.currentdoc = newElement;
                     }
                 }
-                
-                this.environment.prevIndent = this.current.config.indent;
-                // alreadyAdded = false;
-                // if (this.current.config.indent == undefined) {this.current.config.indent = 0}
-
-                // if (this.environment.liststack.indexOf("ul") < 0) {
-                //     this.environment.liststack.push("ul");
-                //     this.doc += "<ul>";
-                //     alreadyAdded = true;
-                // }
-
-                // if (this.environment.prevIndent == undefined) {
-                //     this.environment.prevIndent = this.current.config.indent;
-                //     this.doc += "<li>";
-                // } else {
-                //     if (this.environment.prevIndent < this.current.config.indent && !alreadyAdded) {
-                //         this.doc += "</li><ul><li>";
-                //         this.environment.liststack.push("ul");
-                //     } else if (this.environment.prevIndent > this.current.config.indent) {
-                //         let top = this.environment.liststack.pop();
-                //         this.doc += `</li></${top}><li>`;
-                //     } else {
-                //         this.doc += "</li><li>";
-                //     }
-                // }
-                // this.environment.prevIndent = this.current.config.indent;
-                break;
-            case "OL":
-                alreadyAdded = false;
-                if (this.current.config.indent == undefined) {this.current.config.indent = 0}
-                if (this.environment.liststack.indexOf("ol") < 0) {
-                    this.doc += "<ol>";
-                    this.environment.liststack.push("ol");
-                    alreadyAdded = true;
-                }
-                if (this.environment.prevIndent == undefined) {
-                    this.environment.prevIndent = this.current.config.indent;
-                    this.doc += "<li>";
-                } else {
-                    if (this.environment.prevIndent < this.current.config.indent && !alreadyAdded) {
-                        this.doc += "</li><ol><li>";
-                        this.environment.liststack.push("ol");
-                    } else if (this.environment.prevIndent > this.current.config.indent) {
-                        let top = this.environment.liststack.pop();
-                        this.doc += `</li></${top}><li>`;
-                    } else {
-                        this.doc += "</li><li>";
-                    }
-                }
-                this.environment.prevIndent = this.current.config.indent;
                 break;
             case "HTML":
                 if (this.current.config.doRender) {
-                    this.doc += (`<div>${this.current.context}</div>`);
+                    newElement = document.createElement('div');
+                    newElement.innerHTML = this.current.context;
+                    this.environment.currentdoc.append(newElement);
                 } else {
-                    this.doc += (`<div>${this.current.context.replace(/\</g, '&lt;').replace(/\>/g, '&gt;')}</div>`);
+                    newElement = document.createElement('div');
+                    newElement.innerHTML = this.current.context.replace(/\</g, '&lt;').replace(/\>/g, '&gt;');
+                    this.environment.currentdoc.append(newElement);
                 }
-                
                 break;
             default: 
                 console.log(`Status ${this.current.status} with context ${this.current.context} not rendered`);
@@ -398,15 +514,14 @@ let Renderer = function(parser, aes=defaultaes) {
     };
 
     this.renderCode = function() {
-        let out = "";
+        let out = document.createElement('div');
         if (this.environment.codetype == undefined) {
             console.log("Missing Code Type error");
-        } 
+        }
 
         else if (this.environment.codetype == 'latex') {
-            out = `<div>`;
-            out += this.renderLatex(this.current.context);
-            out += "</div>";
+            console.log(this.current.context);
+            this.renderLatex(this.current.context, out);
         }
 
         else if (this.environment.codetype.includes(":")) {
@@ -441,7 +556,7 @@ let Renderer = function(parser, aes=defaultaes) {
         }
         
         else {
-            out = `<span class="codeblock">${this.current.context.replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")}</span>`;
+            // out = `<span class="codeblock">${this.current.context.replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")}</span>`;
         }
         this.environment.codetype = undefined;
         return out;
@@ -451,13 +566,8 @@ let Renderer = function(parser, aes=defaultaes) {
         
     }
 
-    this.renderLatex = function(context) {
-        let out = "";
-        out += katex.renderToString(context, {
-                throwOnError: false,
-                output:'html'
-        });
-        return out;
+    this.renderLatex = function(context, element) {
+        katex.render(context, element, { throwOnError: false, displayMode: true, output: 'html',  });
     }
 
     this.processStyle = function() {
@@ -487,17 +597,15 @@ let Renderer = function(parser, aes=defaultaes) {
     }) {
         this.init();
 
-        if (options.renderStyle) {
-            this.doc += this.processStyle();    
-        }
+        // if (options.renderStyle) {
+        //     this.doc += this.processStyle();    
+        // }
 
-        this.doc += "\n";
 
-        if (options.renderResource) {
-            this.doc += this.loadResource();
-        }
 
-        this.doc += "\n";
+        // if (options.renderResource) {
+        //     this.doc += this.loadResource();
+        // }
 
         while (this.current != undefined) {
             this.renderSingle();
