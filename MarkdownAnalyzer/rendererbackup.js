@@ -66,7 +66,7 @@ let Renderer = function(parser, aes=defaultaes) {
         liststacklen: 0,
         ulcount: 0,
         olcount:0,
-        currentlist: undefined,
+        lastlist: undefined,
         currentdoc: undefined,
         codetype: undefined,
     }
@@ -81,7 +81,7 @@ let Renderer = function(parser, aes=defaultaes) {
             liststacklen: 0,
             ulcount: 0,
             olcount:0,
-            currentlist:undefined,
+            lastlist:undefined,
             currentdoc: undefined,
             codetype: undefined,
         }
@@ -93,248 +93,161 @@ let Renderer = function(parser, aes=defaultaes) {
             this.environment.Return = false;
         }
 
-        let alreadyAdded, newElement, popResult;
+        let alreadyAdded, newElement;
 
         switch(this.current.status) {
             case "NEW":
-                this.environment.currentdoc = this.doc;
+                currentdoc = this.doc;
                 break;
-
             case "P":
                 newElement = document.createElement('span');
                 newElement.setAttribute('class', 'paragraph');
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                currentdoc.append(newElement);
+                // this.doc += (`<span class="paragraph">${this.current.context}</span>`);
                 break;
-
             case "ITALIC":
                 newElement = document.createElement('span');
                 newElement.setAttribute('class', 'paragraph italic');
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                currentdoc.append(newElement);
+                // this.doc += (`<span class="paragraph italic">${this.current.context}</span>`);
                 break;
-
             case "BOLD":
                 newElement = document.createElement('span');
                 newElement.setAttribute('class', 'paragraph bold');
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                currentdoc.append(newElement);
+                // this.doc += (`<span class="paragraph bold">${this.current.context}</span>`);
                 break;
-
             case "ITALICBOLD":
                 newElement = document.createElement('span');
                 newElement.setAttribute('class', 'paragraph italic bold');
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                currentdoc.append(newElement);
+                // this.doc += (`<span class="paragraph bold italic">${this.current.context}</span>`);
                 break;
-
             case "HEADER":
                 newElement = document.createElement(`h${this.current.config.header}`);
                 newElement.setAttribute('class', `paragraph header h${this.current.config.header}`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                currentdoc.append(newElement);
+                // this.doc += (`<h${this.current.config.header} class='paragraph header h${this.current.config.header}'>${this.current.context}</h${this.current.config.header}>`);
                 break;
-
             case "RETURN":
-                this.environment.currentdoc = this.doc;
+                currentdoc = this.doc;
                 if (!this.environment.Return) {
                     this.environment.Return = true;
-                    this.environment.currentdoc.append(document.createElement("br"));
+                    currentdoc.append(document.createElement("br"));
+                    // this.doc += (`<br />`);
                 }
 
+                // while (this.environment.liststack.length > 0) {
+                //     let top = this.environment.liststack.pop();
+                //     this.doc += `</${top}>`;
+                // }
                 this.environment.liststack = [];
                 this.environment.liststacklen = 0;
                 this.environment.prevIndent = undefined;
-                this.environment.currentlist = undefined;
+                this.environment.lastlist = undefined;
 
                 break;
-
             case "SPLIT":
-                this.environment.currentdoc = this.doc;
-
+                currentdoc = this.doc;
                 this.environment.liststack = [];
                 this.environment.liststacklen = 0;
-                this.environment.currentlist = undefined;
-
-                this.environment.currentdoc.append(document.createElement("hr"));
+                this.environment.lastlist = undefined;
+                // while (this.environment.liststack.length > 0) {
+                //     let top = this.environment.liststack.pop();
+                //     this.doc += `</${top}>`;
+                // }
+                // this.doc += (`<hr />`);
+                currentdoc.append(document.createElement("hr"));
                 break;
-
             case "STRIKETHROUGH":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph strikethrough`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph strikethrough">${this.current.context}</span>`);
                 break;
-
             case "LINK":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph link`);
                 newElement.innerHTML = `<a href=${this.current.config.src}>${this.current.context}</a>`;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph link"><a href="${this.current.config.src}">${this.current.context}</a></span>`);
                 break;
             case "CODE":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph code`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph code">${this.current.context}</span>`);
                 break;
             case "UNDERLINE":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph underline`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph underline">${this.current.context}</span>`);
                 break;
             case "UNDERLINEITALIC":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph underline italic`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph underline italic">${this.current.context}</span>`);
                 break;
-
             case "UNDERLINEBOLD":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph underline bold`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph underline bold">${this.current.context}</span>`);
                 break;
-
             case "UNDERLINEITALICBOLD":
                 newElement = document.createElement(`span`);
                 newElement.setAttribute('class', `paragraph underline italic bold`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<span class="paragraph underline italic bold">${this.current.context}</span>`);
                 break;
-
             case "IMAGE":
                 newElement = document.createElement(`img`);
                 newElement.setAttribute("src", this.current.config.src);
                 newElement.setAttribute('alt', this.current.context);
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<img src="${this.current.config.src}" alt=${this.current.context}>`);
                 break;
-
             case "REFERENCE":
                 newElement = document.createElement(`div`);
                 newElement.setAttribute('class', `reference`);
                 newElement.innerHTML = this.current.context;
-                this.environment.currentdoc.append(newElement);
+                this.doc.append(newElement);
+                // this.doc += (`<div class="reference">${this.current.context}</div>`);
                 break;
-
             case "CODETYPE":
                 this.environment.codetype = this.current.context;
                 break;
-
             case "CODEBLOCK":
                 // DO RENDER CODE HERE
                 // this.doc.append(this.renderCode());
-                // this.environment.currentdoc.append(this.renderCode());
                 break;
-
             case "UL":
-                // handling of special indent value;
                 if (this.current.config.indent == undefined) {this.current.config.indent = 0};
 
-                // if currently not in a UL: either not initialized or inside a "OL" tag
-                if (this.environment.currentlist == undefined || this.environment.currentlist.tagName == "OL") {
-                    // create a new ul element;
+                if (this.environment.liststack[this.environment.liststacklen-1].nodeName.toLowerCase() != "ul") {
                     newElement = document.createElement("ul");
-
-                    // append it to currentdoc, since currentdoc is pointing to our current working position
-                    this.environment.currentdoc.append(newElement);
-
-                    // and if currentlist is a "OL": Update this list to our stack, 
-                    // and replace our currentlist with newly created list
-                    if (this.environment.currentlist != undefined) this.environment.liststack.push({currentlist, indent:this.environment.prevIndent});
-                    this.environment.currentlist = newElement;
-
-                    // and update currentdoc to our document?
-                    this.environment.currentdoc = newElement;
+                    this.environment.liststack.push(newElement);
+                    this.environment.lastlist = newElement;
                 }
 
-                // If previous indentation is not initialized: Initialize with current indentation
                 if (this.environment.prevIndent == undefined) {
                     this.environment.prevIndent = this.current.config.indent;
-                    // and create a new <li> tag;
                     newElement = document.createElement('li');
-                    // and switch our current working position to this new <li> tag.
-                    this.environment.currentdoc = newElement;
-                } 
-                
-                // else: initialized indent
-                else {
-
-                    // indent larger than current indent: start a new list
-                    if (this.environment.prevIndent < this.current.config.indent) {
-                        // start a new list
-                        newElement = document.createElement('ul');
-
-                        // append this new list to our current list;
-                        this.environment.currentlist.append(newElement);
-
-                        // push current list to liststack (archive it);
-                        this.environment.liststack.push({currentlist: this.environment.currentlist, indent: this.environment.prevIndent});
-                        // and switch our current working list to newly created list;
-                        this.environment.currentlist = newElement;
-
-                        // create a new <li> tag
-                        newElement = document.createElement('li');
-                        // append it to our newly created list
-                        this.environment.currentlist.append(newElement);
-                        // and switch our current working node to this tag;
-                        this.environment.currentdoc = newElement;
-                    } 
-                    
-                    // indent smaller than current indent: end current list, 
-                    // and go back to our last list with UL
-                    else if (this.environment.prevIndent > this.current.config.indent) {
-
-                        // pop our last node
-                        popResult = this.environment.liststack.pop();
-                        while (popResult.indent > this.current.config.indent) {
-                            popResult = this.environment.liststack.pop();
-                        }
-
-                        // if we cannot find our last node: 
-                        // start a new UL with current indentation
-                        // and this indicates that we have reached our root doc, we adjust our currentdoc to this.doc
-                        if (this.environment.currentlist == undefined) {
-                            this.environment.currentdoc = this.doc;
-                            newElement = document.createElement('ul')
-                            this.environment.currentlist = newElement;
-                            this.environment.currentdoc.append(newElement);
-                        } 
-
-                        // else if our last node is a "OL": 
-                        // end this "OL", and create a new "UL" under current "OL"
-                        else if (this.environment.currentlist.tagName == "OL") {
-                            newElement = document.createElement('ul');
-                            this.environment.currentlist = this.environment.liststack.pop();
-                            // if we hit our root: adjust currentdoc to root 
-                            if (this.environment.currentlist == undefined) {
-                                this.environment.currentdoc = this.doc;
-                                this.environment.currentdoc.append(newElement);
-                                this.environment.currentlist = newElement;
-                            } 
-                            // else: either we are hitting a <ul> or a <ol>, we append a new ul to currentlist
-                            else {
-                                this.environment.currentlist.append(newElement);
-                                this.environment.liststack.push(this.environment.currentlist);
-                                this.environment.currentlist = newElement;
-                            }
-                        }
-
-                        // else: we are hitting a "UL" element
-                        else {
-
-                        }
-
-                        
-                        newElement = document.createElement('li');
-                        this.environment.currentlist.append(newElement);
-                        this.environment.currentdoc = newElement;
-                    }
                 }
                 
-                this.environment.prevIndent = this.current.config.indent;
                 // alreadyAdded = false;
                 // if (this.current.config.indent == undefined) {this.current.config.indent = 0}
 
