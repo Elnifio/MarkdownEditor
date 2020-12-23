@@ -31,7 +31,7 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
         cursor.fillStyle = configCircle.circleFill;
         cursor.fill();
         cursor.stroke();
-        if (config.haveLabel) {
+        if (config.haveNodeLabel) {
             cursor.font = `${configCircle.labelFontSize}px '${configCircle.labelFontType}'`;
             cursor.textAlign = "center";
             cursor.strokeText(label, x, y);
@@ -54,6 +54,7 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
 
     this.drawLine = function(x1, y1, x2, y2, label="", configLine=configMeta) {
         let cursor = this.canvas.getContext("2d");
+        cursor.beginPath();
         cursor.moveTo(x1, y1);
         cursor.strokeStyle=configLine.lineColor;
         cursor.lineTo(x2, y2);
@@ -153,29 +154,23 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
 
     this.visualizeGraph = function(highlights={edges:{}, nodes:{}}, configVisual=configMeta) {
         let centers = this.arrangePositions();
-        configVisual.haveLabel = this.graph.renderWeight;
+        configVisual.haveLineLabel = this.graph.renderWeight;
         let connected, originalColor;
         for (let e in centers) {
             connected = this.graph.get_connect(e);
             for (let t in connected) {
                 originalColor = configVisual.lineColor;
-                if (this.graph.directed) {
-                    if (highlights.edges[`${e}`]) {
-                        if (highlights.edges[`${e}`][`${t}`]) {
-                            configVisual.lineColor = highlights.edges[`${e}`][`${t}`];
-                        }
+                if (highlights.edges[`${e}`]) {
+                    if (highlights.edges[`${e}`][`${t}`]) {
+                        configVisual.lineColor = highlights.edges[`${e}`][`${t}`];
                     }
-                    this.drawArrow(centers[e].x, centers[e].y, centers[t].x, centers[t].y, connected[t], configVisual);
-                    configVisual.lineColor = originalColor;
-                } else {
-                    if (highlights.edges[`${e}`]) {
-                        if (highlights.edges[`${e}`][`${t}`]) {
-                            configVisual.lineColor = highlights.edges[`${e}`][`${t}`];
-                        }
-                    }
-                    this.drawLine(centers[e].x, centers[e].y, centers[t].x, centers[t].y, connected[t], configVisual);
-                    configVisual.lineColor = originalColor;
                 }
+                if (this.graph.directed) {
+                    this.drawArrow(centers[e].x, centers[e].y, centers[t].x, centers[t].y, connected[t], configVisual);
+                } else {
+                    this.drawLine(centers[e].x, centers[e].y, centers[t].x, centers[t].y, connected[t], configVisual);
+                }
+                configVisual.lineColor = originalColor;
             }
         }
         for (let e in centers) {

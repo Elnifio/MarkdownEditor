@@ -8,7 +8,8 @@ let config = {
     circleBorder:"#000000",
     circleFill:"#FFFFFF",
 
-    haveLabel:true,
+    haveLineLabel:true,
+    haveNodeLabel:true,
     labelFontSize:16,
     labelFontType:"Courier New",
     labelColor:"#000000",

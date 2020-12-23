@@ -16,7 +16,7 @@ let GraphVisual = function(values="", canvas=undefined, directed=false, width=50
         this.canvas = canvas;
     }
 
-    let result = parseGraph(values, directed);
+    let result = parseGraph(values);
     this.graph = result.graph;
     this.highlights = result.highlights;
 
@@ -25,10 +25,10 @@ let GraphVisual = function(values="", canvas=undefined, directed=false, width=50
 
 };
 
-let parseGraph = function(values="", directed=false) {
-    let graph = new Graph(directed);
+let parseGraph = function(values="") {
+    let graph = new Graph();
     // General match for expression
-    let re = /(?<start>[0-9A-Za-z]+)\-+(?<weight>[0-9]+)?\-*(?<directed>\>)?(?<end>[0-9A-Za-z])?(?<highlight>\:\w+)?/;
+    let re = /(?<start>[A-Za-z][0-9A-Za-z]*)\-+(?<weight>[0-9]+)?\-*(?<directed>\>)?(?<end>[A-Za-z][0-9A-Za-z]*)?(?<highlight>\:[0-9A-Za-z\#\(\)\,]+)?/;
 
     let match, start, end, isDirected, weight, highlight;
     let highlights = {edges:{}, nodes:{}};

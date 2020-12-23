@@ -54,6 +54,8 @@ let defaultaes = {
 
 }
 
+let datastructureRE = /(?<ds>(graph|pq|ll|arr|bst|tree))(?<modifier>\:\w*)?(?<varname> as \w+)?(?<option> norender)?/;
+
 
 let Renderer = function(parser, aes=defaultaes, id='renderer') {
     this.current = parser.head;
@@ -519,44 +521,38 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
             console.log("Missing Code Type error");
         }
 
-        else if (this.environment.codetype == 'latex') {
-            console.log(this.current.context);
-            this.renderLatex(this.current.context, out);
-        }
-
-        else if (this.environment.codetype.includes(":")) {
-            let splitted = this.environment.codetype.split(":");
-            let classifier = splitted[0];
-            let status = splitted[1];
-            switch(classifier) {
-                case "dg":
-                case "ug":
-                    switch(status) {
-                        case "init":
-                            new GraphVisual(this.current.context, );
-                            break;
-                        case "mst":
-                            break;
-                        default:
-                            console.log("not supported");
-                    }
-                    break;
-                case "pq":
-                    console.log(`rendering ${classifier} with status ${status}, and context ${this.current.context};`);
-                    break;
-                case "tree":
-                    console.log(`rendering ${classifier} with status ${status}, and context ${this.current.context};`);
-                    break;
-                case "ll":
-                    console.log(`rendering ${classifier} with status ${status}, and context ${this.current.context};`);
-                    break;
-                default:
-                    console.log(`classifier ${classifier} not supported;`);
-            }
-        }
-        
         else {
-            // out = `<span class="codeblock">${this.current.context.replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")}</span>`;
+            let rematch = this.environment.codetype.match(datastructureRE);
+            let newObject, canvas;
+
+            if (this.environment.codetype == 'latex') {
+                this.renderLatex(this.current.context, out);
+            }
+    
+            else if (rematch) {
+                switch (rematch.groups.ds) {
+                    case "graph":
+                        if (rematch.groups.modifier == undefined || rematch.groups.modifier == ":init") {
+                            canvas = document.createElement('canvas');
+                            canvas.width = defaultcanvasaes.width;
+                            canvas.height = defaultcanvasaes.height;
+
+                            newObject = new GraphVisual(this.current.context, canvas, false, defaultcanvasaes.width, defaultcanvasaes.height, 0, 0);
+                            if (rematch.groups.option == undefined) {
+                                out.append(canvas);
+                            }
+                        }
+                        break;
+                    default: 
+                        console.log(`unexpected ${rematch.groups.ds} at render code matching`);
+                }
+            }
+            
+            else {
+                out.innerHTML = `<span>${this.current.context.replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")}</span>`;
+                out.setAttribute('class', 'codeblock');
+                // out = `<span class="codeblock">${this.current.context.replace(/\n/g, "<br>").replace(/\s/g, "&nbsp;")}</span>`;
+            }
         }
         this.environment.codetype = undefined;
         return out;
