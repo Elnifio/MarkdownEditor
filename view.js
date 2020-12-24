@@ -31,9 +31,17 @@ let View = function() {
         this.context.style.maxHeight = `${height}px`;
     }
 
+    this.updateDisplayWidth = function() {
+        
+    }
+
     this.toggleDisplay = function() {
         this.display.style.display = (this.display.style.display=="none")?"block":'none';
     }
+
+    // this.notifyControllerRerender = function() {
+
+    // }
 
     this.notifyController = function() {
         this.controller.updateView(this.editor.value);

@@ -35,6 +35,7 @@ let parseGraph = function(values="") {
     values.split('\n').map(x => {
         // match for each sentence
         match = x.match(re);
+
         // If not match: did not find a 'start' node, return;
         if (!match) return;
 

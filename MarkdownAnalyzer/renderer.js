@@ -6,6 +6,7 @@
 
 import katex from '../node_modules/katex/dist/katex.mjs';
 import GraphVisual from '../DrawingKits/VisualizationKit/graphVisual.js';
+import PrqueVisual from '../DrawingKits/VisualizationKit/prqueVisual.js';
 
 let defaultcanvasaes = {
     width:500,
@@ -54,7 +55,7 @@ let defaultaes = {
 
 }
 
-let datastructureRE = /(?<ds>(graph|pq|ll|arr|bst|tree))(?<modifier>\:\w*)?(?<varname> as \w+)?(?<option> norender)?/;
+let datastructureRE = /(?<ds>(graph|prque|ll|arr|bst|tree))(?<modifier>\:\w*)?(?<varname> as \w+)?(?<option> norender)?/;
 
 
 let Renderer = function(parser, aes=defaultaes, id='renderer') {
@@ -62,13 +63,8 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
     this.doc = document.createElement("div");
     this.doc.setAttribute('id', id);
     this.environment = {
-        insideP: false,
         Return: false,
-        prevIndent: undefined,
         liststack: [],
-        liststacklen: 0,
-        ulcount: 0,
-        olcount:0,
         currentlist: undefined,
         currentdoc: undefined,
         codetype: undefined,
@@ -78,13 +74,8 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
         this.doc = document.createElement("div");
         this.doc.setAttribute('id', id);
         this.environment = {
-            insideP: false,
             Return: false,
-            prevIndent: undefined,
             liststack: [],
-            liststacklen: 0,
-            ulcount: 0,
-            olcount:0,
             currentlist:undefined,
             currentdoc: undefined,
             codetype: undefined,
@@ -150,8 +141,6 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
                 }
 
                 this.environment.liststack = [];
-                this.environment.liststacklen = 0;
-                this.environment.prevIndent = undefined;
                 this.environment.currentlist = undefined;
 
                 break;
@@ -160,7 +149,6 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
                 this.environment.currentdoc = this.doc;
 
                 this.environment.liststack = [];
-                this.environment.liststacklen = 0;
                 this.environment.currentlist = undefined;
 
                 this.environment.currentdoc.append(document.createElement("hr"));
@@ -523,7 +511,7 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
 
         else {
             let rematch = this.environment.codetype.match(datastructureRE);
-            let newObject, canvas;
+            let newObject, canvas, img;
 
             if (this.environment.codetype == 'latex') {
                 this.renderLatex(this.current.context, out);
@@ -539,7 +527,24 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
 
                             newObject = new GraphVisual(this.current.context, canvas, false, defaultcanvasaes.width, defaultcanvasaes.height, 0, 0);
                             if (rematch.groups.option == undefined) {
-                                out.append(canvas);
+                                img = document.createElement('img');
+                                img.src = canvas.toDataURL('jpg');
+                                out.append(img);
+                            }
+                        }
+                        break;
+                    case 'prque':
+                        if (rematch.groups.modifier == undefined || rematch.groups.modifier == ":init") {
+                            console.log('creating canvas for prque');
+                            canvas = document.createElement('canvas');
+                            canvas.width = defaultcanvasaes.width; 
+                            canvas.height = defaultcanvasaes.height;
+                            newObject = new PrqueVisual(this.current.context.replace(/\s+/g, "").split(','), canvas);
+
+                            if (rematch.groups.option == undefined) {
+                                img = document.createElement('img');
+                                img.src = canvas.toDataURL('jpg');
+                                out.append(img);
                             }
                         }
                         break;

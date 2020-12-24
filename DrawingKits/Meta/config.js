@@ -1,4 +1,7 @@
 let config = {
+
+    canvasWidth: 500,
+    canvasHeight: 500,
     
     canvasBorder:5,
     canvasBorderStyle:"1px solid #000000",

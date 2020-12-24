@@ -2,10 +2,15 @@ import Metaarray from "../Meta/metaarray.js";
 import Metatree from "../Meta/metatree.js";
 import Tree from "../DataStructure/tree.js";
 
-let PrqueVisual = function(values=[], width=500, heightTree=350, heightArray=150) {
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = width;
-    this.canvas.height = heightTree+heightArray;
+let PrqueVisual = function(values=[], canvas=undefined, width=500, heightTree=350, heightArray=150) {
+    if (canvas == undefined) {
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = width;
+        this.canvas.height = heightTree+heightArray;
+    } else {
+        this.canvas = canvas;
+    }
+    
 
     let tree = new Tree();
 
@@ -27,11 +32,8 @@ let PrqueVisual = function(values=[], width=500, heightTree=350, heightArray=150
     this.tree = new Metatree(width, heightTree, 0, 0, this.canvas, tree);
     this.array = new Metaarray(width, heightArray, 0, heightTree, this.canvas, values);
 
-
-    this.visualize = function(highlights={}) {
-        this.tree.visualizeTree(highlights);
-        this.array.visualizeArray(highlights);
-    }
+    this.tree.visualizeTree();
+    this.array.visualizeArray();
 }
 
 export default PrqueVisual;

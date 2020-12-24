@@ -17,6 +17,10 @@ let Controller = function(view, text="") {
         console.log(`Time elapsed for parsing and rendering: ${end - start} ms`);
     }
 
+    // this.rerender = function(width) {
+    //     this.renderer = new Renderer(this.parser, )
+    // }
+
     console.log("Init Controller Success");
 }
 

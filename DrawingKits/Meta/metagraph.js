@@ -70,6 +70,7 @@ let Metagraph = function(width, height, canvasX=0, canvasY=0, canvas=undefined, 
     this.drawArrow = function(startX, startY, endX, endY, label="", configArrow=configMeta) {
         let cursor = this.canvas.getContext("2d");
         cursor.strokeStyle = configArrow.lineColor;
+        cursor.beginPath();
         cursor.moveTo(startX, startY);
         cursor.lineTo(endX, endY);
         cursor.stroke();
