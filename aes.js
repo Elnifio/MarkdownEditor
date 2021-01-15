@@ -1,5 +1,45 @@
 let defaultaes = {
 
+    note: {
+        'border-left': '2px solid white',
+        'padding': '5px',
+        'border-bottom': '1px dashed grey',
+    },
+
+    'note-highlight': {
+        'border-left': '2px solid #99ddff',
+    },
+
+    'placeholder-icon': {
+        'color': 'white'
+    },
+
+    'note-expand': {
+        'padding-left': '3px',
+    },
+
+    toolbar: {
+        'border': '1px solid #80d5ff',
+        'background-color': '#99ddff',
+    },
+
+    'toolbar:hover': {
+        'border': '1px solid #80d5ff',
+        'background-color': '#99ddff',
+    },
+
+    'toolbar:active': {
+        'outline': 'none !important',
+        'border': '1px solid #80d5ff',
+        'background-color': '#99ddff',
+    },
+
+    'toolbar:focus': {
+        'outline': 'none !important',
+        'border': '1px solid #80d5ff',
+        'background-color': '#99ddff',
+    },
+
     paragraph: { // style for paragraph
         // 'border-bottom':'5px solid red',
         

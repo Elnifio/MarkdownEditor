@@ -76,13 +76,16 @@ let Metatree = function(width, height, canvasX=0, canvasY=0, canvas=undefined, t
         queue.push(element);
 
         let positions = [];
+        let index = 0;
         
         while (queue.length > 0) {
             currentNode = queue.splice(0, 1)[0];
             positions.push({
                 label:currentNode.node.value, 
                 position: currentNode.position, 
-                connectTo: currentNode.connectTo});
+                connectTo: currentNode.connectTo,
+                index});
+            index += 1;
             children = currentNode.node.find_children();
             splittedWidth = currentNode.availableWidth / (2 * children.length);
             children.map(x => {
@@ -105,14 +108,14 @@ let Metatree = function(width, height, canvasX=0, canvasY=0, canvas=undefined, t
     this.visualizeTree = function(highlights={}, configVisual=configMeta) {
         let positions = this.arrangePositions();
         let originalColor = configVisual.circleBorder;
-        positions.map(x => {
+        positions.map((x) => {
             x.connectTo.map(y => {
                 this.drawLine(x.position.x, x.position.y, y.x, y.y);
             });
-            if (highlights[x.label] != undefined) {
-                configVisual.circleBorder = highlights[x.label];
+            if (highlights[`${x.index}`] != undefined) {
+                configVisual.circleBorder = highlights[`${x.index}`];
             }
-            this.drawRectangle(x.position.x, x.position.y, x.label, highlights[x.label] != undefined, configVisual);
+            this.drawRectangle(x.position.x, x.position.y, x.label, highlights[`${x.index}`] != undefined, configVisual);
             configVisual.circleBorder = originalColor;
         })
     }

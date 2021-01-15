@@ -2,10 +2,21 @@ import Controller from "./control.js";
 
 import defaultaes from './aes.js';
 
+const fs = require('fs');
+
+let folderPrefix = 'NOTE-FOLDER-';
+let filePrefix = 'NOTE-FILE-';
+let root = './notes';
+
+let currentlySelected = undefined;
+let currdir = './notes';
+let currfile = undefined;
 
 let THRESHOLD = 10;
 let REFRESH = 10;
-let OFFSET = 30;
+let OFFSET = 0;
+
+let newly_init = true;
 
 let View = function() {
     this.context = document.getElementById("main-container");
@@ -13,8 +24,21 @@ let View = function() {
     this.display = document.getElementById("display-container");
     this.controller  = new Controller(this, this.editor.value);
     this.toolbars = document.getElementById("toolbars");
+    this.folders = document.getElementById('file-container');
+    this.foldertoolbars = document.getElementById('utility-container');
+
+    // Initiate folder view:
+    let loader = document.createElement('div');
+    this.folders.append(loader);
+    loader.innerHTML = `<p><i class="fa fa-spinner fa-spin"></i>&nbsp;Loading Notes</p>`;
 
     this.startTime = new Date();
+    console.log(this.startTime);
+
+    this.updateEditor = function(value) {
+        this.editor.value = value;
+        this.notifyController();
+    }
 
     this.update = function(value) {
         this.display.replaceChild(value, this.display.firstChild);
@@ -29,9 +53,10 @@ let View = function() {
         this.editor.style.height = `${height}px`;
         this.display.style.maxHeight = `${height}px`;
         this.context.style.maxHeight = `${height}px`;
-    }
 
-    this.updateDisplayWidth = function() {
+        height = this.folders.parentElement.clientHeight - this.foldertoolbars.clientHeight;
+        this.folders.style.height = `${height}px`;
+        
         
     }
 
@@ -39,13 +64,21 @@ let View = function() {
         this.display.style.display = (this.display.style.display=="none")?"block":'none';
     }
 
-    // this.notifyControllerRerender = function() {
-
-    // }
-
     this.notifyController = function() {
         this.controller.updateView(this.editor.value);
     }
+
+    this.save = function() {
+        if (newly_init) {
+            newly_init = false;
+            return;
+        }
+        if (currfile) {
+            fs.writeFile(currfile, this.editor.value, (e) => console.log(e));
+        } else {
+            fs.writeFile(root + '/' + 'scratch.md', this.editor.value, (e) => console.log(e));
+        }
+    };
 
     let currentTime;
 
@@ -69,8 +102,6 @@ let View = function() {
         // this.updateHeights();
     })
 
-    console.log("Init View Success");
-
     this.notifyController();
     this.updateHeights();
 }
@@ -89,13 +120,145 @@ let processStyle = function(aes=defaultaes) {
     return out;
 }
 
+let renderDirectory = function(name, path, indent, view) {
+    let out = document.createElement('div');
+    out.setAttribute('class', 'note-folder');
+    out.setAttribute('id', `${folderPrefix}${name}`);
+
+    out.style.marginLeft = `${indent}px`;
+
+    let title = document.createElement('span');
+    title.setAttribute('class', 'note note-folder-name');
+    title.style.display = 'block';
+    title.innerHTML = `<i class='fas fa-angle-right'></i> <strong>${name}</strong>`;
+    out.append(title);
+
+    let childContainer = document.createElement('div');
+    childContainer.setAttribute('class', 'note-expand');
+    out.append(childContainer);
+    let opened = false;
+
+    title.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        currdir = path + '/' + name;
+
+        if (opened) {
+            childContainer.innerHTML = "";
+            title.innerHTML = `<i class='fas fa-angle-right'></i> <strong>${name}</strong>`;
+            opened = false;
+        } else {
+            title.innerHTML = `<i class='fas fa-angle-down'></i> <strong>${name}</strong>`;
+            opened = true;
+            fs.readdir(path + '/' + name, {withFileTypes:true}, (err, files) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    files.forEach(x => {
+                        if (x.isDirectory()) {
+                            childContainer.append(renderDirectory(x.name, path + '/' + name, indent + 1, view));
+                        } else if (x.isFile()) {
+                            childContainer.append(renderFile(x.name, path + '/' + name, indent + 1, view));
+                        } else {
+                            console.log(`Unrecognized file ${x.name}`);
+                        }
+                    })
+                }
+            })
+        }
+
+        if (!currentlySelected) {
+            currentlySelected = title;
+        } else {
+            currentlySelected.getAttributeNode('class').value = currentlySelected.getAttributeNode('class').value.replace(/\s*note\-highlight\s*/g, '');
+            currentlySelected = title;
+        }
+
+        if (currentlySelected) {
+            currentlySelected.getAttributeNode('class').value = currentlySelected.getAttributeNode('class').value + ' note-highlight';
+        }
+    })
+
+    return out;
+}
+
+let renderFile = function(name, path, indent, view) {
+    let out = document.createElement('div');
+    let fullpath = path + '/' + name;
+    out.setAttribute('class', 'note note-file');
+    out.setAttribute('id', `${filePrefix}${name}`);
+    out.style.marginLeft = `${indent}px`;
+    
+    let fileTitle = document.createElement('span');
+    fileTitle.innerHTML = `<i class='fas fa-angle-right placeholder-icon'></i> ${name}`;
+    out.append(fileTitle);
+    out.append(document.createElement('br'));
+
+    out.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (currfile != fullpath) {
+            view.save();
+        }
+
+        currdir = path;
+        currfile = fullpath;
+
+        fs.readFile(fullpath, (err, data) => {
+            if (err) {
+                console.log(err);
+            } else {
+                view.updateEditor(data.toString());
+            }
+        })
+
+        if (!currentlySelected) {
+            currentlySelected = out;
+        } else {
+            currentlySelected.getAttributeNode('class').value = currentlySelected.getAttributeNode('class').value.replace(/\s*note\-highlight\s*/g, '');
+            currentlySelected = out;
+        }
+
+        if (currentlySelected) {
+            currentlySelected.getAttributeNode('class').value = currentlySelected.getAttributeNode('class').value + ' note-highlight';
+        }
+    })
+
+    return out;
+}
+
 $(() => {
-    // $("#editor").css('height', `${window.innerHeight}`);
-    console.log("Load Script Success");
     $("#display-style").text(processStyle());
 
     let view = new View();
+
+    fs.readdir(root, {withFileTypes:true}, (err, result) => {
+        view.folders.innerHTML = "";
+        if (err) {
+            fs.mkdir(root, (er) => console.log(er));
+        } else {
+            result.forEach( x => {
+                if (x.isDirectory()) {
+                    view.folders.append(renderDirectory(x.name, root, 0, view));
+                } else if (x.isFile()) {
+                    view.folders.append(renderFile(x.name, root, 0, view));
+                } else {
+                    console.log(`Unrecognized file ${x.name}`);
+                }
+            })
+        }
+    });
+
     view.toggleDisplay();
+
+    $('#file-utility-container').on('click', (e) => {
+        e.preventDefault();
+        currdir = './notes';
+        currentlySelected.getAttributeNode('class').value = currentlySelected.getAttributeNode('class').value.replace(/\s*note\-highlight\s*/g, '');
+        currentlySelected = undefined;
+    });
 
     $(window).on("resize", () => {
         view.updateHeights();

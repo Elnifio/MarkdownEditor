@@ -4,7 +4,7 @@
 
 ###### Example: h6
 
-- - -
+- - - 
 
 ## Support for inline styles
 

@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Elnifio/MarkdownEditor#readme",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.1",
     "bulma": "^0.9.1",
     "cnpm": "^6.1.1",
     "jquery": "^3.5.1",

@@ -8,6 +8,7 @@
     <script>window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.js');</script>
     <script src="./view.js" type="module"></script>
     <link rel="stylesheet" href="./node_modules/katex/dist/katex.css">
+    <link rel="stylesheet" href='./node_modules/@fortawesome/fontawesome-free/css/all.css'>
 
     <style id="display-style"></style>
     
@@ -34,7 +35,7 @@
         }
 
         #display-container {
-            border-left: 1px dashed #cccccc;
+            /* border-left: 1px dashed #cccccc; */
             overflow:auto;
         }
 
@@ -43,24 +44,6 @@
             width:80%;
             margin-left:10%;
             margin-right:10%;
-        }
-
-        .toolbar {
-            border:1px solid red;
-        }
-
-        .toolbar:hover {
-            border:1px solid red;
-        }
-
-        .toolbar:active {
-            outline:none !important;
-            border:1px solid grey;
-        }
-
-        .toolbar:focus {
-            outline:none !important;
-            border:1px solid grey;
         }
 
         /* support for inline rendering for long characters */
@@ -73,49 +56,154 @@
         }
     </style>
 
+    <style id="folder-style">
+        .note {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+        }
+
+        #file-container {
+            overflow:auto;
+        }
+    </style>
+
 </head>
 <body style="background: white;" id="contents">
 
-    <nav class="navbar" role="navigation" aria-label="main navigation" id="toolbars">
-        <div class="navbar-brand">
-                <!-- <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28"> -->
-                &lt;/CodeDown&gt;
-        </div>
-
-        <div class="navbar-menu">
-            <div class="navbar-start">
-                <div class="navbar-item">
-                    <div class="buttons">
-                        <button class="button toolbar" id="toggle-display">display</button>
-                        <button class="button toolbar" id="toggle-presentation">present</button>
-                        <button class="button toolbar" id="toggle-style">style</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="navbar-end">
-                <div class="navbar-item">
-                    <div class="buttons">
-                        <button class="button toolbar" id="delete">delete</button>
-                        <button class="button toolbar" id="export">export</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </nav>
-
     <section>
-        <div class="container">
+        <div class="container is-fluid">
+
             <div class="columns" id="main-container">
-                <div class="column" id="editor-container">
-                    <textarea id='editor' >Placeholder</textarea> <!-- Replace this with a "contenteditable" tag -->
+
+                <!-- container for search bar, add file & folder, and file container -->
+                <div class="column is-one-fifth" id="file-utility-container" style="display:block;margin:5px;border-right:1px solid #cccccc">
+
+                    <!-- search bar -->
+                    <div id="utility-container">
+                        <div class='control has-icons-left'>
+                            <input class="input is-rounded" type="text" placeholder="Search" disabled>
+                            <span class='icon is-small is-left'>
+                                <i class="fa fa-search"></i>
+                            </span>
+                        </div>
+                        <hr />
+                    </div>
+
+                    <!-- add a button group here for add file & folder -->
+                    <div id='new-file-folder' class='buttons has-addons is-centered'>
+                    </div>
+
+                    <!-- file container -->
+                    <div id='file-container'></div>
                 </div>
-                <div class="column content wrap" id='display-container' style="display:none" contenteditable="false">
+
+                <!-- container for toolbar, editor, and display -->
+                <div class='is-fluid column'>
+                    
+                    <!-- container for toolbar: add new file & folder, display & present, styles, delete & export -->
+                    <div class='level'>
+
+                        <!-- left side of the toolbar, contains new file & folder, display & present and styles -->
+                        <div class='level-left has-text-centered' id='toolbars'>
+                            <!-- Toolbars -->
+                            <!-- Create new file -->
+                            <div class='level-item'>
+                                <div class='buttons has-addons'>
+                                    <button class='button toolbar level-item' id='new-file'>
+                                        <span class='icon is-small'>
+                                            <i class='far fa-file'></i>
+                                        </span>
+                                    </button>
+        
+                                    <!-- Create new folder -->
+                                    <button class='button toolbar level-item' id='new-folder'>
+                                        <span class='icon is-small'>
+                                            <i class='fas fa-folder-plus'></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class='level-item'>
+                                <div class='buttons has-addons'>
+                                    <!-- Display mode -->
+                                    <button class="button toolbar" id="toggle-display">
+                                        <span class='icon is-small'>
+                                            <i class='fas fa-columns'></i>
+                                        </span>
+                                    </button>
+        
+                                    <!-- Presentation mode -->
+                                    <button class="button toolbar" id="toggle-presentation">
+                                        <span class='icon is-small'>
+                                            <i class='fas fa-desktop'></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Style toolbar -->
+                            <button class="button toolbar level-item" id="toggle-style">
+                                <span class='icon is-small'>
+                                    <i class='fas fa-bold'></i>
+                                </span>
+                                <span class='icon is-small'>
+                                    <i class='fas fa-italic'></i>
+                                </span>
+                                <span class='icon is-small'>
+                                    <i class='fas fa-underline'></i>
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- TODO: Add editor for file name -->
+
+                        <!-- right side of the toolbar, contains delete & export -->
+                        <div class='level-right has-text-centered'>
+                            <div class='level-item'>
+                                <div class='buttons has-addons'>
+                                    <!-- delete + export -->
+                                    <button class="button toolbar" id="delete">
+                                        <span class='icon is-small'>
+                                            <i class='far fa-trash-alt'></i>
+                                        </span>
+                                    </button>
+
+                                    <button class="button toolbar" id="export">
+                                        <span class='icon is-small'>
+                                            <i class='fas fa-download'></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- container for editor & display -->
+                    <div class="columns">
+                        
+                        <!-- editor container -->
+                        <!-- TODO: add a progress bar here to indicate editing progress -->
+                        <div class="column" id="editor-container">
+                            <textarea id='editor' >Start a brand new note!</textarea> <!-- Replace this with a "contenteditable" tag -->
+                        </div>
+
+                        <!-- display container -->
+                        <div class='column box'>
+                            <!-- TODO: add a progress bar here to indicate reading progress -->
+                            <div class="content wrap" id='display-container' style="display:none" contenteditable="false">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="footnote" style="width:5px">&nbsp;</div>
+        <!-- <div id="footnote" style="width:5px">&nbsp;</div> -->
         
     </section>
     

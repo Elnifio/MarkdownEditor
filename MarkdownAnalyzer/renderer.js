@@ -13,52 +13,9 @@ let defaultcanvasaes = {
     height:500
 }
 
-let defaultaes = {
+let datastructureRE = /(?<ds>graph|prque|ll|arr|bst|tree)(?<modifier>\:init|\:modify)?(?<target>\s+from\s+[A-Za-z][0-9a-zA-Z]*)?(?<varname>\s+as\s+[A-Za-z][0-9a-zA-Z]*)?(?<option>\s+norender)?/;
 
-    paragraph: { // style for paragraph
-        // 'border-bottom':'5px solid red',
-        
-    }, 
-    italic: { // style for ITALIC
-        'font-style':'italic',
-
-    }, 
-    bold: { // style for BOLD
-        'font-weight':'bold',
-    }, 
-    header: { // style for HEADERS
-
-    }, 
-    strikethrough: {
-        'text-decoration':'line-through',
-    },
-    link: {
-
-    },
-    code: {
-        "color":"#808080",
-        'border':'1px solid #d9d9d9',
-        'font-family':'"Courier New"',
-    },
-    underline: {
-        'text-decoration':'underline',
-    },
-    reference: {
-        'padding-left':'10px',
-        'border-left':'3px solid red',
-    },
-    codeblock: {
-        'color':'#808080',
-        'border':"1px dashed #d9d9d9",
-        'font-family':'"Courier New"',
-    }
-
-}
-
-let datastructureRE = /(?<ds>(graph|prque|ll|arr|bst|tree))(?<modifier>\:\w*)?(?<varname> as \w+)?(?<option> norender)?/;
-
-
-let Renderer = function(parser, aes=defaultaes, id='renderer') {
+let Renderer = function(parser, id='renderer') {
     this.current = parser.head;
     this.doc = document.createElement("div");
     this.doc.setAttribute('id', id);
@@ -68,6 +25,7 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
         currentlist: undefined,
         currentdoc: undefined,
         codetype: undefined,
+        canvases: {}
     }
 
     this.init = function() {
@@ -79,6 +37,7 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
             currentlist:undefined,
             currentdoc: undefined,
             codetype: undefined,
+            canvases: {}
         }
         this.current = parser.head;
     }
@@ -512,34 +471,66 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
         else {
             let rematch = this.environment.codetype.match(datastructureRE);
             let newObject, canvas, img;
+            let ds, modifier, target, varname, option;
 
             if (this.environment.codetype == 'latex') {
                 this.renderLatex(this.current.context, out);
             }
     
             else if (rematch) {
-                switch (rematch.groups.ds) {
+
+                ds = rematch.groups.ds;
+                modifier = rematch.groups.modifier;
+                option = rematch.groups.option;
+
+                switch (ds) {
                     case "graph":
-                        if (rematch.groups.modifier == undefined || rematch.groups.modifier == ":init") {
+                        if (modifier == undefined || 
+                            modifier == ":init") {
                             canvas = document.createElement('canvas');
                             canvas.width = defaultcanvasaes.width;
                             canvas.height = defaultcanvasaes.height;
 
-                            newObject = new GraphVisual(this.current.context, canvas, false, defaultcanvasaes.width, defaultcanvasaes.height, 0, 0);
-                            if (rematch.groups.option == undefined) {
+                            newObject = new GraphVisual(this.current.context, canvas, false, 
+                                defaultcanvasaes.width, defaultcanvasaes.height, 0, 0);
+
+                            if (rematch.groups.varname != undefined) {
+                                this.environment.canvases[`${rematch.groups.varname.replace(/\s+as\s+/, '')}`] = newObject;
+                            }
+
+                            if (option == undefined) {
                                 img = document.createElement('img');
                                 img.src = canvas.toDataURL('jpg');
                                 out.append(img);
+                            }
+                        } 
+                        
+                        else if (rematch.groups.modifier == ":modify") {
+                            if ( rematch.groups.target != undefined ) {
+                                target = this.environment.canvases[`${rematch.groups.target.replace(/\s+from\s+/, '')}`];
+                                
+                                if ( target != undefined) {
+                                    target.updateGraph(this.current.context);
+                                }
+
+                                if (rematch.groups.varname != undefined) {
+                                    this.environment.canvases[`${rematch.groups.varname.replace(/\s+as\s+/, '')}`] = target;
+                                }
+
+                                if (option == undefined) {
+                                    img = document.createElement('img');
+                                    img.src = target.canvas.toDataURL('jpg');
+                                    out.append(img);
+                                }
                             }
                         }
                         break;
                     case 'prque':
                         if (rematch.groups.modifier == undefined || rematch.groups.modifier == ":init") {
-                            console.log('creating canvas for prque');
                             canvas = document.createElement('canvas');
                             canvas.width = defaultcanvasaes.width; 
                             canvas.height = defaultcanvasaes.height;
-                            newObject = new PrqueVisual(this.current.context.replace(/\s+/g, "").split(','), canvas);
+                            newObject = new PrqueVisual(this.current.context, canvas);
 
                             if (rematch.groups.option == undefined) {
                                 img = document.createElement('img');
@@ -561,10 +552,6 @@ let Renderer = function(parser, aes=defaultaes, id='renderer') {
         }
         this.environment.codetype = undefined;
         return out;
-    }
-
-    this.parseGraph = function(context, graphName) {
-        
     }
 
     this.renderLatex = function(context, element) {

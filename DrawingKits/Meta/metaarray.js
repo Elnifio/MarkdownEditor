@@ -54,7 +54,7 @@ let Metaarray = function(width, height, canvasX, canvasY, canvas=undefined, arra
             } else {
                 current.x += 2 * configPosition.circleRadius + configPosition.spaceBetween;
             }
-            positions.push({x:current.x, y:current.y, label:x});
+            positions.push({x:current.x, y:current.y, label:x, index: this.array.indexOf(x)});
         });
         return positions;
     }
@@ -63,10 +63,10 @@ let Metaarray = function(width, height, canvasX, canvasY, canvas=undefined, arra
         let originalColor = configVisual.circleBorder;
         this.arrangePositions().map(x => {
             
-            if (highlights[`${x.label}`]) {
-                configVisual.circleBorder = highlights[x.label];
+            if (highlights[`${x.index}`]) {
+                configVisual.circleBorder = highlights[x.index];
             }
-            this.drawRectangle(x.x, x.y, x.label, highlights[`${x.label}`] != undefined, configVisual);
+            this.drawRectangle(x.x, x.y, x.label, highlights[`${x.index}`] != undefined, configVisual);
             configVisual.circleBorder = originalColor;
         })
     }
