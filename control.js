@@ -14,7 +14,7 @@ let Controller = function(view, text="") {
         this.renderer = new Renderer(this.parser);
         this.view.update(this.renderer.render());
         let end = new Date();
-        console.log(`Time elapsed for parsing and rendering: ${end - start} ms`);
+        // console.log(`Time elapsed for parsing and rendering: ${end - start} ms`);
     }
 
     // this.rerender = function(width) {

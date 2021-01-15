@@ -2,7 +2,7 @@
 <html lang='en'>
 <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
+    <title>CodeDown</title>
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
     <link rel="stylesheet" href="./node_modules/bulma/css/bulma.css">
     <script>window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.js');</script>
@@ -95,8 +95,8 @@
                     </div>
 
                     <!-- add a button group here for add file & folder -->
-                    <div id='new-file-folder' class='buttons has-addons is-centered'>
-                    </div>
+                    <!-- <div id='new-file-folder' class='buttons has-addons is-centered'>
+                    </div> -->
 
                     <!-- file container -->
                     <div id='file-container'></div>
@@ -120,12 +120,12 @@
                                         </span>
                                     </button>
         
-                                    <!-- Create new folder -->
+                                    <!-- Create new folder
                                     <button class='button toolbar level-item' id='new-folder'>
                                         <span class='icon is-small'>
                                             <i class='fas fa-folder-plus'></i>
                                         </span>
-                                    </button>
+                                    </button> -->
                                 </div>
                             </div>
 
@@ -162,6 +162,14 @@
                         </div>
 
                         <!-- TODO: Add editor for file name -->
+                        <div class='level-item'>
+                            <div class='control has-icons-left' style='width:80%'>
+                                <input class='input is-rounded' type='text' placeholder="" id='file-name-editor'>
+                                <span class='icon is-small is-left'>
+                                    <i class='fas fa-heading'></i>
+                                </span>
+                            </div>
+                        </div>
 
                         <!-- right side of the toolbar, contains delete & export -->
                         <div class='level-right has-text-centered'>
