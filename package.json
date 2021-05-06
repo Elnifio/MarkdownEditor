@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node -r esm ./test.js",
     "start": "electron ."
   },
   "repository": {
@@ -22,9 +22,11 @@
     "@fortawesome/fontawesome-free": "^5.15.1",
     "bulma": "^0.9.1",
     "cnpm": "^6.1.1",
+    "esm": "^3.2.25",
     "jquery": "^3.5.1",
     "katex": "^0.12.0",
-    "mathjax": "^3.1.2"
+    "mathjax": "^3.1.2",
+    "vue": "^2.6.12"
   },
   "devDependencies": {
     "electron": "^11.0.4"

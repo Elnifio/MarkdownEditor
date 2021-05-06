@@ -12,6 +12,13 @@ function createWindow () {
     })
 
     win.loadFile('index.html');
+
+    win.webContents.openDevTools()
+
+    // close event emitter
+    win.webContents.on('close', () => {
+        win.webContents.send('close')
+    });
 }
 
 app.whenReady().then(createWindow)

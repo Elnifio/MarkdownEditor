@@ -6,7 +6,7 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
     <link rel="stylesheet" href="./node_modules/bulma/css/bulma.css">
     <script>window.$ = window.jQuery = require('./node_modules/jquery/dist/jquery.js');</script>
-    <script src="./genericController.js" type="module"></script>
+    <script src="./view.js" type="module"></script>
     <link rel="stylesheet" href="./node_modules/katex/dist/katex.css">
     <link rel="stylesheet" href='./node_modules/@fortawesome/fontawesome-free/css/all.css'>
 
@@ -20,10 +20,10 @@
 
         textarea {
             border:0px solid black;
-            margin-left:3%;
-            margin-right:3%;
+            margin-left:10%;
+            margin-right:10%;
             resize:none;
-            width:100%;
+            width:80%;
             font-family:'Courier New', Courier, monospace;
             font-size:16px;
         }
@@ -54,10 +54,6 @@
             white-space: -o-pre-wrap;   /* Opera 7 */    
             word-wrap: break-word;      /* IE */
         }
-
-        body {
-            overflow: hidden;
-        }
     </style>
 
     <style id="folder-style">
@@ -73,18 +69,6 @@
 
         #file-container {
             overflow:auto;
-        }
-    </style>
-
-    <style id='heights'>
-        #editor {
-            height: 83vh;
-        }
-        #display-container {
-            height: 83vh;
-        }
-        body {
-            height: 100vh;
         }
     </style>
 
@@ -115,15 +99,14 @@
                     </div> -->
 
                     <!-- file container -->
-                    <!-- TODO: repair the bug that this is not scrollable -->
                     <div id='file-container'></div>
                 </div>
 
                 <!-- container for toolbar, editor, and display -->
-                <div class='is-fluid column' id="toolbar-document-container">
+                <div class='is-fluid column'>
                     
                     <!-- container for toolbar: add new file & folder, display & present, styles, delete & export -->
-                    <div class='level' id='tools'>
+                    <div class='level'>
 
                         <!-- left side of the toolbar, contains new file & folder, display & present and styles -->
                         <div class='level-left has-text-centered' id='toolbars'>
@@ -210,7 +193,7 @@
                     </div>
 
                     <!-- container for editor & display -->
-                    <div class="columns" id='editor-display'>
+                    <div class="columns">
                         
                         <!-- editor container -->
                         <!-- TODO: add a progress bar here to indicate editing progress -->
@@ -219,9 +202,9 @@
                         </div>
 
                         <!-- display container -->
-                        <div class='column box' id="display-container-cc">
+                        <div class='column box'>
                             <!-- TODO: add a progress bar here to indicate reading progress -->
-                            <div class="content wrap" id='display-container' style="display:block" contenteditable="false">
+                            <div class="content wrap" id='display-container' style="display:none" contenteditable="false">
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
-import Controller from "./control.js";
+import Controller from "../control.js";
 
-import defaultaes from './aes.js';
+import defaultaes from '../aes.js';
 
 const fs = require('fs');
 
@@ -14,7 +14,7 @@ let currfile = undefined;
 
 let THRESHOLD = 10;
 let REFRESH = 10;
-let OFFSET = 0;
+let OFFSET = 10;
 
 let defaultText = "Start your note here.";
 
@@ -68,7 +68,7 @@ let View = function() {
         height = window.innerHeight - this.toolbars.clientHeight - OFFSET;
         this.editor.style.height = `${height}px`;
         this.display.style.maxHeight = `${height}px`;
-        this.context.style.maxHeight = `${height}px`;
+        this.context.style.maxHeight = `${window.innerHeight - OFFSET}px`;
 
         height = this.folders.parentElement.clientHeight - this.foldertoolbars.clientHeight;
         this.folders.style.height = `${height}px`;
