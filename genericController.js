@@ -107,10 +107,7 @@ let c = new Controller(fc, ec);
 
 const fs = require('fs');
 
-// testing of the newfile function 
-for (let i = 0; i < 50; i ++) {
-    newfile.click();
-}
+1
 
 // on close event:
 require('electron').ipcRenderer.on('close', (event) => {

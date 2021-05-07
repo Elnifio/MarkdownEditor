@@ -70,10 +70,12 @@ let folders = function(storageString) {
     // cursor for navigating between nodes (navigate down)
     this.filecursor = buildResult.opened;
 
+    // check if current file cursor is none
     this.hasFileCursor = function() {
         return this.filecursor != undefined && this.filecursor != null;
     }
 
+    // cursor for navigating between folders
     this.foldercursor = (this.hasFileCursor())?(this.root):(this.filecursor.parent);
     
     if (this.hasFileCursor()) {
