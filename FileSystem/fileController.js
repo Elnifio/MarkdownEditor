@@ -106,7 +106,12 @@ let fileController = function() {
     }
 
     /**
-     * Handles create-file event
+     * Creating files handler: 
+     * param: none
+     * return: 
+     *     function of type (currentValue: string) -> (folders.currentContent: string)
+     * The returned function, when called, will save currentValue into the folder 
+     * and return the content of newly-created file. 
      */
     this.createFile = function() {
         /**
@@ -127,6 +132,11 @@ let fileController = function() {
         }
         return out;
     }
+
+    /**
+     * Creating folders handler: 
+     * 
+     */
 }
 
 
