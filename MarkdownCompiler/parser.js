@@ -58,3 +58,10 @@ let Lexer = require("./lexer");
  *  
  */
 
+let Parser = function(giventext="") {
+    this.accumulator = [];
+    this.specialsCollector = [];
+    this.parse = function(text=giventext) {
+        
+    }
+}
