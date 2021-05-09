@@ -273,5 +273,9 @@ let Lexer = function(text="") {
 //      Token object
 //      TokenType enumerator
 //      specials enumerator
-let Lex = { Lexer, Token, TokenType, specials };
-export default Lex;
+// let Lex = { Lexer, Token, TokenType, specials };
+// export default Lex;
+exports.Lexer = Lexer;
+exports.Token = Token;
+exports.TokenType = TokenType;
+exports.KEYWORDS = specials;

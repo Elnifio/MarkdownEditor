@@ -1,4 +1,5 @@
-import Lexer from "./lexer.js";
+// import Lexer from "./lexer.js";
+let Lexer = require("./lexer");
 
 let word = ["#### this is a header", "", "and this should be a new paragraph", 
 "**with bold here** and *italic here* and ___bold italic here___", 
