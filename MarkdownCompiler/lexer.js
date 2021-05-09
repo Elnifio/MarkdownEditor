@@ -15,7 +15,7 @@
  *  .: period
  * all other characters are normal characters
  */
-let specials = ["\\", "$", "`", "#", "-", "[", "]", ">", " ", "_", "*", "~", "."];
+let specials = ["\\", "$", "`", "#", "-", "[", "]", ">", " ", "_", "*", "~", ".", "\n", "!", "(", ")"];
 
 // Token Types enumeration: 
 let TokenType = {
@@ -34,59 +34,237 @@ let TokenType = {
     underline   : 12,   // underline    - used in styles
     tilda       : 13,   // tilda        - used in styles
     period      : 14,   // period       - used with number to denote ordered list
+    enter       : 15,   // enter: \n    - used to denote end of a line
+    exclamation : 16,   // exclamation  - used for image urls
+    lparen      : 17,   // parenthesis  - used for urls
+    rparen      : 18,   // parenthesis  - used for urls
+
+    // convert from TokenType to literal
+    finder      : (type) => { for (let item in TokenType) { if (TokenType[item] == type) return item; } },
 };
 
 // locks the enumeration
 Object.freeze(TokenType);
 
 // Token object: (type, content) tuple
-let Token = function(type, content) {
-    this.type = type;
+let Token = function(type, content) { 
+    this.type = type; 
     this.content = content;
+
+    // debug use
+    this.literalType = TokenType.finder(this.type);
 };
 
 //  Lexer object: 
 //      call lexer.init to reset a lexer
 //      call lexer.yield to yield the next token
-let Lexer = function() {
+let Lexer = function(text="") {
     // initiate the lexer status
     this.text = text;
     this.cursor = 0;
     this.eof = false;
+    this.maxlen = this.text.length;
     this.currentToken = "";
 
     // initialization
-    this.init = function(text) {
+    this.init = function(newinput) {
         // initiate the lexer status
-        this.text = text;
+        this.text = newinput;
         this.cursor = 0;
         this.eof = false;
         this.currentToken = "";
+        this.maxlen = this.text.length;
     };
 
     // yield one token at a time
     this.yield = function() {
-        this.currentToken = "";
-        let type = this.scantoken();
-        return new Token(this.currentToken, type);
+        if (!this.eof) {
+            this.currentToken = "";
+            let type = this.scantoken();
+            return new Token(type, this.currentToken);
+        }
     };
 
     // scan token based on next token: 
     //     returns the token type
+    let nextToken;
     this.scantoken = function() {
-        let nextToken = this.peekNext();
+        nextToken = this.peekNext();
+        // perform case-by-case analysis
+        switch (nextToken) {
+            // --------
+            // special character: \n
+            // --------
+            // accept one \n at a time
+            case "\n":
+                this.acceptIt();
+                return TokenType.enter;
 
+            // -------- 
+            // style controller: bold, italic, strikethrough, underline (or possibly unordered list & separator)
+            // --------
+            // accepts a sequence of control characters: "***" -> Token(TokenType.asterisk, "***")
+            // necessary for italic, bold, italic-bold, separator, unordered list
+            case "*": 
+                this.acceptSame(nextToken, 2); // maximum length set to 2, either consume one token or consume two tokens
+                return TokenType.asterisk;
+
+            // necessary for separator, unordered list
+            case "-": 
+                this.acceptSame(nextToken); // maximum length set to -1, to consume arbitrary number of "-" tokens
+                return TokenType.minus;
+            
+            // necessary for strikethrough, underline
+            case "~": 
+                this.acceptSame(nextToken, 2); // maximum length set to 2, either one or two tokens
+                return TokenType.tilda;
+
+            // necessary for italic, bold, italic-bold
+            case "_": 
+                this.acceptSame(nextToken, 2); // maximum length set to 2
+                return TokenType.underline;
+
+            // --------
+            // indentation controller: either space or tab
+            // --------
+            // either a space or a tab: if a tab, we replace it with a space
+            // necessary for indentation
+            case " ": case "\t":
+                this.acceptSame(nextToken); // arbitrary length of indentations
+                return TokenType.space;
+            
+            // --------
+            // special blocks controller: code, latex, reference, urls, headers
+            // --------
+            // code blocks: ` *1 or ` *3
+            // latex: $ *1 or $ *2
+            // reference: > *1
+            // urls: []()! symbols
+            // headers: # 1~6
+            // necessary for code blocks: will span up to 3 so accept 1, 2, 3 chars
+            case "`":
+                this.acceptSame(nextToken, 3);
+                return TokenType.backtick;
+
+            // necessary for inline & block latex: will either be 1 or 2 chars
+            case "$":
+                this.acceptSame(nextToken, 2);
+                return TokenType.dollar;
+            
+            // reference block, only 1 char
+            case ">":
+                this.acceptIt();
+                return TokenType.ge;
+            
+            // header: up to 6 chars
+            case "#": 
+                this.acceptSame(nextToken, 6);
+                return TokenType.hashtag;
+
+            // left & right bracket: only appear once
+            case "[":
+                this.acceptIt();
+                return TokenType.lsquare;
+            case "]":
+                this.acceptIt();
+                return TokenType.rsquare;
+
+            // left & right parenthesis: only appear once
+            case "(": 
+                this.acceptIt();
+                return TokenType.lparen;
+            case ")":
+                this.acceptIt();
+                return TokenType.rparen;
+
+            // exclamation: only appear once
+            case "!":
+                this.acceptIt();
+                return TokenType.exclamation;
+
+            // --------
+            // special characters
+            // --------
+            // period . for ordered list
+            // translate \\ for translating character
+            // period: only appear once
+            case ".":
+                this.acceptIt();
+                return TokenType.period;
+
+            // necessary for escaping text: consume it, not accept it, and accept the next character as a word
+            case "\\": 
+                this.consumeIt();
+                this.acceptIt();
+                return TokenType.word;
+            
+            // --------
+            // Ordinary characters
+            // --------
+            // numbers and all other characters
+            // number constructor: construct numbers
+            case "1": case "2": case "3": case "4": case "5":
+            case "6": case "7": case "8": case "9": case "0":
+                while (!this.eof && (this.peekNext() == "1" || this.peekNext() == "2" || this.peekNext() == "3" || this.peekNext() == "4" || 
+                        this.peekNext() == "5" || this.peekNext() == "6" || this.peekNext() == "7" || 
+                        this.peekNext() == "8" || this.peekNext() == "9" || this.peekNext() == "0")) {
+                    this.acceptIt();
+                }
+                return TokenType.number;
+
+            // string constructor: while the next character is not special: we accept it
+            default:
+                while (!this.eof && specials.indexOf(this.peekNext()) < 0) {
+                    this.acceptIt();
+                }
+                return TokenType.word;
+        }
     };
+
+    // consume a character, not append it
+    this.consumeIt = function() {
+        this.cursor += 1;
+        this.eof = this.cursor >= this.maxlen;
+    }
 
     // accept one token at a step
+    let word;
     this.acceptIt = function() {
-        this.currentToken += this.text[this.cursor];
+        word  = this.text[this.cursor];
+        // replace tab item with four spaces
+        if (word == "\t") { word = "    "; }
+        // append it to current token
+        this.currentToken += word;
         this.cursor += 1;
+        this.eof = this.cursor >= this.maxlen;
     };
+
+    // check if the next token is compatible with a given token
+    this.compatible = function(food) {
+        // \t is compatible with space
+        // else: all other tokens only compatible when they are of the same type
+        if (food == " " || food == "\t") return this.peekNext() == " " || this.peekNext() == "\t";
+        else return food == this.peekNext();
+    }
+
+    // accept a sequence of same tokens, with specified maximum length
+    this.acceptSame = function(food, maxlength=-1) {
+        if (maxlength < 0) {
+            while (!this.eof && this.compatible(food)) {
+                this.acceptIt();
+            }
+        }
+        else {
+            while (!this.eof && this.compatible(food) && maxlength > 0) {
+                this.acceptIt();
+                maxlength -= 1;
+            }
+        }
+    }
 
     // peek the next token from the text
     this.peekNext = function() {
-        return this.text[cursor];
+        return this.text[this.cursor];
     }
 };
 
