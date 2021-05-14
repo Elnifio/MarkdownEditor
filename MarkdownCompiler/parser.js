@@ -62,6 +62,7 @@ let Parser = function(giventext="") {
     this.accumulator = [];
     this.specialsCollector = [];
     this.parse = function(text=giventext) {
-        
+
     }
 }
+exports.Parser = Parser;

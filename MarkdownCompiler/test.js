@@ -34,15 +34,23 @@ let LexerTester = function() {
 let ASTTester = function() {
     let AST = require("./AST");
     let Visitor = require("./ASTDisplay");
+
     let ast = new AST.MD();
+
     let b = new AST.Paragraph();
     ast.addBlock(b);
-    b.addSentence("first sentence");
-    b.addSentence("second sentence");
+
+    let sen1 = new AST.Sentence();
+    sen1.set("This is the first sentence. ");
+    b.addSentence(sen1);
+
+    let sen2 = new AST.Sentence();
+    sen2.set("This is the second sentence. ");
+    sen2.setStyle("bold", true);
+    b.addSentence(sen2);
+    
     let c = new AST.Paragraph();
     ast.addBlock(c);
-    c.addSentence("first in C");
-    c.addSentence("second in C");
     ast.addBlock(new AST.Separator());
     ast.addBlock(new AST.Paragraph());
 
