@@ -64,15 +64,22 @@ let Displayer = function(defaultprefix="") {
     }
 
     this.visitReference = function(ref, args) {
-        show(args, ref.toString());
+        show(args, ref.toString() + ": Sentence[" + ref.content.length + "]");
         let prefix = args + " | ";
-        ref.get().visit(this, prefix);
+        // ref.get().visit(this, prefix);
+        ref.get().forEach((x) => (this.visit(x, prefix)));
+    }
+
+    this.visitRefBlock = function(ref, args) {
+        show(args, ref.toString() + ": Reference[" + ref.content.length + "]");
+        let prefix = args + " | ";
+        ref.get().forEach((x) => this.visit(x, prefix));
     }
 
     this.visitHeader = function(header, args) {
-        show(args, header.toString());
+        show(args, header.toString() + ": " + header.level);
         let prefix = args + " | ";
-        console.log(`${prefix}${header.get()}`);
+        console.log(prefix + header.get());
     }
 
     this.visitSentence = function(sen, args) {

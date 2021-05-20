@@ -47,6 +47,11 @@ let TokenType = {
 Object.freeze(TokenType);
 
 // Token object: (type, content) tuple
+/**
+ * 
+ * @param {TokenType: String} type TokenType enum: type of the token
+ * @param {String} content String: Content of the token
+ */
 let Token = function(type, content) { 
     this.type = type; 
     this.content = content;
@@ -58,6 +63,10 @@ let Token = function(type, content) {
 //  Lexer object: 
 //      call lexer.init to reset a lexer
 //      call lexer.yield to yield the next token
+/**
+ * 
+ * @param {String} text initial text: unused
+ */
 let Lexer = function(text="") {
     // initiate the lexer status
     this.text = text;
@@ -67,6 +76,10 @@ let Lexer = function(text="") {
     this.currentToken = "";
 
     // initialization
+    /**
+     * 
+     * @param {String} newinput text to be lexed
+     */
     this.init = function(newinput) {
         // initiate the lexer status
         this.text = newinput;
@@ -76,7 +89,10 @@ let Lexer = function(text="") {
         this.maxlen = this.text.length;
     };
 
-    // yield one token at a time
+    /**
+     * yields one token at a time
+     * @returns Token next token
+     */
     this.yield = function() {
         if (!this.eof) {
             this.currentToken = "";
@@ -85,11 +101,12 @@ let Lexer = function(text="") {
         }
     };
 
-    // scan token based on next token: 
-    //     returns the token type
-    let nextToken;
+    /**
+     * Scan token based on next token
+     * @returns TokenType next token's type
+     */
     this.scantoken = function() {
-        nextToken = this.peekNext();
+        let nextToken = this.peekNext();
         // perform case-by-case analysis
         switch (nextToken) {
             // --------
@@ -222,12 +239,14 @@ let Lexer = function(text="") {
     };
 
     // consume a character, not append it
+    // Internal
     this.consumeIt = function() {
         this.cursor += 1;
         this.eof = this.cursor >= this.maxlen;
     }
 
     // accept one token at a step
+    // Internal
     let word;
     this.acceptIt = function() {
         word  = this.text[this.cursor];
@@ -240,6 +259,7 @@ let Lexer = function(text="") {
     };
 
     // check if the next token is compatible with a given token
+    // Internal
     this.compatible = function(food) {
         // \t is compatible with space
         // else: all other tokens only compatible when they are of the same type
@@ -248,6 +268,7 @@ let Lexer = function(text="") {
     }
 
     // accept a sequence of same tokens, with specified maximum length
+    // Internal
     this.acceptSame = function(food, maxlength=-1) {
         if (maxlength < 0) {
             while (!this.eof && this.compatible(food)) {
@@ -263,6 +284,7 @@ let Lexer = function(text="") {
     }
 
     // peek the next token from the text
+    // Internal
     this.peekNext = function() {
         return this.text[this.cursor];
     }

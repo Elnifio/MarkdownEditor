@@ -31,6 +31,7 @@ let LexerTester = function() {
 }
 // LexerTester();
 
+// tests the AST constructor
 let ASTTester = function() {
     let AST = require("./AST");
     let Visitor = require("./ASTDisplay");
@@ -58,4 +59,18 @@ let ASTTester = function() {
     v.visit(ast);
 }
 
-ASTTester();
+// ASTTester();
+
+let parserTester01 = function() {
+    let Parser = require("./parser");
+    let texts = ["this is a sentence **and this is a bold sentence**", "*and this is a italic sentence*"];
+    let text = texts.join("\n");
+    // console.log(text);
+    let ps = new Parser.Parser();
+    ps.lexer.init(text);
+    ps.nextToken();
+    console.log(ps.parseBulkSentence());
+}
+
+parserTester01();
+

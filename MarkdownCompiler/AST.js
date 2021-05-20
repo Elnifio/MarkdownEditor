@@ -21,7 +21,8 @@ let ASTType = {
     UL: "Unordered List",
     OL: "Ordered List",
     TODO: "Todo List",
-    Reference: "Reference Block",
+    Reference: "Reference",
+    RefBlock: "Reference Block",
     Header: "Header",
 
     // Sentence-level element
@@ -189,17 +190,29 @@ let TODOBlock = function() {
 TODOBlock.prototype = new ListBlock(ASTType.TODO);
 exports.TODO = TODOBlock;
 
-// Reference Block
+// Single Sentence Reference Container
 let Reference = function() {
-    this.content = new Sentence();
-    this.set = function(ctt) { this.content = ctt; }
+    this.content = [];
+    this.push = function(ctt) { this.content.push(ctt); }
     this.get = function() { return this.content; }
     this.visit = function(visitor, arg)  { visitor.visitReference(this, arg); }
 }
 Reference.prototype = new Block(ASTType.Reference);
 exports.Reference = Reference;
 
+// Reference Block Container
+let RefBlock = function() {
+    this.content = [];
+    this.push = function(ctt) { this.content.push(ctt); }
+    this.modifyLast = function(ctt) { this.content[this.content.length-1].push(ctt); }
+    this.get = function() { return this.content; }
+    this.visit = function(visitor, arg) { visitor.visitRefBlock(this, arg); }
+}
+RefBlock.prototype = new Block(ASTType.RefBlock);
+exports.RefBlock = RefBlock;
+
 let Header = function() {
+    this.level=0;
     this.visit = function(visitor, arg) { visitor.visitHeader(this. arg); }
 }
 Header.prototype = new ContentableBlock(ASTType.Header);
@@ -219,21 +232,31 @@ let MetaSentence = function(type=ASTType.Others) {
 }
 MetaSentence.prototype = new AST(ASTType.Others);
 
-let Sentence = function() {
-    this.style = {
-        bold: false,
-        italic: false,
-        underline: false,
-        strikethrough: false,
-        code: false,
+let StyleConstructor = function() {
+    this.bold = false;
+    this.italic=false;
+    this.underline=false;
+    this.strikethrough=false;
+    this.code=false;
 
-        toString: function() {
-            return (this.bold || this.italic || this.underline || this.strikethrough || this.code)?
-            `${this.bold?"Bold ":""}${this.italic?"Italic ":""}` + 
-            `${this.underline?"Underline ":""}${this.strikethrough?"Strikethrough ":""}` + 
-            `${this.code?"Code":""};`:"Plain;";
+    this.toString = function() {
+        if (this.bold || this.italic || this.underline || this.strikethrough || this.code) {
+            let properties = [];
+            if (this.bold) properties.push('Bold');
+            if (this.italic) properties.push("Italic");
+            if (this.underline) properties.push("Underline");
+            if (this.strikethrough) properties.push("Strikethrough");
+            if (this.code) properties.push("Code");
+            return properties.reduce((accumulator, current) => accumulator + "; " + current);
+        } else {
+            return "No Style";
         }
     }
+}
+exports.StyleConstructor = StyleConstructor;
+
+let Sentence = function() {
+    this.style = new StyleConstructor();
 
     this.setStyle = function(option, value=false) {
         if (this.style[option] != undefined) {

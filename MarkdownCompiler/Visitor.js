@@ -54,6 +54,11 @@ let GeneralVisitor = function() {
         report();
     }
 
+    this.visitRefBlock = function(ref, args) {
+        // TODO: REPLACE THIS
+        report();
+    }
+
     this.visitHeader = function(header, args) {
         // TODO: REPLACE THIS
         report();
