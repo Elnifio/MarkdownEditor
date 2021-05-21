@@ -65,6 +65,7 @@ let Parser = function() {
     this.specialsCollector = [];
     this.curr = undefined;
     this.lexer = new Lexer.Lexer();
+    this.eof = false;
 
     this.parse = function(text="") {
         this.lexer.init(text);
@@ -83,16 +84,54 @@ let Parser = function() {
     //      starter for Reference & Header - TokenType.GE || (TokenType.HASHTAG * 1~6)
     this.parseMD = function() {
         let md = new AST.MD();
-        while (!this.lexer.eof) {
+        while (!this.eof) {
             switch(this.curr.type) {
                 // only starter for Reference
                 case TokenType.ge:
                     md.addBlock(this.parseReference());
                     break;
                 case TokenType.hashtag:
+                    md.addBlock(this.parseHeader());
                     break;
+                
+                
+                
             }
         }
+    }
+
+    this.parseMinus = function() {
+        // should consume - or space symbol until non-minus and non-space character is hit
+        let minusSymbol = this.accept(TokenType.minus);
+        // either "-\n", "--\n", or "--...-\n"
+        // first two special cases: treat them as simple paragraph
+        // last case with 3+ minus: treat as Separator
+        if (this.is(TokenType.enter)) {
+            if (minusSymbol.content.length >= 3) return new AST.Separator();
+            let para = new AST.Paragraph();
+            let sen = new AST.Sentence();
+            sen.set(this.collect());
+            para.addSentence(sen);
+            return para;
+        } else 
+        // the sequence might be "- -*", "--* *"
+        // we should accept it and check the next token
+        if (this.is(TokenType.space)) {
+            
+        }
+    }
+
+    // parse a paragraph
+    // the paragraph ends with either eof or an additional \n
+    this.parseParagraph = function() {
+        let paragraph = new AST.Paragraph();
+        let separator = new AST.Sentence();
+        separator.set(" ");
+        do {
+            this.parseBulkSentence(paragraph.sentences);
+            paragraph.addSentence(separator);
+        } while (!this.is(TokenType.enter) && !this.eof);
+        return paragraph;
     }
 
     // parse a Reference block
@@ -100,66 +139,54 @@ let Parser = function() {
     // first accept a > sign
     // if next is space: reference; else: sentence
     this.parseReference = function() {
-        this.accept(TokenType.ge);
-        if (this.is(TokenType.space)) {
-            // on accepting a reference:
-            // first accept a space, and delete the first space character in the space sequence
-            // and while next is not an enter: accept it as a sentence
-            this.acceptAny();
-            let space = this.accumulator[this.accumulator.length - 1];
-            this.emptyAccumulator();
-
-            space.content = space.content.substr(1);
-            this.accumulator.push(space);
-
-            let r = new AST.Reference();
-            let sen;
-
-            // sentence builder
-            while (!this.is(TokenType.enter)) {
-                sen = this.parseSentence();
-                r.push(sen);
-            }
-            return r;
-        }
-        else {
-            return this.parseSentence();
-        }
-    }
-
-    this.parseReferenceBlock = function() {
-        let rblock = new AST.RefBlock();
-        let result;
-        // accept anything as a sentence
-        // until a single line of \n encountered
-        while (!this.is(TokenType.enter)) {
-            if (this.is(TokenType.ge)) {
-                this.acceptAny();
-                if (this.is(TokenType.space)) {
-                    this.acceptAny();
-                    result = this.parseReference();
+        let ref = new AST.Reference();
+        while (this.is(TokenType.ge)) {
+            this.accept(TokenType.ge);
+            if (this.is(TokenType.space)) {
+                this.emptyAccumulator();
+                this.curr.content = this.curr.content.substr(1);
+                this.accept(TokenType.space);
+                while (!this.is(TokenType.ge) && !this.is(TokenType.enter) && !this.eof) {
+                    this.parseBulkSentence(ref.content);
+                }
+            } else {
+                if (ref.isEmpty()) {
+                    return this.parseParagraph();
+                } else {
+                    while (!this.is(TokenType.ge) && !this.is(TokenType.enter) && !this.eof) {
+                        this.parseBulkSentence(ref.content);
+                    }
                 }
             }
-            // // switch based on current character: 
-            // if (this.is(TokenType.ge)) {
-            //     result = this.parseReference();
-            // } else {
-            //     result = this.parseSentence();
-            // }
-            
-            // if (result.type == AST.ASTTypes.Reference) {
-            //     rblock.push(result);
-            // } else {
-            //     rblock.modifyLast(result);
-            // }
         }
-        return rblock;
+        return ref;
     }
 
     this.parseHeader = function() {
         let h = new AST.Header();
         h.level = this.curr.content.length;
-
+        this.accept(TokenType.hashtag);
+        if (this.is(TokenType.space)) {
+            this.consume(TokenType.space);
+            this.emptyAccumulator();
+            while (!this.is(TokenType.enter) && !this.eof) {
+                this.acceptAny();
+            }
+            this.accept(TokenType.enter);
+            h.set(this.collect());
+            return h;
+        } else if (h.level==1) {
+            this.emptyAccumulator();
+            // construct label? currently replace it with a header parser
+            while (!this.is(TokenType.enter) && !this.eof) {
+                this.acceptAny();
+            }
+            this.accept(TokenType.enter);
+            h.set(this.collect());
+            return h;
+        } else {
+            return this.parseParagraph();
+        }
     }
 
     this.parseLatexBlock = function() {
@@ -185,13 +212,40 @@ let Parser = function() {
         // parse a bunch of sentences until \n
         let currsen;
         do {
-            currsen = this.parseSentence();
+            if (this.is(TokenType.dollar, 1)) {
+                currsen = this.parseInlineLatex();
+            }
+            else {
+                currsen = this.parseSentence();
+            }
             sentences.push(currsen);
-        } while (!this.is(TokenType.enter));
+        } while (!this.is(TokenType.enter) && !this.eof);
         this.consume(TokenType.enter);
         return sentences;
     }
 
+    this.parseInlineLatex = function() {
+        this.consume(TokenType.dollar);
+        let sentence = new AST.InlineLatex();
+        // accept anything after a single $
+        while (!this.eof && !this.is(TokenType.enter)) {
+            if (this.is(TokenType.dollar)) {
+                if (this.curr.content.length == 2) {
+                    this.curr.content = "$";
+                } else {
+                    this.consume(TokenType.dollar);
+                }
+                sentence.set(this.collect());
+                this.emptyAccumulator();
+                return sentence;
+            } else {
+                this.acceptAny();
+            }
+        }
+        sentence.set(this.collect());
+        this.emptyAccumulator();
+        return sentence;
+    }
 
     // yield one sentence at a time
     this.parseSentence = function() {
@@ -200,7 +254,7 @@ let Parser = function() {
         
         let tokenLength;
         // consume token until \n
-        while (!this.is(TokenType.enter)) {
+        while (!this.is(TokenType.enter) && !this.eof) {
             // switch based on current token:
             // if is inline element denoter: special case
             // else: not inline element denoter: collect it
@@ -298,8 +352,8 @@ let Parser = function() {
         let style = new AST.StyleConstructor();
         let tokenLength;
         // first construct style for current sentence
-        while (this.is(TokenType.asterisk) || this.is(TokenType.backtick) 
-        || this.is(TokenType.underline) || this.is(TokenType.tilda)) {
+        while ((this.is(TokenType.asterisk) || this.is(TokenType.backtick) 
+        || this.is(TokenType.underline) || this.is(TokenType.tilda)) && !this.eof) {
             tokenLength = this.curr.content.length;
             switch(this.curr.type) {
                 case TokenType.asterisk:
@@ -385,6 +439,10 @@ let Parser = function() {
 
     this.nextToken = function() {
         this.curr = this.lexer.yield();
+        if (this.curr == undefined) {
+            this.curr = new Lexer.Token(TokenType.word, "");
+            this.eof = true;
+        }
     }
 }
 exports.Parser = Parser;

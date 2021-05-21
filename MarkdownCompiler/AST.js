@@ -205,6 +205,7 @@ let RefBlock = function() {
     this.content = [];
     this.push = function(ctt) { this.content.push(ctt); }
     this.modifyLast = function(ctt) { this.content[this.content.length-1].push(ctt); }
+    this.isEmpty = function() {return this.content.length == 0;}
     this.get = function() { return this.content; }
     this.visit = function(visitor, arg) { visitor.visitRefBlock(this, arg); }
 }

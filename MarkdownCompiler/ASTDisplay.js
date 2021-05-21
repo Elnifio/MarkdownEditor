@@ -83,7 +83,7 @@ let Displayer = function(defaultprefix="") {
     }
 
     this.visitSentence = function(sen, args) {
-        show(args, sen.toString() + " Style: " + sen.style.toString());
+        show(args, sen.toString() + " with style: " + sen.style.toString());
         console.log(`${args} | ${sen.get()}`);
     }
 

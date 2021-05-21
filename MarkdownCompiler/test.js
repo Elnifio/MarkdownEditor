@@ -63,13 +63,18 @@ let ASTTester = function() {
 
 let parserTester01 = function() {
     let Parser = require("./parser");
-    let texts = ["this is a sentence **and this is a bold sentence**", "*and this is a italic sentence*"];
+    let Displayer = require("./ASTDisplay");
+    let disp = new Displayer.Displayer();
+    let texts = ["this is a sentence **and this is a bold sentence**", 
+    "*and this is a italic sentence* and",
+    "and $latex$$latex2$ and empty inline latex $$ and end", "and end"];
     let text = texts.join("\n");
-    // console.log(text);
+
     let ps = new Parser.Parser();
     ps.lexer.init(text);
     ps.nextToken();
-    console.log(ps.parseBulkSentence());
+    let ast = ps.parseParagraph();
+    disp.visit(ast);
 }
 
 parserTester01();

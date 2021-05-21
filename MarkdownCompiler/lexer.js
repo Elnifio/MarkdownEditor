@@ -60,6 +60,8 @@ let Token = function(type, content) {
     this.literalType = TokenType.finder(this.type);
 };
 
+exports.Token = Token;
+
 //  Lexer object: 
 //      call lexer.init to reset a lexer
 //      call lexer.yield to yield the next token
@@ -123,7 +125,7 @@ let Lexer = function(text="") {
             // accepts a sequence of control characters: "***" -> Token(TokenType.asterisk, "***")
             // necessary for italic, bold, italic-bold, separator, unordered list
             case "*": 
-                this.acceptSame(nextToken, 2); // maximum length set to 2, either consume one token or consume two tokens
+                this.acceptSame(nextToken, 2); // maximum set to 2
                 return TokenType.asterisk;
 
             // necessary for separator, unordered list
