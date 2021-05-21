@@ -204,12 +204,7 @@ let Lexer = function(text="") {
             // --------
             // special characters
             // --------
-            // period . for ordered list
             // translate \\ for translating character
-            // period: only appear once
-            case ".":
-                this.acceptIt();
-                return TokenType.period;
 
             // necessary for escaping text: consume it, not accept it, and accept the next character as a word
             case "\\": 
@@ -229,7 +224,12 @@ let Lexer = function(text="") {
                         this.peekNext() == "8" || this.peekNext() == "9" || this.peekNext() == "0")) {
                     this.acceptIt();
                 }
-                return TokenType.number;
+                if (this.peekNext() == ".") {
+                    this.acceptIt();
+                    return TokenType.number;
+                } else {
+                    return TokenType.word;
+                }
 
             // string constructor: while the next character is not special: we accept it
             default:

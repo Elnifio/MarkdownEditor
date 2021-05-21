@@ -54,7 +54,7 @@ let AST = require("./AST");
  *  ULIdentifier    := TILDA length 1
  *  CIdentifier     := BACKTICK length 1
  *  LIdentifier     := DOLLAR length 1
- * 
+ *
  *  # Separators
  *  Separator       := ((ASTERISK | MINUS) SPACE?)+
  *  
@@ -62,9 +62,10 @@ let AST = require("./AST");
 
 let Parser = function() {
     this.accumulator = [];
-    this.specialsCollector = [];
+    this.indentation = -1;
     this.curr = undefined;
     this.lexer = new Lexer.Lexer();
+    this.liststack = [];
     this.eof = false;
 
     this.parse = function(text="") {
@@ -101,24 +102,42 @@ let Parser = function() {
     }
 
     this.parseMinus = function() {
-        // should consume - or space symbol until non-minus and non-space character is hit
-        let minusSymbol = this.accept(TokenType.minus);
-        // either "-\n", "--\n", or "--...-\n"
-        // first two special cases: treat them as simple paragraph
-        // last case with 3+ minus: treat as Separator
-        if (this.is(TokenType.enter)) {
-            if (minusSymbol.content.length >= 3) return new AST.Separator();
-            let para = new AST.Paragraph();
-            let sen = new AST.Sentence();
-            sen.set(this.collect());
-            para.addSentence(sen);
-            return para;
-        } else 
-        // the sequence might be "- -*", "--* *"
-        // we should accept it and check the next token
-        if (this.is(TokenType.space)) {
-            
+        // accept all minus and spaces
+        let minusLength = 0;
+        while (this.is(TokenType.minus) || this.is(TokenType.space)) {
+            if (this.is(TokenType.minus)) {
+                minusLength += this.curr.content.length;
+            }
+            this.acceptAny();
         }
+
+        // if next is end of a line: either return a separator or a paragraph
+        if (this.is(TokenType.enter)) {
+            if (minusLength >= 3) {
+                this.accept(TokenType.enter);
+                return new AST.Separator();
+            } else {
+                this.accept(TokenType.enter);
+                let para = new AST.Paragraph();
+                let sen = new AST.Sentence();
+                sen.set(this.collect());
+                para.addSentence(sen);
+                return para;
+            }
+        }
+        // as a list block starter: first check that the length of the minus sign is 1
+        // and then check if the last token on the accumulator is space
+        if (minusLength == 1 && this.accumulator[this.accumulator.length-1].type == TokenType.space) {
+            // is a list, we handle parsing of list inside function parseUL
+            
+        } else {
+            // is not a list, we handle the rest of the sentence inside parseParagraph;
+            return this.parseParagraph();
+        }
+    }
+
+    this.parseUL = function() {
+
     }
 
     // parse a paragraph
@@ -127,11 +146,35 @@ let Parser = function() {
         let paragraph = new AST.Paragraph();
         let separator = new AST.Sentence();
         separator.set(" ");
+        // if we encounter any of these elements below, we know that they must be inline elements, so we continue adding bulk sentence to the paragraph
+        //      word: inline ordinary elements
+        //      \*: inline elements for bold and italic
+        //      $ of length 1: inline elements for inline latex
+        //      ` of length 1: inline elements for code
+        //      ~: inline elements for strikethrough and underline
+        //      [: inline elements for links
+        //      ], (, ): arbitrary word element
+        //      _: inline element for bold and italic
+        // ------------------------
+        // Other elements might denote starting of a block-level elements: 
+        //      number: might denote starting of an ordered list
+        //      minus: might denote starting of a separator or an unordered list
+        //      space: might denote some indentation
+        //      $ of length 2: starting of latex block
+        //      ` of length 3: starting of code block
+        //      #: denote header
+        //      >: starting of a reference block
+        //      \n: denote the end of a block
+        //      \!: image block
         do {
             this.parseBulkSentence(paragraph.sentences);
             paragraph.addSentence(separator);
-        } while (!this.is(TokenType.enter) && !this.eof);
-        return paragraph;
+        } while ((this.is(TokenType.word) || this.is(TokenType.asterisk) || this.is(TokenType.underline)
+                || this.is(TokenType.dollar, 1) || !this.is(TokenType.backtick, 3) 
+                || this.is(TokenType.lsquare) || this.is(TokenType.tilda) || this.is(TokenType.underline)
+                || this.is(TokenType.rparen) || this.is(TokenType.lparen) || this.is(TokenType.rsquare)) 
+                && !this.eof);
+        return paragraph; 
     }
 
     // parse a Reference block

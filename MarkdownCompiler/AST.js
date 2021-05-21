@@ -159,6 +159,8 @@ exports.Image = ImageBlock;
 let ListBlock = function(type=ASTType.List) {
     this.type = type;
     this.subBlocks = [];
+    this.indent = -1;
+    this.level = -1;
     this.insertBlock = function(block) {
         this.subBlocks.push(block);
     }
