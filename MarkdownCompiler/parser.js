@@ -1,6 +1,10 @@
 let Lexer = require("./lexer");
 let TokenType = Lexer.TokenType;
 let AST = require("./AST");
+
+// debug use:
+let displayer = require("./ASTDisplay");
+let disp = new displayer.Displayer();
 /**
  *  ------------------------------------------------
  *  Markdown Grammar: 
@@ -89,22 +93,62 @@ let Parser = function() {
             switch(this.curr.type) {
                 // only starter for Reference
                 case TokenType.ge:
+                    this.collectLists(md);
                     md.addBlock(this.parseReference());
                     break;
                 case TokenType.hashtag:
+                    this.collectLists(md);
                     md.addBlock(this.parseHeader());
                     break;
-                
-                
-                
+                case TokenType.minus:
+                    this.parseMinus(md);
+                    break;
+                case TokenType.space:
+                    this.indentation = this.curr.content.length;
+                    this.accept(TokenType.space);
+                    break;
+                case TokenType.enter:
+                    this.collectLists(md);
+                    this.indentation = 0;
+                    this.accept(TokenType.enter);
+                    break;
+                default:
+                    md.addBlock(this.parseParagraph());
             }
         }
+        this.collectLists(md);
+        return md;
     }
 
-    this.parseMinus = function() {
+    this.showList = function() {
+        this.liststack.forEach((x) => {
+            console.log(x.type);
+            console.log("    " + x.subBlocks.length);
+            x.subBlocks.forEach((y) => {
+                console.log("        " + y.type);
+                console.log("        " + y.sentences.length);
+                y.sentences.forEach((z) => {
+                    console.log("            " + z.content);
+                })
+            })
+        })
+    }
+
+    this.collectLists = function(markdownContainer) {
+        if (this.liststack.length == 0) return;
+        let lastBlock;
+        while (this.liststack.length > 1) {
+            lastBlock = this.liststack.pop();
+            this.liststack[this.liststack.length-1].insertBlock(lastBlock);
+        }
+        markdownContainer.addBlock(this.liststack.pop());
+        return;
+    }
+
+    this.parseMinus = function(markdownContainer) {
         // accept all minus and spaces
         let minusLength = 0;
-        while (this.is(TokenType.minus) || this.is(TokenType.space)) {
+        while (this.is(TokenType.minus) || this.is(TokenType.space) && !this.eof) {
             if (this.is(TokenType.minus)) {
                 minusLength += this.curr.content.length;
             }
@@ -115,38 +159,140 @@ let Parser = function() {
         if (this.is(TokenType.enter)) {
             if (minusLength >= 3) {
                 this.accept(TokenType.enter);
-                return new AST.Separator();
+                markdownContainer.addBlock(new AST.Separator());
+                return;
             } else {
                 this.accept(TokenType.enter);
                 let para = new AST.Paragraph();
                 let sen = new AST.Sentence();
                 sen.set(this.collect());
                 para.addSentence(sen);
-                return para;
+                markdownContainer.addBlock(para);
+                return;
             }
         }
         // as a list block starter: first check that the length of the minus sign is 1
         // and then check if the last token on the accumulator is space
         if (minusLength == 1 && this.accumulator[this.accumulator.length-1].type == TokenType.space) {
             // is a list, we handle parsing of list inside function parseUL
-            
+            this.emptyAccumulator();
+            this.parseUL(this.indentation, markdownContainer);
         } else {
             // is not a list, we handle the rest of the sentence inside parseParagraph;
-            return this.parseParagraph();
+            markdownContainer.addBlock(this.parseParagraph());
         }
     }
 
-    this.parseUL = function() {
+    this.parseUL = function(indent, markdownContainer) {
+        /**
+         *  On initializing the list stack, we should push the MD block onto the list stack
+         *  we have cases: 
+         *      1.  list stack is empty:
+         *              we create one new list block, 
+         *              add it to the list stack,
+         *              parse sentences as list item, 
+         *              and push the list block onto the last list block
+         *      2.  list stack is not empty, 
+         *          and the last item in list block is either not a ul or has indentation > current
+         *              we **recursively pop the blocks until the indentation <= current**
+         *              1. if after poping, the stack is empty:
+         *                      we push the last popped block onto the markdownContainer
+         *                      create one new list block
+         *                      add it to the list stack
+         *                      parse the rest as paragraph and add it to the current list block
+         *              2. else: the stack is not empty
+         *                      we push the last popped block onto the last item in the stack
+         *                      create one new list block
+         *                      add it to the list stack
+         *                      parse the rest as paragraph and add it to the current list block
+         *              and start parse a list item, add the list item to the current list block
+         *      3.  list stack is not empty, 
+         *          and the last item in list block is a UL and has indentation == current
+         *              start parse a list item, add the list item to the last list block
+         *      4.  list stack is not empty,
+         *          and the last item in list block is a UL and has indentation < current
+         *              we push this newly created block onto the stack
+         *              start parse a list item, add the list item to the last list block
+         */
 
+        if (this.liststack.length == 0) {
+            let newlb = new AST.UL();
+            newlb.indent = indent;
+            this.liststack.push(newlb);
+            /**
+             *  list stack is empty:
+             *      we create one new list block, 
+             *      add it to the list stack,
+             *      parse sentences as list item, 
+             *      and push the list block onto the last list block
+             */
+            let newli = new AST.ListItem();
+            newli = this.parseParagraph(newli);
+            newlb.subBlocks.push(newli);
+            return;
+        }
+
+        // list stack is not empty, 
+        // and the last item in list block is either not a ul or has indentation > current
+        //      we **recursively pop the blocks until the indentation <= current**
+        //      1. if after poping, the stack is empty:
+        //          we push the last popped block onto the markdownContainer
+        //          create one new list block
+        //          add it to the list stack
+        //          parse the rest as paragraph and add it to the current list block
+        //      2. else: the stack is not empty
+        //          we push the last popped block onto the last item in the stack
+        //          create one new list block
+        //          add it to the list stack
+        //          parse the rest as paragraph and add it to the current list block
+        // and start parse a list item, add the list item to the current list block
+        let lastBlock = this.liststack[this.liststack.length-1];
+        while ((lastBlock.indent > indent || lastBlock.type != AST.ASTTypes.UL)) {
+            lastBlock = this.liststack.pop();
+            if (this.liststack.length == 0) {
+                markdownContainer.addBlock(lastBlock);
+                let newlb = new AST.UL();
+                this.liststack.push(newlb);
+                let newli = new AST.ListItem();
+                newli = this.parseParagraph(newli);
+                newlb.subBlocks.push(newli);
+                return;
+            } else {
+                this.liststack[this.liststack.length-1].subBlocks.push(lastBlock);
+                lastBlock = this.liststack[this.liststack.length-1];
+            }
+        }
+        // after this recursion, we see that 
+        // last block must have indent <= current indent, and 
+        // must have type UL
+        // 3. list stack is not empty, 
+        //    and the last item in list block is a UL and has indentation == current
+        //          start parse a list item, add the list item to the last list block
+        // 4. list stack is not empty,
+        //    and the last item in list block is a UL and has indentation < current
+        //          we push this newly created block onto the stack
+        //          start parse a list item, add the list item to the last list block
+        if (lastBlock.indent != indent) {
+            lastBlock = new AST.UL();
+            this.liststack.push(lastBlock);
+        }
+        let newli = new AST.ListItem();
+        newli = this.parseParagraph(newli);
+        lastBlock.subBlocks.push(newli);
     }
 
     // parse a paragraph
     // the paragraph ends with either eof or an additional \n
-    this.parseParagraph = function() {
-        let paragraph = new AST.Paragraph();
+    this.parseParagraph = function(para=undefined) {
+        let paragraph;
+        if (!para) paragraph = new AST.Paragraph();
+        else paragraph = para;
+        
         let separator = new AST.Sentence();
         separator.set(" ");
-        // if we encounter any of these elements below, we know that they must be inline elements, so we continue adding bulk sentence to the paragraph
+        // if we encounter any of these elements below, 
+        // we know that they must be inline elements, 
+        // so we continue adding bulk sentence to the paragraph
         //      word: inline ordinary elements
         //      \*: inline elements for bold and italic
         //      $ of length 1: inline elements for inline latex
@@ -170,7 +316,7 @@ let Parser = function() {
             this.parseBulkSentence(paragraph.sentences);
             paragraph.addSentence(separator);
         } while ((this.is(TokenType.word) || this.is(TokenType.asterisk) || this.is(TokenType.underline)
-                || this.is(TokenType.dollar, 1) || !this.is(TokenType.backtick, 3) 
+                || this.is(TokenType.dollar, 1) || (this.is(TokenType.backtick, 1) || this.is(TokenType.backtick, 2))
                 || this.is(TokenType.lsquare) || this.is(TokenType.tilda) || this.is(TokenType.underline)
                 || this.is(TokenType.rparen) || this.is(TokenType.lparen) || this.is(TokenType.rsquare)) 
                 && !this.eof);

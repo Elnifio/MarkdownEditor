@@ -67,13 +67,12 @@ let parserTester01 = function() {
     let disp = new Displayer.Displayer();
     let texts = ["this is a sentence **and this is a bold sentence**", 
     "*and this is a italic sentence* and",
-    "and $latex$$latex2$ and empty inline latex $$ and end", "and end"];
+    "and $latex$$latex2$ and empty inline latex $$ and end", "and end",
+    "", "- this is first list item;", " - this is a sublist item"];
     let text = texts.join("\n");
 
     let ps = new Parser.Parser();
-    ps.lexer.init(text);
-    ps.nextToken();
-    let ast = ps.parseParagraph();
+    let ast = ps.parse(text);
     disp.visit(ast);
 }
 

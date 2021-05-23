@@ -24,6 +24,7 @@ let ASTType = {
     Reference: "Reference",
     RefBlock: "Reference Block",
     Header: "Header",
+    ListItem: "List item",
 
     // Sentence-level element
     Sentence: "Sentence",
@@ -107,6 +108,16 @@ let Paragraph = function() {
 Paragraph.prototype = new Block(ASTType.Paragraph);
 exports.Paragraph = Paragraph;
 
+let ListItem = function() {
+    this.sentences = [];
+    this.addSentence = function(sentence) {
+        this.sentences.push(sentence);
+    };
+    this.visit = function(visitor, args) { return visitor.visitListItem(this, args); }
+}
+ListItem.prototype = new Block(ASTType.ListItem);
+exports.ListItem = ListItem;
+
 // Separator block
 let Separator = function() { 
     this.visit = function(visitor, args) { return visitor.visitSeparator(this, args); }
@@ -158,18 +169,18 @@ exports.Image = ImageBlock;
 // General List block
 let ListBlock = function(type=ASTType.List) {
     this.type = type;
-    this.subBlocks = [];
     this.indent = -1;
     this.level = -1;
-    this.insertBlock = function(block) {
-        this.subBlocks.push(block);
-    }
-    this.getBlock = function() { return this.subBlocks; }
 }
 ListBlock.prototype = new Block(ASTType.Others);
 
 // unordered list block
 let ULBlock = function() {
+    this.subBlocks = [];
+    this.insertBlock = function(block) {
+        this.subBlocks.push(block);
+    }
+    this.getBlock = function() { return this.subBlocks; }
     this.visit = function(visitor, arg) { visitor.visitUL(this, arg); }
 }
 ULBlock.prototype = new ListBlock(ASTType.UL);
@@ -177,6 +188,11 @@ exports.UL = ULBlock;
 
 // ordered list block
 let OLBlock = function() {
+    this.subBlocks = [];
+    this.insertBlock = function(block) {
+        this.subBlocks.push(block);
+    }
+    this.getBlock = function() { return this.subBlocks; }
     this.visit = function(visitor, arg) { visitor.visitOL(this, arg); }
 }
 OLBlock.prototype = new ListBlock(ASTType.OL);
@@ -184,6 +200,11 @@ exports.OL = OLBlock;
 
 // \TODO block
 let TODOBlock = function() {
+    this.subBlocks = [];
+    this.insertBlock = function(block) {
+        this.subBlocks.push(block);
+    }
+    this.getBlock = function() { return this.subBlocks; }
     this.insertBlock = function(block, status) {
         this.subBlocks.push({block, status});
     }

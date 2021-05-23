@@ -14,6 +14,11 @@ let GeneralVisitor = function() {
         report();
     }
 
+    this.visitListItem = function(li, args) {
+        // TODO: REPLACE THIS
+        report();
+    }
+
     this.visitSeparator = function(sep, args) {
         // TODO: REPLACE THIS
         report();

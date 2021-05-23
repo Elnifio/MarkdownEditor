@@ -22,6 +22,12 @@ let Displayer = function(defaultprefix="") {
         ast.sentences.forEach((x) => x.visit(this, prefix));
     }
 
+    this.visitListItem = function(li, args) {
+        show(args, li.toString() + ": Sentence[" + li.sentences.length + "]");
+        let prefix = args + " | ";
+        li.sentences.forEach((x) => x.visit(this, prefix));
+    }
+
     this.visitSeparator = function(ast, args) {
         show(args, ast.toString());
     }
