@@ -28,16 +28,17 @@ let TokenType = {
     dollar      : 6,    // dollar       - used for inline LaTeX
     backtick    : 7,    // backtick     - used for code renderings
     hashtag     : 8,    // hashtag      - used for headers
-    lsquare     : 9,    // left square  - used for todos (- [ ])
-    rsquare     : 10,   // right square - used for todos
+    lsquare     : 9,    // left square  - used for links and images
+    rsquare     : 10,   // right square - used for links and images
     ge          : 11,   // right arrow  - used for references
     underline   : 12,   // underline    - used in styles
     tilda       : 13,   // tilda        - used in styles
-    period      : 14,   // period       - used with number to denote ordered list
-    enter       : 15,   // enter: \n    - used to denote end of a line
-    exclamation : 16,   // exclamation  - used for image urls
-    lparen      : 17,   // parenthesis  - used for urls
-    rparen      : 18,   // parenthesis  - used for urls
+    todo        : 14,   // \todo token  - used solely for TODOs
+    todoSuccess : 15,   // \todo finished token   
+    enter       : 16,   // enter: \n    - used to denote end of a line
+    imageSt     : 17,   // Image ST: ![ - used for image starter
+    lparen      : 18,   // parenthesis  - used for urls
+    rparen      : 19,   // parenthesis  - used for urls
 
     // convert from TokenType to literal
     finder      : (type) => { for (let item in TokenType) { if (TokenType[item] == type) return item; } },
@@ -130,6 +131,28 @@ let Lexer = function(text="") {
 
             // necessary for separator, unordered list
             case "-": 
+                if (this.remain(5) && this.currentToken == "") {
+                    // currently at -, and the next sequence is - [ ]
+                    // with at least one space after it
+                    let nextfour = this.text.substr(this.cursor, 6);
+                    if (nextfour == "- [ ] ") {
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptSame(" ");
+                        return TokenType.todo;
+                    } else if (nextfour == "- [x] ") {
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptIt();
+                        this.acceptSame(" ");
+                        return TokenType.todoSuccess;
+                    }
+                }
                 this.acceptSame(nextToken); // maximum length set to -1, to consume arbitrary number of "-" tokens
                 return TokenType.minus;
             
@@ -199,7 +222,11 @@ let Lexer = function(text="") {
             // exclamation: only appear once
             case "!":
                 this.acceptIt();
-                return TokenType.exclamation;
+                if (this.peekNext() == "[") {
+                    this.acceptIt();
+                    return TokenType.imageSt;
+                }
+                return TokenType.word;
 
             // --------
             // special characters
@@ -247,6 +274,10 @@ let Lexer = function(text="") {
         this.eof = this.cursor >= this.maxlen;
     }
 
+    this.remain = function(chars)  {
+        return (chars + this.cursor) < this.maxlen;
+    }
+
     // accept one token at a step
     // Internal
     let word;
@@ -290,6 +321,7 @@ let Lexer = function(text="") {
     this.peekNext = function() {
         return this.text[this.cursor];
     }
+
 };
 
 // exports:

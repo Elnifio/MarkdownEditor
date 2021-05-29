@@ -64,9 +64,9 @@ let Displayer = function(defaultprefix="") {
     }
 
     this.visitTODO = function(todo, args) {
-        show(args, todo.toString() + `: Sublist[${todo.getBlock().length}]`);
+        show(args, todo.toString() + `: Sentences[${todo.sentences.length}], finished? ${todo.status}`);
         let prefix = args + " | ";
-        todo.getBlock().forEach((x) => x.visit(this, `${prefix}[${x.status?"x":" "}] `));
+        todo.sentences.forEach((x) => x.visit(this, `${prefix}[${x.status?"x":" "}] `));
     }
 
     this.visitReference = function(ref, args) {
@@ -90,7 +90,7 @@ let Displayer = function(defaultprefix="") {
 
     this.visitSentence = function(sen, args) {
         show(args, sen.toString() + " with style: " + sen.style.toString());
-        console.log(`${args} | ${sen.get()}`);
+        console.log(`${args} | "${sen.get()}"`);
     }
 
     this.visitInlineLatex = function(il, args) {
@@ -101,8 +101,7 @@ let Displayer = function(defaultprefix="") {
     this.visitLink = function(link, args) {
         show(args, link.toString());
         let prefix = args + " | ";
-        console.log(prefix + "Alt text:");
-        link.get('alt').visit(this, prefix + "         ");
+        console.log(prefix + "Alt: " + link.get("alt"));
         console.log(prefix + "URL: " + link.get('url'));
     }
 }

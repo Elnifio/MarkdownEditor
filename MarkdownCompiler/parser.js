@@ -70,6 +70,7 @@ let Parser = function() {
     this.curr = undefined;
     this.lexer = new Lexer.Lexer();
     this.liststack = [];
+    this.todoList = false;
     this.eof = false;
 
     this.parse = function(text="") {
@@ -95,25 +96,59 @@ let Parser = function() {
                 case TokenType.ge:
                     this.collectLists(md);
                     md.addBlock(this.parseReference());
+                    this.indentation = 0;
                     break;
+
+                // only starter for header
                 case TokenType.hashtag:
                     this.collectLists(md);
                     md.addBlock(this.parseHeader());
+                    this.indentation = 0;
                     break;
+
+                // starter for separator and unordered list
                 case TokenType.minus:
                     this.parseMinus(md);
+                    this.indentation = 0;
                     break;
+
+                case TokenType.number:
+                    this.parseOL(this.indentation, md);
+                    this.indentation = 0;
+                    break;
+
+                case TokenType.todo:
+                    this.collectLists(md);
+                    md.addBlock(this.parseTODO(false));
+                    this.indentation = 0;
+                    break;
+
+                case TokenType.todoSuccess:
+                    this.collectLists(md);
+                    md.addBlock(this.parseTODO(true));
+                    this.indentation = 0;
+                    break;
+
+                case TokenType.imageSt:
+                    this.collectLists(md);
+                    md.addBlock(this.parseImg());
+                    this.indentation = 0;
+                    break;
+                
                 case TokenType.space:
                     this.indentation = this.curr.content.length;
                     this.accept(TokenType.space);
                     break;
+
                 case TokenType.enter:
                     this.collectLists(md);
                     this.indentation = 0;
-                    this.accept(TokenType.enter);
+                    this.consume(TokenType.enter);
                     break;
+
                 default:
                     md.addBlock(this.parseParagraph());
+                    this.indentation = 0;
             }
         }
         this.collectLists(md);
@@ -143,6 +178,30 @@ let Parser = function() {
         }
         markdownContainer.addBlock(this.liststack.pop());
         return;
+    }
+
+    this.parseCodeBlock = function() {
+        this.consume(TokenType.backtick);
+        let cb = new AST.CodeBlock();
+        while (!this.is(TokenType.enter) && !this.eof) {
+            this.acceptAny();
+        }
+        cb.setType(this.collect());
+        this.emptyAccumulator();
+        if (this.eof) return cb;
+        this.accept(TokenType.enter);
+        while (!this.is(TokenType.backtick, 3) && !this.eof) {
+            this.acceptAny();
+        }
+        cb.set(this.collect());
+        if (!this.eof) {
+            this.accept(TokenType.backtick, 3);
+            while (!this.is(TokenType.enter) && !this.eof) {
+                this.acceptAny();
+            }
+            if (!this.eof) this.accept(TokenType.enter);
+        }
+        return cb;
     }
 
     this.parseMinus = function(markdownContainer) {
@@ -183,6 +242,7 @@ let Parser = function() {
         }
     }
 
+    // parsing of a UL
     this.parseUL = function(indent, markdownContainer) {
         /**
          *  On initializing the list stack, we should push the MD block onto the list stack
@@ -281,6 +341,117 @@ let Parser = function() {
         lastBlock.subBlocks.push(newli);
     }
 
+    // parsing of a OL, similar to parsing of a UL
+    this.parseOL = function(indent, markdownContainer) {
+        /**
+         *  parsing of OL should be nearly the same as parsing of UL: 
+         *  we have cases: 
+         *      1.  list stack is empty:
+         *              we create one new list block, 
+         *              add it to the list stack,
+         *              parse sentences as list item, 
+         *              and push the list block onto the last list block
+         *      2.  list stack is not empty, 
+         *          and the last item in list block is either not a ol or has indentation > current
+         *              we **recursively pop the blocks until the indentation <= current**
+         *              1. if after poping, the stack is empty:
+         *                      we push the last popped block onto the markdownContainer
+         *                      create one new list block
+         *                      add it to the list stack
+         *                      parse the rest as paragraph and add it to the current list block
+         *              2. else: the stack is not empty
+         *                      we push the last popped block onto the last item in the stack
+         *                      create one new list block
+         *                      add it to the list stack
+         *                      parse the rest as paragraph and add it to the current list block
+         *              and start parse a list item, add the list item to the current list block
+         *      3.  list stack is not empty, 
+         *          and the last item in list block is a ol and has indentation == current
+         *              start parse a list item, add the list item to the last list block
+         *      4.  list stack is not empty,
+         *          and the last item in list block is a ol and has indentation < current
+         *              we push this newly created block onto the stack
+         *              start parse a list item, add the list item to the last list block
+         */
+        if (this.liststack.length == 0) {
+            let newlb = new AST.OL();
+            newlb.indent = indent;
+            this.liststack.push(newlb);
+            let newli = new AST.ListItem();
+            newli = this.parseParagraph(newli);
+            newlb.subBlocks.push(newli);
+            return;
+        }
+
+        let lastBlock = this.liststack[this.liststack.length-1];
+        while ((lastBlock.indent > indent || lastBlock.type != AST.ASTTypes.OL)) {
+            lastBlock = this.liststack.pop();
+            if (this.liststack.length == 0) {
+                markdownContainer.addBlock(lastBlock);
+                let newlb = new AST.OL();
+                this.liststack.push(newlb);
+                let newli = new AST.ListItem();
+                newli = this.parseParagraph(newli);
+                newlb.subBlocks.push(newli);
+                return;
+            } else {
+                this.liststack[this.liststack.length-1].subBlocks.push(lastBlock);
+                lastBlock = this.liststack[this.liststack.length-1];
+            }
+        }
+
+        if (lastBlock.indent != indent) {
+            lastBlock = new AST.OL();
+            this.liststack.push(lastBlock);
+        }
+        let newli = new AST.ListItem();
+        newli = this.parseParagraph(newli);
+        lastBlock.subBlocks.push(newli);
+    }
+
+    this.parseTODO = function(todoSuccess) {
+        // not a TODO list, but we parse it as a single block-level element
+        // accept a single TODO indicator and start parsing a paragraph element
+        this.acceptAny();
+        this.emptyAccumulator();
+        let todo = new AST.TODO();
+        todo.status = todoSuccess;
+        todo = this.parseParagraph(todo);
+        return todo;
+    }
+
+    this.parseImg = function() {
+        this.accept(TokenType.imageSt);
+        while (!this.eof) {
+            if (this.is(TokenType.rsquare)) {
+                this.accept(TokenType.rsquare);
+                if (this.is(TokenType.lparen)) {
+                    this.accept(TokenType.lparen);
+                    break;
+                } else {
+                    return this.parseParagraph();
+                }
+            } else if (this.is(TokenType.enter)) {
+                return this.parseParagraph();
+            } else {
+                this.acceptAny();
+            }
+        }
+
+        if (this.eof) return this.parseParagraph();
+
+        let content = this.collect();
+        let img = new AST.Image();
+        img.set("alt", content.substr(2, content.length - 4));
+        this.emptyAccumulator();
+        while (!this.eof && !this.is(TokenType.enter) && !this.is(TokenType.rparen)) {
+            this.acceptAny();
+        }
+        if (this.is(TokenType.rparen)) this.consume(TokenType.rparen);
+        img.set("src", this.collect());
+        return img;
+    }
+
     // parse a paragraph
     // the paragraph ends with either eof or an additional \n
     this.parseParagraph = function(para=undefined) {
@@ -306,6 +477,7 @@ let Parser = function() {
         //      number: might denote starting of an ordered list
         //      minus: might denote starting of a separator or an unordered list
         //      space: might denote some indentation
+        //      \todo & \todoSuccess: might denote start of a todo list
         //      $ of length 2: starting of latex block
         //      ` of length 3: starting of code block
         //      #: denote header
@@ -361,8 +533,9 @@ let Parser = function() {
             while (!this.is(TokenType.enter) && !this.eof) {
                 this.acceptAny();
             }
-            this.accept(TokenType.enter);
+            this.consume(TokenType.enter);
             h.set(this.collect());
+            this.emptyAccumulator();
             return h;
         } else if (h.level==1) {
             this.emptyAccumulator();
@@ -370,8 +543,9 @@ let Parser = function() {
             while (!this.is(TokenType.enter) && !this.eof) {
                 this.acceptAny();
             }
-            this.accept(TokenType.enter);
+            this.consume(TokenType.enter);
             h.set(this.collect());
+            this.emptyAccumulator();
             return h;
         } else {
             return this.parseParagraph();
@@ -399,10 +573,16 @@ let Parser = function() {
 
     this.parseBulkSentence = function(sentences=[]) {
         // parse a bunch of sentences until \n
+        // if current is a single $: start parse a inline latex
+        // if current is a single [: start parse a link
+        // other styles are handled in parseSentence
         let currsen;
         do {
             if (this.is(TokenType.dollar, 1)) {
                 currsen = this.parseInlineLatex();
+            }
+            else if (this.is(TokenType.lsquare)) {
+                currsen = this.parseLink();
             }
             else {
                 currsen = this.parseSentence();
@@ -434,6 +614,68 @@ let Parser = function() {
         sentence.set(this.collect());
         this.emptyAccumulator();
         return sentence;
+    }
+
+    this.parseLink = function() {
+        // assume that when called, current token is [
+        this.acceptAny();
+        // accepts description text:
+        while (!this.eof) {
+            if (this.is(TokenType.enter)) {
+                // did not properly finish a link, we directly collect current items and return a sentence
+                let sen = new AST.Sentence();
+                sen.set(this.collect());
+                this.emptyAccumulator();
+                return sen;
+            } else 
+            // else: if properly finishes the description text:
+            if (this.is(TokenType.rsquare)) {
+                this.accept(TokenType.rsquare);
+                break;
+            }
+            this.acceptAny();
+        }
+
+        // if eof encountered: we parse sentence
+        if (this.eof) {
+            return this.parseSentence();
+        }
+
+        // followed by ], we should accept a (
+        // if not, we collect current content and return a sentence
+        if (!this.is(TokenType.lparen)) {
+            // previous items already in the accumulator
+            // so when parsing the sentence, 
+            // all previous items are memorized by the accumulator and thus
+            // included in the sentence. 
+            return this.parseSentence();
+        }
+
+        // else: we accept a left parenthesis
+        let link = new AST.Link();
+        let currContent = this.collect();
+        link.set("alt", currContent.substr(1, currContent.length - 2));
+        this.consume(TokenType.lparen);
+        this.emptyAccumulator();
+        while (!this.eof) {
+            // proper close of a link
+            if (this.is(TokenType.rparen)) {
+                link.set("url", this.collect());
+                this.consume(TokenType.rparen);
+                return link;
+            } else 
+            // unexpected close of a link: \n encountered
+            if (this.is(TokenType.enter)) {
+                link.set("url", this.collect());
+                return link;
+            } else {
+                // still constructing the link's content
+                this.acceptAny();
+            }
+        }
+        // unexpected close of a link: eof encountered
+        link.set("url", this.collect());
+        return link;
     }
 
     // yield one sentence at a time
@@ -521,7 +763,7 @@ let Parser = function() {
                     }
                 // SPECIAL CASE for link: 
                 // directly return current sentence
-                case TokenType.lsqaure:
+                case TokenType.lsquare:
                     current.set(this.collect());
                     this.emptyAccumulator();
                     return current;

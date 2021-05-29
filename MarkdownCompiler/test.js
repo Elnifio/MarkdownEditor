@@ -1,3 +1,7 @@
+// run command:
+// node -r esm ./test.js
+// under current working directory
+
 // import Lexer from "./lexer.js";
 let LexerTester = function() {
     let Lexer = require("./lexer");
@@ -6,6 +10,7 @@ let LexerTester = function() {
     "**with bold here** and *italic here* and ___bold italic here___", 
     "and ~underline~ and ~~strikethrough~~ and ~~~underline strikethrough~~~", 
     "with [link](link) here", "", "![image](image here)"];
+    // word = ["todo: - [ ]     empty one","todo: - [x] fulfilled one","todo: - [y] not a todo","todo: - [x]not a todo",]
     
     let testtext = "";
     let item;
@@ -62,17 +67,30 @@ let ASTTester = function() {
 // ASTTester();
 
 let parserTester01 = function() {
+    // Initialization of Parser and Displayer
+    // module imports
     let Parser = require("./parser");
     let Displayer = require("./ASTDisplay");
+    // displayer and parser initialization
     let disp = new Displayer.Displayer();
+    let ps = new Parser.Parser();
+
+    // Initialization of test text
     let texts = ["this is a sentence **and this is a bold sentence**", 
     "*and this is a italic sentence* and",
     "and $latex$$latex2$ and empty inline latex $$ and end", "and end",
     "", "- this is first list item;", " - this is a sublist item"];
+
+    texts = ["#### this is a header", "", "and this should be a new paragraph", 
+    "**with bold here** and *italic here* and ___bold italic here___", 
+    "and ~underline~ and ~~strikethrough~~ and ~~~underline strikethrough~~~", 
+    "with [link](link) here", "", "![image](image here)"];
+
     let text = texts.join("\n");
 
-    let ps = new Parser.Parser();
+    // parse of the text
     let ast = ps.parse(text);
+    // display of the AST
     disp.visit(ast);
 }
 

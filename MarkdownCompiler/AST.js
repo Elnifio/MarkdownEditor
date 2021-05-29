@@ -118,6 +118,18 @@ let ListItem = function() {
 ListItem.prototype = new Block(ASTType.ListItem);
 exports.ListItem = ListItem;
 
+// \TODO block
+let TODOBlock = function() {
+    this.sentences = [];
+    this.status = false;
+    this.addSentence = function(sentence) {
+        this.sentences.push(sentence);
+    }
+    this.visit = function(visitor, arg) { visitor.visitTODO(this, arg); }
+}
+TODOBlock.prototype = new Block(ASTType.TODO);
+exports.TODO = TODOBlock;
+
 // Separator block
 let Separator = function() { 
     this.visit = function(visitor, args) { return visitor.visitSeparator(this, args); }
@@ -135,7 +147,7 @@ ContentableBlock.prototype = new Block(ASTType.Others);
 
 // CodeBlock block
 let CodeBlock = function() { 
-    this.codetype = "untyped";
+    this.codetype = undefined;
     this.setType = function(content) { this.codetype = content; }
     this.getType = function() { return this.codetype; }
     this.visit = function(visitor, arg)  { visitor.visitCodeBlock(this, arg); }
@@ -170,7 +182,6 @@ exports.Image = ImageBlock;
 let ListBlock = function(type=ASTType.List) {
     this.type = type;
     this.indent = -1;
-    this.level = -1;
 }
 ListBlock.prototype = new Block(ASTType.Others);
 
@@ -198,21 +209,6 @@ let OLBlock = function() {
 OLBlock.prototype = new ListBlock(ASTType.OL);
 exports.OL = OLBlock;
 
-// \TODO block
-let TODOBlock = function() {
-    this.subBlocks = [];
-    this.insertBlock = function(block) {
-        this.subBlocks.push(block);
-    }
-    this.getBlock = function() { return this.subBlocks; }
-    this.insertBlock = function(block, status) {
-        this.subBlocks.push({block, status});
-    }
-    this.visit = function(visitor, arg) { visitor.visitTODO(this, arg); }
-}
-TODOBlock.prototype = new ListBlock(ASTType.TODO);
-exports.TODO = TODOBlock;
-
 // Single Sentence Reference Container
 let Reference = function() {
     this.content = [];
@@ -223,21 +219,9 @@ let Reference = function() {
 Reference.prototype = new Block(ASTType.Reference);
 exports.Reference = Reference;
 
-// Reference Block Container
-let RefBlock = function() {
-    this.content = [];
-    this.push = function(ctt) { this.content.push(ctt); }
-    this.modifyLast = function(ctt) { this.content[this.content.length-1].push(ctt); }
-    this.isEmpty = function() {return this.content.length == 0;}
-    this.get = function() { return this.content; }
-    this.visit = function(visitor, arg) { visitor.visitRefBlock(this, arg); }
-}
-RefBlock.prototype = new Block(ASTType.RefBlock);
-exports.RefBlock = RefBlock;
-
 let Header = function() {
     this.level=0;
-    this.visit = function(visitor, arg) { visitor.visitHeader(this. arg); }
+    this.visit = function(visitor, arg) { visitor.visitHeader(this, arg); }
 }
 Header.prototype = new ContentableBlock(ASTType.Header);
 exports.Header = Header;
@@ -303,7 +287,7 @@ exports.InlineLatex = InlineLatex;
 let Link = function() {
     this.property = {
         url: "",
-        alt: new Sentence(),
+        alt: "",
     }
 
     this.set = function(option, value) {
