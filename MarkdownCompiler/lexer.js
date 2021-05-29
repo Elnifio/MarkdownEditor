@@ -15,10 +15,11 @@
  *  .: period
  * all other characters are normal characters
  */
-let specials = ["\\", "$", "`", "#", "-", "[", "]", ">", " ", "_", "*", "~", ".", "\n", "!", "(", ")"];
+let specials = ["\\", "$", "`", "#", "-", "[", "]", ">", " ", "_", "*", "~", "\n", "!", "(", ")"];
 
 // Token Types enumeration: 
 let TokenType = {
+    eof         : -1,   // eof special symbol
     word        : 0,    // Words
     number      : 1,    // Numbers      - used in ordered lists
     asterisk    : 2,    // asterisks    - used in styles, unordered lists, separators
@@ -59,6 +60,10 @@ let Token = function(type, content) {
 
     // debug use
     this.literalType = TokenType.finder(this.type);
+
+    this.toString = function() {
+        return `${this.literalType}: "${this.content}"`;
+    }
 };
 
 exports.Token = Token;
@@ -101,6 +106,9 @@ let Lexer = function(text="") {
             this.currentToken = "";
             let type = this.scantoken();
             return new Token(type, this.currentToken);
+        }
+        else {
+            return undefined;
         }
     };
 

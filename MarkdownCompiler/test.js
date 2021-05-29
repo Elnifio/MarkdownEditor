@@ -87,6 +87,7 @@ let parserTester01 = function() {
     "with [link](link) here", "", "![image](image here)"];
 
     let text = texts.join("\n");
+    text = "We can enter **BOLD texts, *BOLD AND ITALIC texts***, *Italic texts*, ~underlined **BOLD**, *Italic*, **BOLD AND ITALIC**~ texts.";
 
     // parse of the text
     let ast = ps.parse(text);
@@ -94,5 +95,21 @@ let parserTester01 = function() {
     disp.visit(ast);
 }
 
-parserTester01();
+// parserTester01();
 
+let parserTester02 = function() {
+        // Initialization of Parser and Displayer
+    // module imports
+    let Parser = require("./parser");
+    let Displayer = require("./ASTDisplay");
+    let fs = require("fs");
+    // displayer and parser initialization
+    let disp = new Displayer.Displayer();
+    let ps = new Parser.Parser();
+
+    let text = fs.readFileSync("test.md").toString();
+    let ast = ps.parse(text);
+    disp.visit(ast);
+}
+
+parserTester02();

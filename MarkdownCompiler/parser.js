@@ -91,6 +91,7 @@ let Parser = function() {
     this.parseMD = function() {
         let md = new AST.MD();
         while (!this.eof) {
+            console.log(this.curr);
             switch(this.curr.type) {
                 // only starter for Reference
                 case TokenType.ge:
@@ -147,6 +148,7 @@ let Parser = function() {
                     break;
 
                 default:
+                    console.log("Calling parseParagraph");
                     md.addBlock(this.parseParagraph());
                     this.indentation = 0;
             }
@@ -343,6 +345,10 @@ let Parser = function() {
 
     // parsing of a OL, similar to parsing of a UL
     this.parseOL = function(indent, markdownContainer) {
+        this.consume(TokenType.number);
+        if (this.is(TokenType.space)) {
+            this.consume(TokenType.space);
+        }
         /**
          *  parsing of OL should be nearly the same as parsing of UL: 
          *  we have cases: 
@@ -571,6 +577,7 @@ let Parser = function() {
         }
     }
 
+    this.lastStyle = new AST.StyleConstructor();
     this.parseBulkSentence = function(sentences=[]) {
         // parse a bunch of sentences until \n
         // if current is a single $: start parse a inline latex
@@ -578,6 +585,14 @@ let Parser = function() {
         // other styles are handled in parseSentence
         let currsen;
         do {
+            // console.log("----------------");
+            // console.log("Inside parseBulkSentence with " + this.curr.toString());
+            // console.log("Current Style: " + this.lastStyle.toString());
+            // console.log("Current sentences: ");
+            // sentences.forEach((x) => {
+            //     console.log(`    "${x.content}", ${x.style? x.style.toString():x.type}`);
+            // });
+            // console.log("----------------");
             if (this.is(TokenType.dollar, 1)) {
                 currsen = this.parseInlineLatex();
             }
@@ -585,7 +600,7 @@ let Parser = function() {
                 currsen = this.parseLink();
             }
             else {
-                currsen = this.parseSentence();
+                currsen = this.parseSentence(this.lastStyle);
             }
             sentences.push(currsen);
         } while (!this.is(TokenType.enter) && !this.eof);
@@ -679,9 +694,11 @@ let Parser = function() {
     }
 
     // yield one sentence at a time
-    this.parseSentence = function() {
+    this.parseSentence = function(style=undefined) {
+        console.log("Successfully enters parseSentence");
         let current = new AST.Sentence();
-        current.style = this.constructStyle();
+        current.style = this.constructStyle(style);
+        console.log("Successfully finished parsing styles");
         
         let tokenLength;
         // consume token until \n
@@ -690,6 +707,9 @@ let Parser = function() {
             // if is inline element denoter: special case
             // else: not inline element denoter: collect it
             tokenLength = this.curr.content.length;
+            if (tokenLength == 0) {
+                break;
+            }
             switch(this.curr.type) {
                 // special inline element denoter: 
                 // either * or _, and we need to discuss its case
@@ -698,9 +718,7 @@ let Parser = function() {
                     if (tokenLength == 2) {
                         // if current is already bold: then we simply consume it and return;
                         // else: current is not bold, we directly return current sentence;
-                        if (current.style.bold) {
-                            this.consume(this.curr.type);
-                        }
+                        this.endStyle(current.style);
                         current.set(this.collect());
                         this.emptyAccumulator();
                         return current;
@@ -709,9 +727,7 @@ let Parser = function() {
                         // else: we hit the case for italic
                         // if current is already italic: we simply consume it and return;
                         // else: current is not italic, we return current sentence;
-                        if (current.style.italic) {
-                            this.consume(this.curr.type);
-                        }
+                        this.endStyle(current.style);
                         current.set(this.collect());
                         this.emptyAccumulator();
                         return current;
@@ -720,16 +736,12 @@ let Parser = function() {
                     if (tokenLength == 2) {
                         // if current is already strikethrough: then we simply consume it and return;
                         // else: we directly build sentence and return
-                        if (current.style.strikethrough) {
-                            this.consume(TokenType.tilda);
-                        }
+                        this.endStyle(current.style);
                         current.set(this.collect());
                         this.emptyAccumulator();
                         return current;
                     } else {
-                        if (current.style.underline) {
-                            this.consume(TokenType.tilda);
-                        }
+                        this.endStyle(current.style);
                         current.set(this.collect());
                         this.emptyAccumulator();
                         return current;
@@ -737,9 +749,7 @@ let Parser = function() {
                 case TokenType.backtick:
                     if (tokenLength != 2) {
                         // if current is not 2: we hit an indicator to change the style
-                        if (current.style.code) {
-                            this.consume(TokenType.backtick);
-                        }
+                        this.endStyle(current.style);
                         current.set(this.collect());
                         this.emptyAccumulator();
                         return current;
@@ -768,6 +778,8 @@ let Parser = function() {
                     this.emptyAccumulator();
                     return current;
                 
+                case TokenType.eof:
+                    break;
                 // all other default case: accept it, add it to current accumulator
                 default:
                     this.acceptAny();
@@ -779,8 +791,77 @@ let Parser = function() {
         return current;
     }
 
-    this.constructStyle = function() {
+    this.endStyle = function(style) {
+        let tokenLength;
+        for (st in style) {
+            this.lastStyle[st] = style[st];
+        }
+        while ((this.is(TokenType.asterisk) || this.is(TokenType.backtick) 
+                || this.is(TokenType.underline) || this.is(TokenType.tilda)) && !this.eof) {
+            tokenLength = this.curr.content.length;
+            switch(this.curr.type) {
+                case TokenType.asterisk:
+                case TokenType.underline:
+                    if (tokenLength == 1) {
+                        if (style.italic) {
+                            this.consume(this.curr.type);
+                            this.lastStyle.italic = !this.lastStyle.italic;
+                        } else {
+                            return;
+                        }
+                    } else {
+                        if (style.bold) {
+                            this.consume(this.curr.type);
+                            this.lastStyle.bold = !this.lastStyle.bold;
+                        } else {
+                            return;
+                        }
+                    }
+                    break;
+                case TokenType.backtick:
+                    if (tokenLength != 2) {
+                        if (style.code) {
+                            this.consume(this.curr.type);
+                            this.lastStyle.code = !this.lastStyle.code;
+                        } else {
+                            return;
+                        }
+                    }
+                    else {
+                        this.consume(this.curr.type);
+                    }
+                    break;
+                case TokenType.tilda:
+                    if (tokenLength == 2) {
+                        if (style.strikethrough) {
+                            this.consume(this.curr.type);
+                            this.lastStyle.strikethrough = !this.lastStyle.strikethrough;
+                        } else {
+                            return;
+                        }
+                    } else {
+                        if (style.underline) {
+                            this.consume(this.curr.type);
+                            this.lastStyle.underline = !this.lastStyle.underline;
+                        } else {
+                            return;
+                        }
+                    } 
+                    break;
+                default:
+                    throw "Unexpected TokenType";
+            }
+        }
+        return;
+    }
+
+    this.constructStyle = function(givenStyle=undefined) {
         let style = new AST.StyleConstructor();
+        if (givenStyle) {
+            for (st in givenStyle) {
+                style[st] = givenStyle[st];
+            }
+        }
         let tokenLength;
         // first construct style for current sentence
         while ((this.is(TokenType.asterisk) || this.is(TokenType.backtick) 
