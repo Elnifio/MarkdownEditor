@@ -66,7 +66,7 @@ let disp = new displayer.Displayer();
 
 let Parser = function() {
     this.accumulator = [];
-    this.indentation = -1;
+    this.indentation = 0;
     this.curr = undefined;
     this.lexer = new Lexer.Lexer();
     this.liststack = [];
@@ -91,7 +91,6 @@ let Parser = function() {
     this.parseMD = function() {
         let md = new AST.MD();
         while (!this.eof) {
-            console.log(this.curr);
             switch(this.curr.type) {
                 // only starter for Reference
                 case TokenType.ge:
@@ -137,6 +136,7 @@ let Parser = function() {
                     break;
                 
                 case TokenType.space:
+                    console.log(`Indentation: ${this.curr.content.length}`);
                     this.indentation = this.curr.content.length;
                     this.accept(TokenType.space);
                     break;
@@ -146,6 +146,13 @@ let Parser = function() {
                     this.indentation = 0;
                     this.consume(TokenType.enter);
                     break;
+
+                case TokenType.backtick:
+                    if (this.is(TokenType.backtick, 3)) {
+                        md.addBlock(this.parseCodeBlock());
+                    } else {
+                        md.addBlock(this.parseParagraph());
+                    }
 
                 default:
                     console.log("Calling parseParagraph");
@@ -159,7 +166,7 @@ let Parser = function() {
 
     this.showList = function() {
         this.liststack.forEach((x) => {
-            console.log(x.type);
+            console.log(x.type + " Indent: " + x.indent);
             console.log("    " + x.subBlocks.length);
             x.subBlocks.forEach((y) => {
                 console.log("        " + y.type);
@@ -191,7 +198,7 @@ let Parser = function() {
         cb.setType(this.collect());
         this.emptyAccumulator();
         if (this.eof) return cb;
-        this.accept(TokenType.enter);
+        this.consume(TokenType.enter);
         while (!this.is(TokenType.backtick, 3) && !this.eof) {
             this.acceptAny();
         }
@@ -203,6 +210,7 @@ let Parser = function() {
             }
             if (!this.eof) this.accept(TokenType.enter);
         }
+        this.emptyAccumulator();
         return cb;
     }
 
@@ -309,11 +317,12 @@ let Parser = function() {
         //          parse the rest as paragraph and add it to the current list block
         // and start parse a list item, add the list item to the current list block
         let lastBlock = this.liststack[this.liststack.length-1];
-        while ((lastBlock.indent > indent || lastBlock.type != AST.ASTTypes.UL)) {
-            lastBlock = this.liststack.pop();
+        while (lastBlock.indent > indent || (lastBlock.indent == indent && lastBlock.type != AST.ASTTypes.UL)) {
+            lastBlock = this.liststack.pop(); 
             if (this.liststack.length == 0) {
                 markdownContainer.addBlock(lastBlock);
                 let newlb = new AST.UL();
+                newlb.indent = indent;
                 this.liststack.push(newlb);
                 let newli = new AST.ListItem();
                 newli = this.parseParagraph(newli);
@@ -336,6 +345,7 @@ let Parser = function() {
         //          start parse a list item, add the list item to the last list block
         if (lastBlock.indent != indent) {
             lastBlock = new AST.UL();
+            lastBlock.indent = indent;
             this.liststack.push(lastBlock);
         }
         let newli = new AST.ListItem();
@@ -345,6 +355,8 @@ let Parser = function() {
 
     // parsing of a OL, similar to parsing of a UL
     this.parseOL = function(indent, markdownContainer) {
+        console.log(`number ${this.curr.content} indent ${this.indentation}`);
+        this.showList();
         this.consume(TokenType.number);
         if (this.is(TokenType.space)) {
             this.consume(TokenType.space);
@@ -390,11 +402,12 @@ let Parser = function() {
         }
 
         let lastBlock = this.liststack[this.liststack.length-1];
-        while ((lastBlock.indent > indent || lastBlock.type != AST.ASTTypes.OL)) {
+        while ((lastBlock.indent > indent || (lastBlock.indent == indent && lastBlock.type != AST.ASTTypes.OL))) {
             lastBlock = this.liststack.pop();
             if (this.liststack.length == 0) {
                 markdownContainer.addBlock(lastBlock);
                 let newlb = new AST.OL();
+                newlb.indent = indent;
                 this.liststack.push(newlb);
                 let newli = new AST.ListItem();
                 newli = this.parseParagraph(newli);
@@ -408,6 +421,7 @@ let Parser = function() {
 
         if (lastBlock.indent != indent) {
             lastBlock = new AST.OL();
+            lastBlock.indent = indent;
             this.liststack.push(lastBlock);
         }
         let newli = new AST.ListItem();
@@ -695,10 +709,8 @@ let Parser = function() {
 
     // yield one sentence at a time
     this.parseSentence = function(style=undefined) {
-        console.log("Successfully enters parseSentence");
         let current = new AST.Sentence();
         current.style = this.constructStyle(style);
-        console.log("Successfully finished parsing styles");
         
         let tokenLength;
         // consume token until \n
