@@ -2,8 +2,6 @@ let show = function(prefix, content) {
     console.log(prefix + content);
 }
 
-let report = () => { throw "Unimplemented Abstract Method" };
-
 let Displayer = function(defaultprefix="") {
 
     this.visit = function(ast) {

@@ -1,6 +1,6 @@
-import Folder from './FileSystem/folders.js';
-import FileController from './FileSystem/fileController.js';
-import Renderer from './FileSystem/fileRenderer.js';
+import Folder from '../FileSystem/folders.js';
+import FileController from '../FileSystem/fileController.js';
+import Renderer from '../FileSystem/fileRenderer.js';
 
 let visualize = function(node) {
     let out = {

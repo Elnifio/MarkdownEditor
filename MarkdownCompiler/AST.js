@@ -125,7 +125,7 @@ let TODOBlock = function() {
     this.addSentence = function(sentence) {
         this.sentences.push(sentence);
     }
-    this.visit = function(visitor, arg) { visitor.visitTODO(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitTODO(this, arg); }
 }
 TODOBlock.prototype = new Block(ASTType.TODO);
 exports.TODO = TODOBlock;
@@ -150,14 +150,14 @@ let CodeBlock = function() {
     this.codetype = undefined;
     this.setType = function(content) { this.codetype = content; }
     this.getType = function() { return this.codetype; }
-    this.visit = function(visitor, arg)  { visitor.visitCodeBlock(this, arg); }
+    this.visit = function(visitor, arg)  { return visitor.visitCodeBlock(this, arg); }
 }
 CodeBlock.prototype = new ContentableBlock(ASTType.CodeBlock);
 exports.CodeBlock = CodeBlock;
 
 // LaTeX block
 let LatexBlock = function() {
-    this.visit = function(visitor, arg)  { visitor.visitLatexBlock(this, arg); }
+    this.visit = function(visitor, arg)  { return visitor.visitLatexBlock(this, arg); }
 }
 LatexBlock.prototype = new ContentableBlock(ASTType.LatexBlock);
 exports.LatexBlock = LatexBlock;
@@ -173,7 +173,7 @@ let ImageBlock = function() {
     }
     this.get = function(option) { return this.property[option]; }
 
-    this.visit = function(visitor, arg) { visitor.visitImage(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitImage(this, arg); }
 }
 ImageBlock.prototype = new Block(ASTType.Image);
 exports.Image = ImageBlock;
@@ -192,7 +192,7 @@ let ULBlock = function() {
         this.subBlocks.push(block);
     }
     this.getBlock = function() { return this.subBlocks; }
-    this.visit = function(visitor, arg) { visitor.visitUL(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitUL(this, arg); }
 }
 ULBlock.prototype = new ListBlock(ASTType.UL);
 exports.UL = ULBlock;
@@ -204,7 +204,7 @@ let OLBlock = function() {
         this.subBlocks.push(block);
     }
     this.getBlock = function() { return this.subBlocks; }
-    this.visit = function(visitor, arg) { visitor.visitOL(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitOL(this, arg); }
 }
 OLBlock.prototype = new ListBlock(ASTType.OL);
 exports.OL = OLBlock;
@@ -214,14 +214,14 @@ let Reference = function() {
     this.content = [];
     this.push = function(ctt) { this.content.push(ctt); }
     this.get = function() { return this.content; }
-    this.visit = function(visitor, arg)  { visitor.visitReference(this, arg); }
+    this.visit = function(visitor, arg)  { return visitor.visitReference(this, arg); }
 }
 Reference.prototype = new Block(ASTType.Reference);
 exports.Reference = Reference;
 
 let Header = function() {
     this.level=0;
-    this.visit = function(visitor, arg) { visitor.visitHeader(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitHeader(this, arg); }
 }
 Header.prototype = new ContentableBlock(ASTType.Header);
 exports.Header = Header;
@@ -255,9 +255,9 @@ let StyleConstructor = function() {
             if (this.underline) properties.push("Underline");
             if (this.strikethrough) properties.push("Strikethrough");
             if (this.code) properties.push("Code");
-            return properties.reduce((accumulator, current) => accumulator + "; " + current);
+            return properties.reduce((accumulator, current) => accumulator + " " + current);
         } else {
-            return "No Style";
+            return "";
         }
     }
 }
@@ -273,13 +273,13 @@ let Sentence = function() {
     }
 
     this.getStyle = function(option) { return this.style[option]; }
-    this.visit = function(visitor, arg) { visitor.visitSentence(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitSentence(this, arg); }
 }
 Sentence.prototype = new MetaSentence(ASTType.Sentence);
 exports.Sentence = Sentence;
 
 let InlineLatex = function() {
-    this.visit = function(visitor, arg) { visitor.visitInlineLatex(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitInlineLatex(this, arg); }
 }
 InlineLatex.prototype = new MetaSentence(ASTType.Latex);
 exports.InlineLatex = InlineLatex;
@@ -295,7 +295,7 @@ let Link = function() {
     }
     this.get = function(option) { return this.property[option]; }
 
-    this.visit = function(visitor, arg) { visitor.visitLink(this, arg); }
+    this.visit = function(visitor, arg) { return visitor.visitLink(this, arg); }
 }
 Link.prototype = new MetaSentence(ASTType.Link);
 exports.Link = Link;

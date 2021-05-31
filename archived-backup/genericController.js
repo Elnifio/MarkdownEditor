@@ -2,8 +2,8 @@
  * Generic Controller should only be in charge of file controller and editor controller
  * on each update, it will notify file & editor controller, and they respond with corresponding actions
  */
-import FileController from './FileSystem/fileController.js';
-import EditorController from './EditorControl/editorController.js';
+import FileController from '../FileSystem/fileController.js';
+import EditorController from '../EditorControl/editorController.js';
 
 let REFRESH = 10; // refresh every REFRESH seconds
 let OFFSET = 40;

@@ -77,6 +77,7 @@ let Parser = function() {
         this.lexer.init(text);
         this.nextToken();
         let out = this.parseMD();
+        disp.visit(out);
         return out;
     }
 
@@ -136,7 +137,6 @@ let Parser = function() {
                     break;
                 
                 case TokenType.space:
-                    console.log(`Indentation: ${this.curr.content.length}`);
                     this.indentation = this.curr.content.length;
                     this.accept(TokenType.space);
                     break;
@@ -155,7 +155,6 @@ let Parser = function() {
                     }
 
                 default:
-                    console.log("Calling parseParagraph");
                     md.addBlock(this.parseParagraph());
                     this.indentation = 0;
             }
@@ -355,8 +354,6 @@ let Parser = function() {
 
     // parsing of a OL, similar to parsing of a UL
     this.parseOL = function(indent, markdownContainer) {
-        console.log(`number ${this.curr.content} indent ${this.indentation}`);
-        this.showList();
         this.consume(TokenType.number);
         if (this.is(TokenType.space)) {
             this.consume(TokenType.space);
@@ -599,14 +596,6 @@ let Parser = function() {
         // other styles are handled in parseSentence
         let currsen;
         do {
-            // console.log("----------------");
-            // console.log("Inside parseBulkSentence with " + this.curr.toString());
-            // console.log("Current Style: " + this.lastStyle.toString());
-            // console.log("Current sentences: ");
-            // sentences.forEach((x) => {
-            //     console.log(`    "${x.content}", ${x.style? x.style.toString():x.type}`);
-            // });
-            // console.log("----------------");
             if (this.is(TokenType.dollar, 1)) {
                 currsen = this.parseInlineLatex();
             }
@@ -691,11 +680,13 @@ let Parser = function() {
             if (this.is(TokenType.rparen)) {
                 link.set("url", this.collect());
                 this.consume(TokenType.rparen);
+                this.emptyAccumulator();
                 return link;
             } else 
             // unexpected close of a link: \n encountered
             if (this.is(TokenType.enter)) {
                 link.set("url", this.collect());
+                this.emptyAccumulator();
                 return link;
             } else {
                 // still constructing the link's content
@@ -704,6 +695,7 @@ let Parser = function() {
         }
         // unexpected close of a link: eof encountered
         link.set("url", this.collect());
+        this.emptyAccumulator();
         return link;
     }
 
