@@ -466,6 +466,7 @@ let Parser = function() {
         }
         if (this.is(TokenType.rparen)) this.consume(TokenType.rparen);
         img.set("src", this.collect());
+        this.emptyAccumulator();
         return img;
     }
 

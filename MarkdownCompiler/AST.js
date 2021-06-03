@@ -6,32 +6,31 @@ const { TouchBarSlider } = require("electron");
 // --------
 let ASTType = {
     // General Purpose AST Abstract Type
-    AST: "AST",
+    AST: "ast",
 
     // Markdown Top-level Type
-    MD: "Markdown",
+    MD: "markdown-block",
 
     // Block-level Types
-    Block: "Block",
-    Paragraph: "Paragraph",
-    Separator: "Separator",
-    CodeBlock: "Code Block",
-    LatexBlock: "LaTeX Block",
-    Image: "Image",
-    UL: "Unordered List",
-    OL: "Ordered List",
-    TODO: "Todo List",
-    Reference: "Reference",
-    RefBlock: "Reference Block",
-    Header: "Header",
-    ListItem: "List item",
+    Block: "block",
+    Paragraph: "paragraph",
+    Separator: "separator",
+    CodeBlock: "code-block",
+    LatexBlock: "latex-block",
+    Image: "image-block",
+    UL: "unordered-list-block",
+    OL: "ordered-list-block",
+    TODO: "todo-block",
+    Reference: "reference-block",
+    Header: "header-block",
+    ListItem: "list-item-block",
 
     // Sentence-level element
-    Sentence: "Sentence",
-    Latex: "Inline Latex",
-    Link: "Link",
+    Sentence: "sentence",
+    Latex: "inline-latex",
+    Link: "inline-link",
 
-    Others: "Others",
+    Others: "others",
 }
 Object.freeze(ASTType);
 exports.ASTTypes = ASTType;
@@ -247,6 +246,16 @@ let StyleConstructor = function() {
     this.strikethrough=false;
     this.code=false;
 
+    this.compress = function() {
+        return {
+            bold: this.bold,
+            italic: this.italic,
+            underline: this.underline,
+            strikethrough: this.strikethrough,
+            code: this.code
+        }
+    };
+
     this.toString = function() {
         if (this.bold || this.italic || this.underline || this.strikethrough || this.code) {
             let properties = [];
@@ -272,7 +281,7 @@ let Sentence = function() {
         }
     }
 
-    this.getStyle = function(option) { return this.style[option]; }
+    this.getStyle = function() { return this.style.compress(); }
     this.visit = function(visitor, arg) { return visitor.visitSentence(this, arg); }
 }
 Sentence.prototype = new MetaSentence(ASTType.Sentence);

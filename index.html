@@ -5,6 +5,6 @@
     <script src="./renderer.js" type="module"></script>
 </head>
 <body style="background: white;" id="contents">
-<div id="app" v-html="message"></div>
+<div id="app"><markdown-block :ast="ast"></markdown-block></div>
 </body>
 </html>
