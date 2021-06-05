@@ -35,8 +35,13 @@ let Components = require("./MarkdownCompiler/Components");
 let vm = new Vue({
     el: "#app",
     data: {
-        ASTType: AST.ASTTypes,
         ast: ast
+    },
+    methods: {
+        reparse: function(event) {
+            console.log(event.target.value);
+            this.ast = psr.parse(event.target.value);
+        }
     }
 })
 

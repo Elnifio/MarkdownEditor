@@ -1,6 +1,25 @@
 let AST = require("./AST");
 let ASTType = AST.ASTTypes;
 
+// let styles = {
+//     "original": 0
+// }
+// Vue.component("note-styles", {
+//     data: function() {
+//         return {current: 0};
+//     },
+//     computed: {
+//         currentStyle: function() {
+//             switch(this.current) {
+//                 case styles.original:
+//                     return {
+//                     }
+//             }
+//         }
+//     },
+//     template: ``,
+// })
+
 // ----------------
 // 
 // Sentence-level elements
@@ -19,7 +38,12 @@ Vue.component(ASTType.Link, {
 // TODO: REPLACE THIS WITH vue-latex
 Vue.component(ASTType.Latex, {
     props: ['sentence'],
-    template: `<span>{{sentence.get()}}</span>`
+    template: `<span><span class="code">{{sentence.get()}}</span> (<span v-html="sentence.render()"></span>)</span>`
+})
+
+Vue.component(ASTType.ReferenceSeparator, {
+    props: ["sentence"],
+    template: `<br />`
 })
 
 // ----------------
@@ -63,12 +87,12 @@ Vue.component(ASTType.TODO, {
 Vue.component(ASTType.CodeBlock, {
     props: ["content"],
     template: `
-    <div>
-        <template v-for="codes in content.get().split('\\n')">
-            <span>{{ codes }}</span>
+    <p class="codeblock">
+        <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
+            <span>{{index+1}} {{ codes }}</span>
             <br />
         </template>
-    </div>
+    </p>
     `
 })
 
@@ -76,11 +100,13 @@ Vue.component(ASTType.CodeBlock, {
 Vue.component(ASTType.LatexBlock, {
     props: ["content"],
     template: `
-    <div>
-        <template v-for="codes in content.get().split('\\n')">
-            <span>{{ codes }}</span>
+    <div class="codeblock">
+        <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
+            <span>{{index+1}} {{ codes }}</span>
             <br />
         </template>
+        <hr />
+        <div class="latex-result" v-html="content.render()"></div>
     </div>
     `
 }) 
@@ -114,7 +140,7 @@ Vue.component(ASTType.OL, {
 Vue.component(ASTType.Reference, {
     props: ["content"],
     template: `
-    <p>
+    <p class="reference">
         <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
     </p>`
 })
@@ -123,7 +149,24 @@ Vue.component(ASTType.Reference, {
 Vue.component(ASTType.Header, {
     props: ["content"],
     template: `
-    <p>Header: {{ content.level }} | {{ content.get() }}</p>`
+    <h1 v-if="content.level === 1">
+        {{ content.get() }}
+    </h1>
+    <h2 v-else-if="content.level === 2">
+        {{ content.get() }}
+    </h2>
+    <h3 v-else-if="content.level === 3">
+        {{ content.get() }}
+    </h3>
+    <h4 v-else-if="content.level === 4">
+        {{ content.get() }}
+    </h4>
+    <h5 v-else-if="content.level === 5">
+        {{ content.get() }}
+    </h5>
+    <h6 v-else-if="content.level === 6">
+        {{ content.get() }}
+    </h6>`,
 })
 
 // ----------------
@@ -134,7 +177,7 @@ Vue.component(ASTType.Header, {
 Vue.component(ASTType.MD, {
     props: ['ast'],
     template: `
-    <div>
+    <div class="markdown-container">
         <component v-for="block in ast.blocks" v-bind:is="block.type" v-bind:content="block"></component>
     </div>`
 })

@@ -54,9 +54,11 @@ Object.freeze(TokenType);
  * @param {TokenType: String} type TokenType enum: type of the token
  * @param {String} content String: Content of the token
  */
-let Token = function(type, content) { 
+let Token = function(type, content, line=0, pos=0) { 
     this.type = type; 
     this.content = content;
+    this.line=line;
+    this.position=pos;
 
     // debug use
     this.literalType = TokenType.finder(this.type);
@@ -204,7 +206,12 @@ let Lexer = function(text="") {
             // reference block, only 1 char
             case ">":
                 this.acceptIt();
-                return TokenType.ge;
+                if (this.peekNext() == " ") {
+                    this.acceptIt();
+                    return TokenType.ge;
+                } else {
+                    return TokenType.word;
+                }
             
             // header: up to 6 chars
             case "#": 
@@ -244,8 +251,14 @@ let Lexer = function(text="") {
             // necessary for escaping text: consume it, not accept it, and accept the next character as a word
             case "\\": 
                 this.consumeIt();
-                this.acceptIt();
-                return TokenType.word;
+                if (specials.indexOf(this.peekNext()) < 0 || this.peekNext() == "\\" || this.peekNext() == "\n") {
+                    console.log(this.peekNext());
+                    this.currentToken += "\\";
+                    return TokenType.word;
+                } else {
+                    this.acceptIt();
+                    return TokenType.word;
+                }
             
             // --------
             // Ordinary characters

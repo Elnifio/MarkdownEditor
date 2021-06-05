@@ -2,6 +2,7 @@
 // ENUMERATIONS OF AST NODES
 
 const { TouchBarSlider } = require("electron");
+const katex = require("katex");
 
 // --------
 let ASTType = {
@@ -24,6 +25,7 @@ let ASTType = {
     Reference: "reference-block",
     Header: "header-block",
     ListItem: "list-item-block",
+    ReferenceSeparator: "reference-separator",
 
     // Sentence-level element
     Sentence: "sentence",
@@ -107,6 +109,16 @@ let Paragraph = function() {
 Paragraph.prototype = new Block(ASTType.Paragraph);
 exports.Paragraph = Paragraph;
 
+// Single Sentence Reference Container
+let Reference = function() {
+    this.sentences = [];
+    this.addSentence = function(ctt) { this.sentences.push(ctt); }
+    this.get = function() { return this.sentences; }
+    this.visit = function(visitor, arg)  { return visitor.visitReference(this, arg); }
+}
+Reference.prototype = new Block(ASTType.Reference);
+exports.Reference = Reference;
+
 let ListItem = function() {
     this.sentences = [];
     this.addSentence = function(sentence) {
@@ -157,6 +169,10 @@ exports.CodeBlock = CodeBlock;
 // LaTeX block
 let LatexBlock = function() {
     this.visit = function(visitor, arg)  { return visitor.visitLatexBlock(this, arg); }
+    this.render = function() {
+        return katex.renderToString(this.content, {throwOnError:false});
+    }
+
 }
 LatexBlock.prototype = new ContentableBlock(ASTType.LatexBlock);
 exports.LatexBlock = LatexBlock;
@@ -208,15 +224,7 @@ let OLBlock = function() {
 OLBlock.prototype = new ListBlock(ASTType.OL);
 exports.OL = OLBlock;
 
-// Single Sentence Reference Container
-let Reference = function() {
-    this.content = [];
-    this.push = function(ctt) { this.content.push(ctt); }
-    this.get = function() { return this.content; }
-    this.visit = function(visitor, arg)  { return visitor.visitReference(this, arg); }
-}
-Reference.prototype = new Block(ASTType.Reference);
-exports.Reference = Reference;
+
 
 let Header = function() {
     this.level=0;
@@ -238,6 +246,12 @@ let MetaSentence = function(type=ASTType.Others) {
     this.get = function() {return this.content; }
 }
 MetaSentence.prototype = new AST(ASTType.Others);
+
+let ReferenceSeparator = function() {
+    this.visit = function(visitor, arg) { return visitor.visitReferenceSeparator(this, arg); }
+}
+ReferenceSeparator.prototype = new MetaSentence(ASTType.ReferenceSeparator);
+exports.RefSeparator = ReferenceSeparator;
 
 let StyleConstructor = function() {
     this.bold = false;
@@ -289,6 +303,9 @@ exports.Sentence = Sentence;
 
 let InlineLatex = function() {
     this.visit = function(visitor, arg) { return visitor.visitInlineLatex(this, arg); }
+    this.render = function() {
+        return katex.renderToString(this.content, {throwOnError:false});
+    }
 }
 InlineLatex.prototype = new MetaSentence(ASTType.Latex);
 exports.InlineLatex = InlineLatex;

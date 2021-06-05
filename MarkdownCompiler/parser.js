@@ -72,8 +72,23 @@ let Parser = function() {
     this.liststack = [];
     this.todoList = false;
     this.eof = false;
+    this.ref = undefined;
+
+    this.init = function() {
+        this.accumulator = [];
+        this.indentation = 0;
+        this.curr = undefined;
+        this.liststack = [];
+        this.todoList = false;
+        this.eof = false;
+        this.ref = undefined;
+    }
 
     this.parse = function(text="") {
+        if (text == "") {
+            return undefined;
+        }
+        this.init();
         this.lexer.init(text);
         this.nextToken();
         let out = this.parseMD();
@@ -153,7 +168,15 @@ let Parser = function() {
                     } else {
                         md.addBlock(this.parseParagraph());
                     }
-
+                    break;
+                
+                case TokenType.dollar:
+                    if (this.is(TokenType.dollar, 2)) {
+                        md.addBlock(this.parseLatexBlock());
+                    } else {
+                        md.addBlock(this.parseParagraph());
+                    }
+                    break;
                 default:
                     md.addBlock(this.parseParagraph());
                     this.indentation = 0;
@@ -224,7 +247,7 @@ let Parser = function() {
         }
 
         // if next is end of a line: either return a separator or a paragraph
-        if (this.is(TokenType.enter)) {
+        if (this.is(TokenType.enter) || this.eof) {
             if (minusLength >= 3) {
                 this.accept(TokenType.enter);
                 markdownContainer.addBlock(new AST.Separator());
@@ -520,23 +543,9 @@ let Parser = function() {
     this.parseReference = function() {
         let ref = new AST.Reference();
         while (this.is(TokenType.ge)) {
-            this.accept(TokenType.ge);
-            if (this.is(TokenType.space)) {
-                this.emptyAccumulator();
-                this.curr.content = this.curr.content.substr(1);
-                this.accept(TokenType.space);
-                while (!this.is(TokenType.ge) && !this.is(TokenType.enter) && !this.eof) {
-                    this.parseBulkSentence(ref.content);
-                }
-            } else {
-                if (ref.isEmpty()) {
-                    return this.parseParagraph();
-                } else {
-                    while (!this.is(TokenType.ge) && !this.is(TokenType.enter) && !this.eof) {
-                        this.parseBulkSentence(ref.content);
-                    }
-                }
-            }
+            this.consume(TokenType.ge);
+            ref = this.parseParagraph(ref);
+            ref.addSentence(new AST.RefSeparator());
         }
         return ref;
     }
@@ -571,16 +580,17 @@ let Parser = function() {
     }
 
     this.parseLatexBlock = function() {
-        this.accept(TokenType.dollar);
-        let proceed = this.accept(TokenType.enter);
+        this.consume(TokenType.dollar);
+        let proceed = this.consume(TokenType.enter);
         let out;
         if (proceed) {
             out = new AST.LatexBlock();
             while (this.curr != undefined && !this.is(TokenType.dollar, 2)) {
                 this.acceptAny();
             }
-            this.accept(TokenType.dollar);
+            this.consume(TokenType.dollar);
             out.set(this.collect());
+            this.emptyAccumulator();
             return out;
         }
         else {

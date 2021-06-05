@@ -32,6 +32,11 @@ If these styles do not fit your requirements, you could <span style="color:red">
     - ~~Strikethrough~~?
 10. And we finish a nested list here.
 
+## TODOs: 
+
+- [ ] this is a **todo item**
+- [ ] this is another **todo item with ~underline ~~strikethrough *italic~~ end strikethrough~ end underline* end italic** end bold
+
 - - -
 
 ## Support for images
@@ -50,11 +55,18 @@ If these styles do not fit your requirements, you could <span style="color:red">
 
 #### LaTeX
 
-LaTeX formulae start with `latex` after a code block
+LaTeX formulae start with `latex` after a code block, inline latex test $\frac{1}{2}=0.5$
 
-```latex
+$$
 \frac{1}{2} = 0.5
-```
+$$
+
+$$
+\begin{aligned}
+x&=1\\
+y&=2
+\end{aligned}
+$$
 
 #### Graph
 

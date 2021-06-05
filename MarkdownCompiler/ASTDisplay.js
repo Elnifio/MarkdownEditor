@@ -68,9 +68,13 @@ let Displayer = function(defaultprefix="") {
     }
 
     this.visitReference = function(ref, args) {
-        show(args, ref.toString() + ": Sentence[" + ref.content.length + "]");
+        show(args, ref.toString() + ": Sentence[" + ref.sentences.length + "]");
         let prefix = args + " | ";
-        ref.get().forEach((x) => (this.visit(x, prefix)));
+        ref.get().forEach((x) => (x.visit(this, prefix)));
+    }
+
+    this.visitReferenceSeparator = function(refsepa, args) {
+        show(args, "---");
     }
 
     this.visitHeader = function(header, args) {
