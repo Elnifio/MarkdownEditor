@@ -10,7 +10,7 @@
 
 We can enter **BOLD texts, *BOLD AND ITALIC texts***, *Italic texts*, ~underlined **BOLD**, *Italic*, **BOLD AND ITALIC**~ texts.
 
-We can also write ~~Strikethrough~~, but it does not support combination with the above three formats.
+We can also write ~~Strikethrough~~, but it does not support combination with the above three formats. and this is another 
 
 `Inline Code Snippets` are supported as well. 
 

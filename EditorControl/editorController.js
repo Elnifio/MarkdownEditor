@@ -1,5 +1,5 @@
-import Parser from '../MarkdownAnalyzer/parser.js';
-import Renderer from '../MarkdownAnalyzer/renderer.js';
+// import Parser from '../MarkdownAnalyzer/parser.js';
+// import Renderer from '../MarkdownAnalyzer/renderer.js';
 
 /**
  *  An object that manipulates with editor & loader
@@ -20,16 +20,15 @@ let EditorController = function() {
     this.registerListener = function(listener) { this.listener = listener; }
 
     this.updateText = function(text) {
-        this.parser = new Parser(text);
-        this.parser.parse();
-        this.renderer = new Renderer(this.parser);
-        let result = this.renderer.render();
+        // this.parser = new Parser(text);
+        // this.parser.parse();
+        // this.renderer = new Renderer(this.parser);
+        // let result = this.renderer.render();
         return (editor, display) => {
             // editor remains the same
             editor.value = text;
             // display content should be updated
-            display.innerHTML = "";
-            display.append(result);
+            display.innerHTML = text;
         }
     }
 }

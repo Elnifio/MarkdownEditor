@@ -8,16 +8,17 @@ let docu = fs.readFileSync("./MarkdownCompiler/test.md").toString();
 // let parsed = ren.render(docu);
 
 // Markdown Parser模块
-let Parser = require("./MarkdownCompiler/parser");
+let Parser = require("../MarkdownCompiler/parser");
 // 构建parser对象
 let psr = new Parser.Parser();
 // 解析读取的文档
 let ast = psr.parse(docu);
 
 // 非必需：AST模块
-let AST = require("./MarkdownCompiler/AST");
+let AST = require("../MarkdownCompiler/AST");
 // 要么把这个放在这里要么把这个放在html里面 不然不会eval
-let Components = require("./MarkdownCompiler/Components");
+let Components = require("../MarkdownCompiler/Components");
+let HomepageComponents = require("../HomepageComponent");
 
 // 这一部分是之前用于测试的代码
 /**
@@ -39,6 +40,8 @@ let Components = require("./MarkdownCompiler/Components");
  // para.addSentence(lin1);
  */
 
+document.getElementById("txt").innerHTML = docu;
+
 // Vue写的Renderer
 let vm = new Vue({
     el: "#app",
@@ -52,6 +55,17 @@ let vm = new Vue({
     }
 })
 
+// let vm = new Vue({
+//     el: "#app",
+//     data: {
+//         default: docu
+//     },
+//     methods: {
+//         reparse: function(text) {
+//             return psr.parse(text);
+//         }
+//     }
+// })
 
 
 

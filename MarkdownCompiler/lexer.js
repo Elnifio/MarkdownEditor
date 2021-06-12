@@ -54,11 +54,13 @@ Object.freeze(TokenType);
  * @param {TokenType: String} type TokenType enum: type of the token
  * @param {String} content String: Content of the token
  */
-let Token = function(type, content, line=0, pos=0) { 
+let Token = function(type, content, line=-1, pos=-1, index=-1) { 
     this.type = type; 
     this.content = content;
     this.line=line;
-    this.position=pos;
+    this.posn=pos;
+    this.index=index;
+
 
     // debug use
     this.literalType = TokenType.finder(this.type);
@@ -84,6 +86,8 @@ let Lexer = function(text="") {
     this.eof = false;
     this.maxlen = this.text.length;
     this.currentToken = "";
+    this.line = 0;
+    this.posn = 0;
 
     // initialization
     /**
@@ -97,17 +101,23 @@ let Lexer = function(text="") {
         this.eof = false;
         this.currentToken = "";
         this.maxlen = this.text.length;
+        this.line=0;
+        this.posn = 0;
     };
 
     /**
      * yields one token at a time
      * @returns Token next token
      */
+    let line, posn, idx;
     this.yield = function() {
         if (!this.eof) {
             this.currentToken = "";
+            line=this.line;
+            posn = this.posn;
+            idx = this.cursor;
             let type = this.scantoken();
-            return new Token(type, this.currentToken);
+            return new Token(type, this.currentToken, line,posn,idx);
         }
         else {
             return undefined;
@@ -128,6 +138,8 @@ let Lexer = function(text="") {
             // accept one \n at a time
             case "\n":
                 this.acceptIt();
+                this.line += 1;
+                this.posn = 0;
                 return TokenType.enter;
 
             // -------- 
@@ -252,7 +264,6 @@ let Lexer = function(text="") {
             case "\\": 
                 this.consumeIt();
                 if (specials.indexOf(this.peekNext()) < 0 || this.peekNext() == "\\" || this.peekNext() == "\n") {
-                    console.log(this.peekNext());
                     this.currentToken += "\\";
                     return TokenType.word;
                 } else {
@@ -292,6 +303,7 @@ let Lexer = function(text="") {
     // Internal
     this.consumeIt = function() {
         this.cursor += 1;
+        this.posn += 1;
         this.eof = this.cursor >= this.maxlen;
     }
 
@@ -309,6 +321,7 @@ let Lexer = function(text="") {
         // append it to current token
         this.currentToken += word;
         this.cursor += 1;
+        this.posn += 1;
         this.eof = this.cursor >= this.maxlen;
     };
 

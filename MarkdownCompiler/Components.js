@@ -1,24 +1,26 @@
 let AST = require("./AST");
 let ASTType = AST.ASTTypes;
 
-// let styles = {
-//     "original": 0
-// }
-// Vue.component("note-styles", {
-//     data: function() {
-//         return {current: 0};
-//     },
-//     computed: {
-//         currentStyle: function() {
-//             switch(this.current) {
-//                 case styles.original:
-//                     return {
-//                     }
-//             }
-//         }
-//     },
-//     template: ``,
-// })
+/** previous codes for styles as plugin
+ // let styles = {
+ //     "original": 0
+ // }
+ // Vue.component("note-styles", {
+ //     data: function() {
+ //         return {current: 0};
+ //     },
+ //     computed: {
+ //         currentStyle: function() {
+ //             switch(this.current) {
+ //                 case styles.original:
+ //                     return {
+ //                     }
+ //             }
+ //         }
+ //     },
+ //     template: ``,
+ // })
+ */
 
 // ----------------
 // 

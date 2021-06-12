@@ -52,10 +52,11 @@ exports.Style = Style;
 // General AST Parents
 let AST = function(type=ASTType.AST) {
     this.type = type;
+    this.line = -1;
     this.report = function(indent="") {
         console.log(`${indent}Type: ${this.type}: ${this.toString()}`);
     }
-    this.toString = function() { return this.type; }
+    this.toString = function() { return `${this.type}@line ${this.line}`; }
 
     this.visit = function(visitor, args) {
         throw `visiting abstract AST Node with type ${this.type}`;

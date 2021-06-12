@@ -37,6 +37,12 @@ let readNotes = function(path="./FileSystem/notes.json") {
     return fs.readFileSync(path, {encoding: 'utf8'});
 }
 
+/**
+ * Its listener should provide the following methods:
+ *      listener.updateContent( (String -> String) )
+ *          takes in a str->str function as an argument, 
+ *          update the original string to new string
+ */
 let fileController = function() {
     let storage = readNotes();
 

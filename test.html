@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+        <style>
+            .note.children {
+                margin-left: 6px;
+                padding-left: 3px;
+            }
+            .note.children:hover {
+                margin-left: 5px;
+                border-left: 1px solid grey;
+                padding-left: 3px;
+            }
+            .note.title:hover {
+                background-color: #e6e6e6;
+            }
+            .note.title {
+                border:1px solid black;
+            }
+            .note.title.selected {
+                background-color: #66ccff;
+            }
+            .fs-file .note.title.opened {
+                background-color: #b3e6ff;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="zipper">
+            <editor @editor-update="editormodule"></editor>
+            <hr />
+            <create-file @create-file-event="createFile"></create-file>
+            <create-folder @create-folder-event="createFolder"></create-folder>
+            <delete-file @delete-file-event="deleteFile"></delete-file>
+            <delete-folder @delete-folder-event="deleteFolder"></delete-folder>
+            <hr />
+            <fsmodule :initfs="storage" @update-content="log"></fsmodule>
+            <hr />
+            <h3>Currently Selected:</h3>
+            <p>{{ storage.getCurrentContent() }}</p>
+        </div>
+
+        <script src="./test.js"></script>
+    </body>
+</html>
