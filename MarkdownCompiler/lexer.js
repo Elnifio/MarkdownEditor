@@ -263,7 +263,13 @@ let Lexer = function(text="") {
             // necessary for escaping text: consume it, not accept it, and accept the next character as a word
             case "\\": 
                 this.consumeIt();
-                if (specials.indexOf(this.peekNext()) < 0 || this.peekNext() == "\\" || this.peekNext() == "\n") {
+                let nexter = this.peekNext();
+                if (nexter == "\\") {
+                    this.currentToken += "\\";
+                    this.acceptIt();
+                    return TokenType.word;
+                }
+                else if (specials.indexOf(this.peekNext()) < 0 || this.peekNext() == "\n") {
                     this.currentToken += "\\";
                     return TokenType.word;
                 } else {

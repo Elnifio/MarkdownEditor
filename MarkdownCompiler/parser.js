@@ -625,7 +625,7 @@ let Parser = function() {
             this.emptyAccumulator();
             out = new AST.LatexBlock();
             out.line = line;
-            while (this.curr != undefined && !this.is(TokenType.dollar, 2)) {
+            while (this.curr != undefined && !this.is(TokenType.dollar, 2) && !this.eof) {
                 this.acceptAny();
             }
             this.consume(TokenType.dollar);

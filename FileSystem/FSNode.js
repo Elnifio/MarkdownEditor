@@ -52,16 +52,18 @@ exports.unzip = unzip;
  * @param {Object[]} zipped a list of objects of form [<name>, <type>, <content>, <opened>, [...children]]
  */
 let unziphelper = function(zipped) {
+    // [ <root>, <last-opened-file>]
     let returned = [undefined, undefined];
     // [<name>, <type>, <content>, <opened>, [...children]]
     let out = new FSNode(zipped[0], zipped[1], zipped[2], zipped[3], {}, undefined);
     returned[0] = out;
+
     if (out.type == Type.file && out.opened) {
         returned[1] = out;
     }
 
     let result;
-    zipped[4].map( (child) => {
+    zipped[4].forEach( (child) => {
         result = unziphelper(child);
         out.addChild(result[0]);
         if (result[1]) returned[1] = result[1];
@@ -91,6 +93,7 @@ let FSNode = function(name, type, content="", opened=false, children={}, parent=
     this.setOpen = function() { this.opened = true; };
     this.setClose = function() { this.opened = false; };
     this.getName = function() { return this.name + "-" + this.type; };
+    this.getCanonicalName = function() { return this.name; };
 
     this.isFile = function() { return this.type == Type.file; } 
     this.isFolder = function() { return this.type == Type.folder; }
@@ -139,6 +142,16 @@ let FSNode = function(name, type, content="", opened=false, children={}, parent=
                 return true;
             }
         }
+    }
+
+    this.findPath = function() {
+        let cursor = this.parent;
+        let out = this.getCanonicalName();
+        while (cursor.parent != undefined) {
+            out = cursor.getCanonicalName() + "/" + out;
+            cursor = cursor.parent;
+        }
+        return out;
     }
 
     // Get & set for content

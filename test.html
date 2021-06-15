@@ -3,9 +3,64 @@
     <head>
         <meta charset="utf-8">
         <title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
+
+        <!-- Vue resources -->
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
-        <style>
+        <!-- Vuetify resources -->
+        <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+        <!-- katex resources -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css" integrity="sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc" crossorigin="anonymous">
+
+        <style id="markdown-container-style">
+            .markdown-container {
+                font-family:"Arial";
+            }
+    
+            .markdown-container .bold {
+                font-weight:bold;
+            }
+            .markdown-container .italic {
+                font-style:italic;
+            }
+            .markdown-container .underline {
+                text-decoration:underline;
+            }
+            .markdown-container .strikethrough {
+                text-decoration:line-through;
+            }
+            .markdown-container .code {
+                font-family:"Courier New";
+                background-color:#e6e6e6;
+                border-radius:2px;
+                /* border:1px solid black;
+                border-radius:2px; */
+            }
+    
+            .markdown-container .reference {
+                padding-left:5px;
+                border-left:3px solid #e6e6e6;
+                color: grey
+            }
+    
+            .markdown-container .codeblock {
+                font-family:"Courier New";
+                background-color:#e6e6e6;
+                border-radius:2px;
+                padding:10px;
+            }
+            .markdown-container .latex-result {
+                margin:auto;
+                width:50%;
+                text-align:center;
+            }
+        </style>
+
+        <style id="fs-style">
             .note.children {
                 margin-left: 6px;
                 padding-left: 3px;
@@ -31,18 +86,17 @@
     </head>
     <body>
 
-        <div id="zipper">
-            <editor @editor-update="editormodule"></editor>
-            <hr />
-            <create-file @create-file-event="createFile"></create-file>
-            <create-folder @create-folder-event="createFolder"></create-folder>
-            <delete-file @delete-file-event="deleteFile"></delete-file>
-            <delete-folder @delete-folder-event="deleteFolder"></delete-folder>
-            <hr />
-            <fsmodule :initfs="storage" @update-content="log"></fsmodule>
-            <hr />
-            <h3>Currently Selected:</h3>
-            <p>{{ storage.getCurrentContent() }}</p>
+        <div id="app">
+            <v-app>
+                <v-navigation-drawer app>
+                    <fsmodule :initfs="storage" @update-content="log"></fsmodule>
+                </v-navigation-drawer>
+                <v-main>
+                    <v-container fluid>
+                        <editor-control :editor="emstore"></editor-control>
+                    </v-container>
+                </v-main>
+            </v-app>
         </div>
 
         <script src="./test.js"></script>

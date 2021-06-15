@@ -1,36 +1,32 @@
 const FSNode = require("./FileSystem/FSNode");
 const FSModule = require("./FileSystem/FSModule");
 const FSControlKit = require("./FileSystem/FSControlKit");
-const EditorModule = require("./Editor-new/EditorModule");
-const node = FSNode.FSNode;
-const ftype = FSNode.Type;
+const EditorModule = require("./Editor/EditorModule");
+const Conponents = require("./MarkdownCompiler/Components");
+const fs = require("fs");
 
-let n01 = new node("n01", ftype.file, "123", true);
-let n02 = new node("n02", ftype.file, "133");
-let n03 = new node("n03", ftype.folder, "", true);
-n03.addChild(n02);
-n03.addChild(n01);
+let storage = fs.readFileSync("storage.json").toString();
+const rootEle = new FSNode.FSNode("root", FSNode.Type.folder, "", true);
+if (storage == "") storage = FSNode.zip(rootEle);
+let FS = new FSModule.FS(storage);
+let EMStore = new EditorModule.Editor();
+EMStore.setCurrent(FS.getCurrentContent());
 
-let n04 = new node("n04", ftype.file, "444", false);
-let n05 = new node("n05", ftype.folder, "144", true);
-n05.addChild(n03);
-n05.addChild(n04);
+Vue.use(Vuetify);
 
-let zipped = FSNode.zip(n05);
-// console.log(zipped);
-
-let FS = new FSModule.FS(zipped);
-console.log("--------\nFile cursor:")
-console.log(FSNode.zip(FS.filecursor));
-console.log("--------\nFolder cursor:")
-console.log(FSNode.zip(FS.foldercursor));
+require('electron').ipcRenderer.on('close', (event) => {
+    if (FS.hasFileCursor()) FS.saveCurrentFile(EMStore.getCurrent());
+    fs.writeFileSync('./storage.json', FS.export());
+})
 
 let vm = new Vue({
-    el: "#zipper",
+    el: "#app",
+    vuetify: new Vuetify(),
     data: {
         // nodes: FSNode.unzip(zipped)[0],
         storage: FS,
         initval: "initialization",
+        emstore: EMStore,
     },
     methods: {
         logger: function(e) {
@@ -38,7 +34,8 @@ let vm = new Vue({
             console.log(FS.getCurrentContent());
         },
         log: function(updator) {
-            console.log(updator("test save"));
+            EMStore.setCurrent(updator(EMStore.getCurrent()));
+            // console.log(updator("test save"));
         },
         editormodule: function(event) {
             console.log(event);
@@ -61,3 +58,4 @@ let vm = new Vue({
         }
     }
 })
+

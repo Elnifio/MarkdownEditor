@@ -40,7 +40,15 @@ Vue.component(ASTType.Link, {
 // TODO: REPLACE THIS WITH vue-latex
 Vue.component(ASTType.Latex, {
     props: ['sentence'],
-    template: `<span><span class="code">{{sentence.get()}}</span> (<span v-html="sentence.render()"></span>)</span>`
+    template: `
+    <v-tooltip bottom>
+        <template v-slot:activator="{on, attrs}">
+            <span v-html="sentence.render()" v-bind="attrs" v-on="on"></span>
+        </template>
+        <span>
+            {{sentence.get()}}
+        </span> 
+    </v-tooltip>`
 })
 
 Vue.component(ASTType.ReferenceSeparator, {
@@ -98,19 +106,19 @@ Vue.component(ASTType.CodeBlock, {
     `
 })
 
-// TODO: REPLACE THIS WITH vue-latex
+// deleted contents: 
+/*
+<div class="codeblock">
+    <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
+        <span>{{index+1}} {{ codes }}</span>
+        <br />
+    </template>
+    <hr />
+</div>
+*/
 Vue.component(ASTType.LatexBlock, {
     props: ["content"],
-    template: `
-    <div class="codeblock">
-        <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
-            <span>{{index+1}} {{ codes }}</span>
-            <br />
-        </template>
-        <hr />
-        <div class="latex-result" v-html="content.render()"></div>
-    </div>
-    `
+    template: `<div class="latex-result" v-html="content.render()"></div>`
 }) 
 
 Vue.component(ASTType.Image, {

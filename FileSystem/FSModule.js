@@ -200,6 +200,10 @@ let FS = function(storage) {
         if (this.filecursor) this.filecursor.selected = false;
         if (this.foldercursor) this.foldercursor.selected = false;
     }
+
+    this.export = function() {
+        return FSNode.zip(this.root);
+    }
 };
 exports.FS = FS;
 
@@ -241,11 +245,13 @@ Vue.component("fsmodule", {
         
     },
 
+    // deleted: 
+    // <fsnode :node="fs.root" @click-handler="clickHandler"></fsnode>
     template: `
         <div>
             <h1>File System</h1>
             <hr />
-            <fsnode :node="fs.root" @click-handler="clickHandler"></fsnode>
+            <fsnode v-for="child in fs.root.children" :node="child" :key="child.getName()" @click-handler="clickHandler"></fsnode>
         </div>
     `
 })
