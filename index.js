@@ -1,7 +1,11 @@
-const FSNode = require("./FileSystem-VTreeView-version/FSNode");
-const FSModule = require("./FileSystem-VTreeView-version/FSModule");
+const FSNode = require("./FileSystem/FSNode");
+const FSModule = require("./FileSystem/FSModule");
+const FSControlKit = require("./FileSystem/FSControlKit");
+const EditorModule = require("./Editor/EditorModule");
+const Conponents = require("./MarkdownCompiler/Components");
 const fs = require("fs");
-const EM = require("./Editor/EditorModule");
+
+const ipcRenderer = require("electron").ipcRenderer;
 
 let storage = fs.readFileSync("storage.json").toString();
 
@@ -12,21 +16,23 @@ if (storage == "") {
     let n02 = FSNode.createFolder("n02", true);
     let n03 = FSNode.createFile("n03", false, "n03 content");
     let n04 = FSNode.createFile("n04", false, "n04 content");
-    let n05 = FSNode.createFolder("n05", true);
-    let n06 = FSNode.createFile("n06", false, "n06 content");
-    n05.addChild(n06);
     n02.addChild(n03);
     n02.addChild(n04);
-    n02.addChild(n05);
     rootEle.addChild(n01);
     rootEle.addChild(n02);
-    storage = FSNode.zip(rootEle.children);
+    storage = FSNode.zip(rootEle);
 }
-console.log(storage);
-let FS = FSModule.FSFactory(storage);
-console.log(FS.current);
+let FS = new FSModule.FS(storage);
+let EMStore = new EditorModule.Editor();
+EMStore.setCurrent(FS.getCurrentContent());
 
 Vue.use(Vuetify);
+
+ipcRenderer.on('close', (event) => {
+    if (FS.hasFileCursor()) FS.saveCurrentFile(EMStore.getCurrent());
+    fs.writeFileSync('./storage.json', FS.export());
+    ipcRenderer.send("close-complete", FS.export());
+})
 
 let vm = new Vue({
     el: "#app",
@@ -35,18 +41,16 @@ let vm = new Vue({
         // nodes: FSNode.unzip(zipped)[0],
         storage: FS,
         initval: "initialization",
+        emstore: EMStore,
     },
     methods: {
-        updator: function(updatorFn) {
-            console.log(updatorFn("13333"));
-        },
-
         logger: function(e) {
             console.log(FSNode.zip(e));
             console.log(FS.getCurrentContent());
         },
         log: function(updator) {
             EMStore.setCurrent(updator(EMStore.getCurrent()));
+            // console.log(updator("test save"));
         },
         editormodule: function(event) {
             console.log(event);

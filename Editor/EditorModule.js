@@ -1,4 +1,5 @@
 let Parser = require("../MarkdownCompiler/parser");
+let Components = require("../MarkdownCompiler/Components")
 let pobj = new Parser.Parser();
 
 let Editor = function() {
@@ -39,26 +40,32 @@ Vue.component("editor", {
 });
 
 Vue.component("editor-control", {
-    props: ["editor"],
+    props: {
+        initval: String
+    },
     data: function() {
         return {
-            estore: this.editor,
+            editorvalue: this.initval,
         }
     },
     computed: {
         ast: function() {
-            return pobj.parse(this.estore.getCurrent());
+            return pobj.parse(this.editorvalue);
         }
     },
-    methods: {
-        // reparse: function(newvalue) {
-        //     this.ast = pobj.parse(newvalue);
-        // }
+    methods: { 
+        update: function(event) {
+            this.editorvalue = event;
+            this.$emit("update", event);
+        },
+        select: function(event) {
+            console.log(event);
+        }
     },
     template: `
     <v-row>
         <v-col cols=6>
-        <editor v-model="estore.state.currval"></editor>
+            <editor v-model="editorvalue" @input="update($event)"></editor>
         </v-col>
         <v-col cols=6>
         <markdown-block :ast="ast" v-if="ast"></markdown-block>
@@ -66,3 +73,10 @@ Vue.component("editor-control", {
     </v-row>
     `
 })
+
+/*
+deleted content: 
+
+            <v-textarea @input="update($event)" @select="select($event)" :value="evalue">
+            </v-textarea>
+*/

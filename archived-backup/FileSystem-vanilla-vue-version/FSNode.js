@@ -154,6 +154,30 @@ let FSNode = function(name, type, content="", opened=false, children={}, parent=
         return out;
     }
 
+    this.summarize = function() {
+        // [<summarized-object>, [<opened-id>, ...]]
+        let out = [{
+            name: this.getCanonicalName(),
+            id: this.findPath(),
+            isFile: this.isFile(),
+        }, []];
+        let summarized = out[0];
+        let openedItem = out[1];
+
+        if (this.opened) openedItem.push(summarized.id);
+
+        if (this.isFolder()) {
+            summarized.children = [];
+            let child, result;
+            for (child in this.children) {
+                result = this.children[child].summarize();
+                summarized.children.push(result[0]);
+                openedItem = openedItem.concat(result[1]);
+            }
+        }
+        return out;
+    }
+
     // Get & set for content
     this.getContent = function() { return this.content; }
     this.setContent = function(new_content) { this.content = new_content; }
@@ -164,12 +188,21 @@ let FSNode = function(name, type, content="", opened=false, children={}, parent=
 }
 exports.FSNode = FSNode;
 
+exports.createFile = function(name, opened=false, content="") {
+    return new FSNode(name, Type.file, content, opened);
+}
+
+exports.createFolder = function(name, opened=false, content="") {
+    return new FSNode(name, Type.folder, content, opened);
+}
+
 Vue.component("fsnode", {
     props: ["node"],
 
+    computed: { },
+
     methods: {
         resolveClick: function() {
-            // console.log("clicked inside node " + this.node.name);
             this.node.toggleOpen();
             this.$emit("click-handler", this.node);
         },
@@ -182,8 +215,17 @@ Vue.component("fsnode", {
     template: `
     <div class="note" :class="'fs-'+node.type">
         <div @click.stop="resolveClick" class="note title" :class="{selected: node.selected, opened: node.opened}">
-            {{ node.type }} | {{ node.name }}<br/>
-            {{ node.content }}
+            <template v-if="node.isFile()">
+                <v-icon v-if="node.opened">mdi-file-edit-outline</v-icon>
+                <v-icon v-else>mdi-file-outline</v-icon>
+            </template>
+            <template v-else>
+                <v-icon v-if="node.opened">mdi-folder-open-outline</v-icon>
+                <v-icon v-else>mdi-folder-outline</v-icon>
+            </template>
+            {{ node.name }}
+            <hr/>
+            {{ node.content.substr(0, 100) }}
         </div>
         <div v-if="node.opened && node.isFolder()" class="note children">
             <fsnode v-for="child in node.children" :node="child" :key="child.getName()" @click-handler="pass"></fsnode>

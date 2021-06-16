@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 
 console.log("started");
 
@@ -20,7 +20,7 @@ function createWindow () {
 
     // close event emitter
     win.webContents.on('close', () => {
-        win.webContents.send('close')
+        win.webContents.send('close');
     });
 }
 
@@ -32,6 +32,10 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
     }
+})
+
+ipcMain.on("close-complete", (args) => {
+    console.log(args);
 })
 
 app.on('activate', () => {
