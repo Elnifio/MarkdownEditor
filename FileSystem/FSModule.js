@@ -67,6 +67,14 @@ let FS = function(rootNode, currentlyOpened, openList) {
         this.foldercursor = this.getWorkingFolder();
     }
 
+    this.setFileCursorStatus = function(open) {
+        if (this.filecursor) this.filecursor.setOpenCloseStatus(open);
+    }
+
+    this.setFolderCursorStatus = function(open) {
+        if (this.foldercursor) this.foldercursor.setOpenCloseStatus(open);
+    }
+
     this.resetFolderCursor = function(node) { this.foldercursor = node; };
 
     this.getCurrentContent = function() {
@@ -139,6 +147,89 @@ let FS = function(rootNode, currentlyOpened, openList) {
         }
     }
 
+    /**
+     * 
+     * @param {FSNode.FSNode} node node that need to be relocated
+     * @param {String} newpath new path string
+     */
+    this.relocateFile = function(node, newpath) {
+        if (!node.renamable) return;
+        if (!node.parent) return;
+
+        node.parent.deleteChild(node);
+        let curr = this.root;
+        if (newpath[0] == "/") newpath = newpath.substring(1);
+        let paths = newpath.split("/");
+        let plen = paths.length;
+        paths.forEach((x, idx) => {
+            // is a file name
+            if (idx == plen - 1) {
+                let newname = x;
+                if (curr.hasChildFile(newname)) {
+                    let i = 1;
+                    while (curr.hasChildFile(newname + i)) {
+                        i += 1;
+                    }
+                    newname += i;
+                }
+                node.setName(newname);
+                curr.addChild(node, true);
+                node.updateChildrenPath();
+            } 
+
+            // is a folder name
+            else {
+                curr = curr.findOrCreateChildFolder(x);
+                curr.setOpen();
+                if (!this.opened.includes(curr)) this.opened.push(curr);
+            }
+        });
+    }
+
+    /**
+     * 
+     * @param {FSNode.FSNode} node new folder node that needs to be relocated
+     * @param {String} newpath new path for the folder node
+     */
+    this.relocateFolder = function(node, newpath) {
+        if (!node.renamable) return;
+        if (!node.parent) return;
+
+        console.log("folder cursor: " + this.foldercursor.path);
+        node.parent.deleteChild(node);
+        
+        let curr = this.root;
+        if (newpath[0] == "/") newpath = newpath.substring(1);
+        let paths = newpath.split("/");
+        let plen = paths.length;
+        paths.forEach((x, index) => {
+            //  first find or create the path
+            //  and check if current x is the last item in list
+            //  if is last item, then we check if current node has a children of the same name as node
+            //      if has same name, then we migrate all children under current node to this node
+            //      else, we add current node as a child of curr
+            //  else, directly enter next loop
+            if (index == plen-1) {
+                // indicates that there already has a folder with same name, migrate all children to this node
+                if (curr.hasChildFolder(x)) {
+                    curr = curr.findOrCreateChildFolder(x);
+                    node.migrate(curr);
+                    return;
+                } 
+                // no duplicate name found, add node as a child of curr
+                else {
+                    node.setName(x);
+                    curr.addChild(node, true);
+                    node.updateChildrenPath();
+                }
+            } else {
+                curr = curr.findOrCreateChildFolder(x);
+                curr.setOpen();
+                if (!this.opened.includes(curr)) this.opened.push(curr);
+            }
+        });
+    }
+
     this.createFile = function(currentValue) {
         this.resetSelected();
         if (this.filecursor) {
@@ -180,7 +271,7 @@ let FS = function(rootNode, currentlyOpened, openList) {
 
     // delete currently selected file and set filecursor to be undefined
     // silently fail if filecursor is undefined
-    this.deleteFile = function() {
+    this.deleteCurrentFile = function() {
         if (this.filecursor) {
             this.deleteNodePrimitive(this.filecursor);
             this.filecursor = undefined;
@@ -191,16 +282,34 @@ let FS = function(rootNode, currentlyOpened, openList) {
         node.parent.deleteChild(node);
     }
 
+    this.deleteGivenNode = function(node) {
+        if (!node.deletable) return;
+
+        if (this.foldercursor == node) {
+            if (this.in()) {
+                this.filecursor = undefined;
+            }
+            this.foldercursor = this.root;
+        }
+
+        if (this.filecursor == node) {
+            this.filecursor = undefined;
+        }
+
+        this.deleteNodePrimitive(node);
+    }
+
     // delete currently selected folder and set foldercursor to be root
     // silently fail if: 
     //      foldercursor is undefined
-    //      foldercursor is root
+    //      foldercursor is root ( folder is not deletable )
     // if currently editing file is also in foldercursor, 
     // we also select filecursor as undefined
-    this.deleteFolder = function() {
+    this.deleteCurrentFolder = function() {
         // edge cases
         if (!this.foldercursor) return;
-        if (this.foldercursor == this.root) return;
+        // if (this.foldercursor == this.root) return;
+        if (!this.foldercursor.deletable) return;
 
         // file cursor inside folder cursor
         if (this.in()) {
@@ -230,8 +339,28 @@ let FS = function(rootNode, currentlyOpened, openList) {
     this.resetToRoot = function() {
         this.foldercursor = this.root;
     }
+
+    this.export = function() {
+        return FSNode.zip(this.root.children);
+    }
 };
 exports.FS = FS;
+
+/**
+ * 
+ * @param {FS} fs fs to visualize
+ */
+let visualize = function(fs, msg="") {
+    console.log("----------------Visualizing FS----------------");
+    console.log(msg);
+    console.log("--------\nFile Cursor:")
+    console.log(FSNode.visualizer(fs.filecursor));
+    console.log("--------\nFolder Cursor:")
+    console.log(FSNode.visualizer(fs.foldercursor));
+    console.log("--------\nRoot:");
+    console.log(FSNode.visualizer(fs.root));
+}
+exports.visualize = visualize;
 
 Vue.component("fsmodule", {
     props: ["initfs"],
@@ -273,6 +402,7 @@ Vue.component("fsmodule", {
             }
             log("set new folder cursor as " + this.fs.getSelectedFolder().path);
             this.fs.opened = openedList;
+            this.fs.setFolderCursorStatus(this.fs.opened.includes(this.fs.foldercursor));
         },
 
         /**
@@ -282,8 +412,28 @@ Vue.component("fsmodule", {
         fileClickHandler: function(newnode) {
             console.log("Clicking node:");
             console.log(newnode);
+            this.fs.setFileCursorStatus(false);
             this.fs.resetFileCursor(newnode[0]);
-            // TODO: 修复无法切换笔记的bug
+            this.fs.setFileCursorStatus(true);
+            this.$emit("switch-note", this.fs.current);
+        },
+
+        /**
+         * 
+         * @param {{FSNode, String}} newconfig 
+         */
+        relocationHandler: function(node, newpath) {
+            visualize(this.fs, `Relocating node ${node.path} -> ${newpath}`);
+            if (node.isFile()) {
+                this.fs.relocateFile(node, newpath);
+            } else {
+                this.fs.relocateFolder(node, newpath);
+            }
+        },
+
+        deleteNodeHandler: function(node) {
+            console.log("deleting node:" + node.path);
+            this.fs.deleteGivenNode(node);
         }
     },
 
@@ -293,7 +443,7 @@ Vue.component("fsmodule", {
                 :items="fs.getDB()"
                 :open="fs.opened"
                 activatable
-                item-key="path"
+                item-key="id"
                 open-on-click
                 dense
                 shaped
@@ -313,6 +463,13 @@ Vue.component("fsmodule", {
 
                 <template v-slot:label="{ item, open }">
                     {{ item.getCanonicalName() }}
+                </template>
+
+                <template v-slot:append="{ item }">
+                    <fs-node-menu 
+                    :initval="item" 
+                    @node-relocate="relocationHandler" 
+                    @delete-node="deleteNodeHandler"></fs-node-menu>
                 </template>
             </v-treeview>
         </div>

@@ -20,11 +20,15 @@ if (storage == "") {
     n02.addChild(n05);
     rootEle.addChild(n01);
     rootEle.addChild(n02);
+    console.log(FSNode.visualizer(rootEle));
     storage = FSNode.zip(rootEle.children);
 }
 console.log(storage);
 let FS = FSModule.FSFactory(storage);
 console.log(FS.current);
+
+let EStore = new EM.Editor();
+EStore.setCurrent(FS.current);
 
 Vue.use(Vuetify);
 
@@ -34,11 +38,17 @@ let vm = new Vue({
     data: {
         // nodes: FSNode.unzip(zipped)[0],
         storage: FS,
-        initval: "initialization",
+        initval: FS.getCurrentContent(),
+        estore: EStore,
     },
     methods: {
-        updator: function(updatorFn) {
-            console.log(updatorFn("13333"));
+        switchNote: function(newvalue) {
+            console.log("updated new value: "+ newvalue);
+            EStore.setCurrent(newvalue);
+        },
+
+        storeToSystem: function() {
+            FS.current = EStore.getCurrent();
         },
 
         logger: function(e) {
@@ -48,6 +58,8 @@ let vm = new Vue({
         log: function(updator) {
             EMStore.setCurrent(updator(EMStore.getCurrent()));
         },
+
+
         editormodule: function(event) {
             console.log(event);
         },

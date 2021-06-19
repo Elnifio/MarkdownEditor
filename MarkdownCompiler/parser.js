@@ -255,10 +255,13 @@ let Parser = function() {
                 this.accept(TokenType.enter);
                 let sep = new AST.Separator();
                 sep.line = line;
+                this.collectLists(markdownContainer);
                 markdownContainer.addBlock(sep);
+                this.emptyAccumulator();
                 return;
             } else {
                 this.accept(TokenType.enter);
+                this.collectLists(markdownContainer);
                 let para = new AST.Paragraph();
                 para.line = line;
                 let sen = new AST.Sentence();

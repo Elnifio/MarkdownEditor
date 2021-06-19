@@ -5,7 +5,11 @@ const EditorModule = require("./Editor/EditorModule");
 const Conponents = require("./MarkdownCompiler/Components");
 const fs = require("fs");
 
-const ipcRenderer = require("electron").ipcRenderer;
+const { ipcRenderer } = require("electron");
+
+ipcRenderer.on("log-value-result", (event, message) => {
+    console.log(message);
+})
 
 let storage = fs.readFileSync("storage.json").toString();
 
@@ -20,57 +24,48 @@ if (storage == "") {
     n02.addChild(n04);
     rootEle.addChild(n01);
     rootEle.addChild(n02);
-    storage = FSNode.zip(rootEle);
+    storage = FSNode.zip(rootEle.children);
 }
-let FS = new FSModule.FS(storage);
+let FS = FSModule.FSFactory(storage);
 let EMStore = new EditorModule.Editor();
-EMStore.setCurrent(FS.getCurrentContent());
+EMStore.setCurrent(FS.current);
 
 Vue.use(Vuetify);
 
-ipcRenderer.on('close', (event) => {
-    if (FS.hasFileCursor()) FS.saveCurrentFile(EMStore.getCurrent());
+ipcRenderer.on('close-app', (event, message) => {
+    // if (FS.hasFileCursor()) FS.current = EMStore.getCurrent();
     fs.writeFileSync('./storage.json', FS.export());
-    ipcRenderer.send("close-complete", FS.export());
+    ipcRenderer.send("close-complete-index", "closed");
 })
 
 let vm = new Vue({
     el: "#app",
     vuetify: new Vuetify(),
+
     data: {
         // nodes: FSNode.unzip(zipped)[0],
         storage: FS,
         initval: "initialization",
         emstore: EMStore,
     },
+
     methods: {
-        logger: function(e) {
-            console.log(FSNode.zip(e));
-            console.log(FS.getCurrentContent());
-        },
-        log: function(updator) {
-            EMStore.setCurrent(updator(EMStore.getCurrent()));
-            // console.log(updator("test save"));
-        },
-        editormodule: function(event) {
-            console.log(event);
+        log: function(e) {
+            console.log(e);
         },
 
-        createFile: function() {
-            FS.createFile("123");
+        switchNote: function(newvalue) {
+            console.log("updated new value: "+ newvalue);
+            this.emstore.setCurrent(newvalue);
         },
 
-        createFolder: function() {
-            FS.createFolder();
+        storeToSystem: function() {
+            console.log("storing to system");
+            this.storage.current = this.emstore.getCurrent();
+            ipcRenderer.send("log-value", "storing to system");
         },
 
-        deleteFile: function() {
-            FS.deleteFile();
-        },
 
-        deleteFolder: function() {
-            FS.deleteFolder();
-        }
     }
 })
 

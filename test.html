@@ -15,15 +15,16 @@
         <div id="app">
             <v-app>
                 <v-navigation-drawer app>
-                    <fsmodule :initfs="storage" @update-click="updator"></fsmodule>
+                    <fsmodule :initfs="storage" @switch-note="switchNote"></fsmodule>
                 </v-navigation-drawer>
                 <v-main>
                     <v-container fluid>
-                        <editor-control :initval="storage.current" @update="storage.current = $event"></editor-control>
+                        <editor-control :estore="estore" @store-to-system="storeToSystem"></editor-control>
                     </v-container>
                 </v-main>
             </v-app>
         </div>
         <script src="./test.js" type="module"></script>
+        <!-- <script src="./testrelocate.js"></script> -->
     </body>
 </html>

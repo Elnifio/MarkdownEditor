@@ -88,17 +88,22 @@
 
         <div id="app">
             <v-app>
-                <v-navigation-drawer app>
-                    <fsmodule :initfs="storage" @update-content="log"></fsmodule>
+                <v-navigation-drawer 
+                    app 
+                    permanent 
+                    expand-on-hover 
+                    @update:mini-variant="log" 
+                    mini-variant>
+                    <fsmodule :initfs="storage" @switch-note="switchNote"></fsmodule>
                 </v-navigation-drawer>
                 <v-main>
                     <v-container fluid>
-                        <editor-control :editor="emstore"></editor-control>
+                        <editor-control :estore="emstore" @store-to-system="storeToSystem"></editor-control>
                     </v-container>
                 </v-main>
             </v-app>
         </div>
 
-        <script src="./test.js"></script>
+        <script src="./index.js"></script>
     </body>
 </html>

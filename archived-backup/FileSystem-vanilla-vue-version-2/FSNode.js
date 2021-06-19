@@ -7,6 +7,11 @@ let Type = {
 }
 exports.Type = Type;
 
+let Color = {
+    default: "no-color"
+}
+exports.Color = Color;
+
 let PathSep = "/";
 exports.PathSeparator = PathSep;
 
@@ -69,6 +74,7 @@ let unzip = function(zipped) {
         opens.lastOpened = (xres[1])?xres[1]:opens.lastOpened;
         opens.openedFolders = opens.openedFolders.concat(xres[2]);
     })
+    root.deletable = false;
     return [root, opens.lastOpened, opens.openedFolders];
 }
 exports.unzip = unzip;
@@ -113,7 +119,7 @@ let unziphelper = function(zipped, path="") {
  * @param {Boolean} opened      : status: is the node opened?
  * @param {FSNode[]} children   : children of this node, ignored if type==file
  * @param {FSNode} parent       : parent of this node
- * @param {String} PathSep      : path of this node
+ * @param {String} path         : path of this node
  */
 let FSNode = function(name, type, content="", opened=false, children=[], parent=undefined, path="") {
     this.name=name;
@@ -123,7 +129,9 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     this.children=children;
     this.parent=parent;
     this.path = path;
-    this.selected = false;
+    this.description = "";
+    this.deletable = true;
+
 
     this.setOpen = function() { this.opened = true; };
     this.setClose = function() { this.opened = false; };
@@ -275,3 +283,45 @@ exports.createFile = function(name, opened=false, content="") {
 exports.createFolder = function(name, opened=false, content="") {
     return new FSNode(name, Type.folder, content, opened);
 }
+
+Vue.component("fs-node", {
+    props: ["currnode"],
+    data: function() {
+        return {
+            node: this.currnode,
+        }
+    },
+    template: `
+        
+    `
+})
+
+Vue.component("fs-node-menu", {
+    props: ["initval"],
+    data: function() {
+        return {
+            node: this.initval,
+            open: false,
+        }
+    },
+    template: `
+        <v-menu 
+            v-model="open" 
+            :close-on-content-click="false" 
+            offset-x>
+            <template v-slot:activator="{ on, attrs }">
+                <v-btn v-bind="attrs" v-on="on" icon>
+                    <v-icon>mdi-dots-horizontal-circle-outline</v-icon>
+                </v-btn>
+            </template>
+
+            <v-card>
+                <v-list-item>
+                    <v-list-item-title>
+                        {{ node.getCanonicalName() }}
+                    </v-list-item-title>
+                </v-list-item>
+            </v-card>
+        </v-menu>
+    `,
+})
