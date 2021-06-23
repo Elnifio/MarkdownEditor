@@ -21,6 +21,7 @@ Vue.component("editor", {
     props: {
         "estore": Editor,
         "value": String,
+        "editable": Boolean,
     },
     // data: function() {
     //     return {
@@ -46,14 +47,15 @@ Vue.component("editor", {
         @select="select($event)" 
         :value="value" 
         @input="inputUpdate($event)" 
-        auto-grow>
+        auto-grow
+        :disabled="!editable">
     </v-textarea>
     `
 });
 
 let newAST;
 Vue.component("editor-control", {
-    props: ['estore'],
+    props: ['estore', 'editable'],
     data: function() {
         return {
             editorstore: this.estore,
@@ -90,7 +92,8 @@ Vue.component("editor-control", {
             <editor 
                 v-model="editorstore.getCurrent()" 
                 @value-update="store($event)" 
-                @input-update="update($event)"></editor>
+                @input-update="update($event)"
+                :editable="editable"></editor>
         </v-col>
         <v-col cols=6>
             <markdown-block :ast="ast" v-if="ast"></markdown-block>

@@ -38,6 +38,16 @@ ipcRenderer.on('close-app', (event, message) => {
     ipcRenderer.send("close-complete-index", "closed");
 })
 
+let Central = {
+    navbar: {
+        show: true,
+        storage: true,
+    },
+    editor: {
+        editable: FS.hasFileCursor(),
+    }
+}
+
 let vm = new Vue({
     el: "#app",
     vuetify: new Vuetify(),
@@ -47,8 +57,7 @@ let vm = new Vue({
         storage: FS,
         initval: "initialization",
         emstore: EMStore,
-        showNavbar: true,
-        showStorage: true,
+        central: Central,
     },
 
     methods: {
@@ -57,16 +66,21 @@ let vm = new Vue({
         },
 
         adjustNavbar: function() {
-            this.showNavbar = !this.showNavbar;
+            this.central.showNavbar = !this.central.showNavbar;
         },
         adjustStorage: function() {
-            console.log(`showNavbar: ${this.showNavbar}, showStorage: ${this.showStorage}`);
-            this.showStorage = (!this.showNavbar) && (!this.showStorage);
+            console.log(`showNavbar: ${this.central.navbar.storage}, showStorage: ${this.central.navbar.storage}`);
+            this.central.navbar.storage = (!this.central.navbar.show) && (!this.central.navbar.storage);
+        },
+
+        showStorage: function() {
+            return !(this.central.navbar.show || this.central.navbar.storage);
         },
 
         switchNote: function(newvalue) {
             console.log("updated new value: "+ newvalue);
             this.emstore.setCurrent(newvalue);
+            this.central.editor.editable = true;
         },
 
         storeToSystem: function() {
@@ -84,10 +98,15 @@ let vm = new Vue({
             console.log("create a new file");
             this.storage.createFile(this.emstore.getCurrent());
             this.emstore.setCurrent(this.storage.current);
+            this.central.editor.editable = true;
         },
 
         clearEditor: function() {
-            this.emstore.setCurrent("");
+            this.central.editor.editable = false;
+            this.emstore.setCurrent("Did not open any file"); 
+            /*
+            刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量
+            */
         }
 
     }
