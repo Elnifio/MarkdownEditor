@@ -29,7 +29,12 @@ let ASTType = AST.ASTTypes;
 // Each element is referred as 'sentence' variable
 Vue.component(ASTType.Sentence, {
     props: ['sentence'],
-    template: `<span v-bind:class='sentence.getStyle()'>{{ sentence.get() }}</span>`
+    template: `
+    <span>
+        <component :is="sentence.isCode()?'code':'span'" :class='sentence.getStyle()'>{{ sentence.get() }}</component>
+    </span>
+    
+    `
 })
 
 Vue.component(ASTType.Link, {
@@ -37,7 +42,6 @@ Vue.component(ASTType.Link, {
     template: `<span><a v-bind:href="sentence.get('url')">{{ sentence.get('alt') }}</a></span>`
 })
 
-// TODO: REPLACE THIS WITH vue-latex
 Vue.component(ASTType.Latex, {
     props: ['sentence'],
     template: `
@@ -109,7 +113,7 @@ Vue.component(ASTType.CodeBlock, {
         }
     },
     template: `
-    <p class="codeblock" >
+    <p class="code" >
         <template>
             <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
                 <span>{{index+1}} {{ codes }}</span>
@@ -166,9 +170,11 @@ Vue.component(ASTType.OL, {
 Vue.component(ASTType.Reference, {
     props: ["content"],
     template: `
-    <p class="reference">
+    <blockquote class="blockquote">
+    <p>
         <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
-    </p>`
+    </p>
+    </blockquote>`
 })
 
 // TODO: redesign this component

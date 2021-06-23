@@ -41,7 +41,12 @@ Vue.component("editor", {
         },
     },
     template: `
-    <v-textarea @blur="updator($event)" @select="select($event)" :value="value" @input="inputUpdate($event)" auto-grow>
+    <v-textarea 
+        @blur="updator($event)" 
+        @select="select($event)" 
+        :value="value" 
+        @input="inputUpdate($event)" 
+        auto-grow>
     </v-textarea>
     `
 });

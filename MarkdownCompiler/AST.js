@@ -271,11 +271,10 @@ let StyleConstructor = function() {
 
     this.compress = function() {
         return {
-            bold: this.bold,
-            italic: this.italic,
-            underline: this.underline,
-            strikethrough: this.strikethrough,
-            code: this.code
+            'font-weight-bold': this.bold,
+            'font-italic': this.italic,
+            'text-decoration-underline': this.underline,
+            'text-decoration-line-through': this.strikethrough,
         }
     };
 
@@ -303,6 +302,8 @@ let Sentence = function() {
             this.style[option] = value;
         }
     }
+
+    this.isCode = function() { return this.style.code; }
 
     this.getStyle = function() { return this.style.compress(); }
     this.visit = function(visitor, arg) { return visitor.visitSentence(this, arg); }
