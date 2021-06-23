@@ -119,10 +119,14 @@
                             <v-icon>mdi-folder</v-icon>
                         </v-list-item-icon>
                         <v-list-item-title>Folders</v-list-item-title>
-                        <v-icon>mdi-folder-plus-outline</v-icon>
-                        <v-icon>mdi-file-plus-outline</v-icon>
+                        <v-btn icon @click.prevent.stop="createFolder">
+                            <v-icon>mdi-folder-plus-outline</v-icon>
+                        </v-btn>
+                        <v-btn icon @click.prevent.stop="createFile">
+                            <v-icon>mdi-file-plus-outline</v-icon>
+                        </v-btn>
                     </v-list-item>
-                    <fsmodule :initfs="storage" @switch-note="switchNote" v-if="!(showStorage || showNavbar)"></fsmodule>
+                    <fsmodule :initfs="storage" @switch-note="switchNote" v-if="!(showStorage || showNavbar)" @clear-editor="clearEditor"></fsmodule>
                     <v-divider></v-divider>
 
                     <v-list-item>

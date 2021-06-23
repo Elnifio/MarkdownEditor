@@ -170,7 +170,7 @@ let FS = function(rootNode, currentlyOpened, openList) {
 
         let node = new FSNode.FSNode(name, FSNode.Type.file, placeholder);
         this.filecursor = node;
-        parent.addChild(node);
+        parent.addChild(node, true);
         parent.setOpen();
     }
 
@@ -276,7 +276,6 @@ let FS = function(rootNode, currentlyOpened, openList) {
     }
 
     this.createFile = function(currentValue) {
-        this.resetSelected();
         if (this.filecursor) {
             this.saveCurrentFile(currentValue);
             this.filecursor.setClose();
@@ -295,7 +294,6 @@ let FS = function(rootNode, currentlyOpened, openList) {
     //                      append this newly-created folder to current folder
     //                      and navigate to this newly-created folder
     this.createFolder = function() {
-        this.resetSelected();
         let parent = this.getSelectedFolder();
         let name = "undefined";
         if (parent.hasChildFolder(name)) {
@@ -308,7 +306,7 @@ let FS = function(rootNode, currentlyOpened, openList) {
 
         let node = new FSNode.FSNode(name, FSNode.Type.folder);
         this.foldercursor = node;
-        parent.addChild(node);
+        parent.addChild(node, true);
         parent.setOpen();
         return true;
         // return node;
@@ -481,6 +479,7 @@ Vue.component("fsmodule", {
         deleteNodeHandler: function(node) {
             log("deleting node:" + node.path);
             this.fs.deleteGivenNode(node);
+            this.$emit("clear-editor");
         }
     },
 

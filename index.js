@@ -75,6 +75,20 @@ let vm = new Vue({
             ipcRenderer.send("log-value", "storing to system");
         },
 
+        createFolder: function() {
+            console.log("create a new folder");
+            this.storage.createFolder();
+        },
+
+        createFile: function() {
+            console.log("create a new file");
+            this.storage.createFile(this.emstore.getCurrent());
+            this.emstore.setCurrent(this.storage.current);
+        },
+
+        clearEditor: function() {
+            this.emstore.setCurrent("");
+        }
 
     }
 })
