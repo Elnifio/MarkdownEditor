@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Vue 测试实例 - 菜鸟教程(runoob.com)</title>
+        <title>App Title here</title>
 
         <!-- Vue resources -->
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -16,6 +16,7 @@
         <!-- katex resources -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css" integrity="sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc" crossorigin="anonymous">
 
+        <!-- styles for markdown container and AST -->
         <style id="markdown-container-style">
             .markdown-container {
                 font-family:"Arial";
@@ -60,45 +61,82 @@
             }
         </style>
 
-        <style id="fs-style">
-            .note.children {
-                margin-left: 6px;
-                padding-left: 3px;
-            }
-            .note.children:hover {
-                margin-left: 5px;
-                border-left: 1px solid grey;
-                padding-left: 3px;
-            }
-            .note.title:hover {
-                background-color: #e6e6e6;
-            }
-            .note.title {
-                color: 
-            }
-            .note.title.selected {
-                background-color: #66ccff;
-            }
-            .fs-file .note.title.opened {
-                background-color: #b3e6ff;
-            }
-        </style>
     </head>
     <body>
-
+        <!-- App entry -->
         <div id="app">
             <v-app>
+
+                <!--    App bar container -->
+                <v-app-bar
+                    app
+                    elevate-on-scroll
+                    scroll-target="#editor"
+                    color="white">
+                    <v-app-bar-nav-icon @click.prevent.stop="showNavbar=!showNavbar">
+                        <v-icon>mdi-iframe-outline</v-icon>
+                    </v-app-bar-nav-icon>
+                    <v-toolbar-title>Title</v-toolbar-title>
+                </v-app-bar>
+
                 <v-navigation-drawer 
-                    app 
-                    permanent 
-                    expand-on-hover 
-                    @update:mini-variant="log" 
-                    mini-variant>
-                    <fsmodule :initfs="storage" @switch-note="switchNote"></fsmodule>
+                app 
+                permanent 
+                :mini-variant.sync="showNavbar">
+
+                    <!-- Slots for Title, Settings -->
+                    <!-- Placeholder for app brand -->
+                    <v-list-item>
+                        <v-list-item-icon>
+                            <v-icon>mdi-iframe-outline</v-icon>
+                        </v-list-item-icon> 
+                        <v-list-item-title>App name here</v-list-item-title>
+                        <v-btn icon @click.stop="showNavbar=!showNavbar">
+                            <v-icon>mdi-chevron-left</v-icon>
+                        </v-btn>
+                    </v-list-item>
+                    <v-list-item>
+                        <v-list-item-icon>
+                            <v-icon>mdi-tune</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Settings</v-list-item-title>
+                    </v-list-item>
+                    <v-divider></v-divider>
+
+                    <!-- Slots for TODO, Calendars, etc -->
+                    <!-- Activator for TODO board -->
+                    <v-list-item>
+                        <v-list-item-icon>
+                            <v-icon>mdi-checkbox-marked-outline</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Todo Board</v-list-item-title>
+                    </v-list-item>
+                    <v-divider></v-divider>
+                    
+                    <!-- Slots for File Systems, Tag Systems -->
+                    <v-list-item @click="showStorage = !showStorage && !showNavbar">
+                        <v-list-item-icon>
+                            <v-icon>mdi-folder</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Folders</v-list-item-title>
+                        <v-icon>mdi-folder-plus-outline</v-icon>
+                        <v-icon>mdi-file-plus-outline</v-icon>
+                    </v-list-item>
+                    <fsmodule :initfs="storage" @switch-note="switchNote" v-if="!(showStorage || showNavbar)"></fsmodule>
+                    <v-divider></v-divider>
+
+                    <v-list-item>
+                        <v-list-item-icon>
+                            <v-icon>mdi-tag</v-icon>
+                        </v-list-item-icon>
+                        
+                        <v-list-item-title>Tags</v-list-item-title>
+                    </v-list-item>
                 </v-navigation-drawer>
-                <v-main>
+                
+                <v-main app>
                     <v-container fluid>
-                        <editor-control :estore="emstore" @store-to-system="storeToSystem"></editor-control>
+                        <editor-control :estore="emstore" @store-to-system="storeToSystem" id="editor"></editor-control>
                     </v-container>
                 </v-main>
             </v-app>

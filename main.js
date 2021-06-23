@@ -6,49 +6,17 @@ let win = undefined;
 let closable = false;
 let quittable = false;
 
-/**
- * Previous version of initiating window:
-    function createWindow () {
-        win = new BrowserWindow({
-            width: 800,
-            height: 600,
-            minWidth: 800,
-            minHeight: 600,
-            webPreferences: {
-                nodeIntegration: true
-            }
-        })
-
-        win.loadFile('index.html');
-        // win.loadFile("test.html");
-
-        win.webContents.openDevTools()
-
-        // close event emitter
-        // win.webContents.on('close', () => {
-        //     win.webContents.send("close-app", "closing files");
-        // });
-        win.on("close", (e) => {
-            console.log("closing app");
-            win.webContents.send("close-app", "closing files");
-        });
-    };
-    app.whenReady().then(createWindow)
- */
-
-app.whenReady().then(() => {
+let createWindow = function() {
     win = new BrowserWindow({
         width: 800, height: 600,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            contextIsolation: false
         }
     })
     win.loadFile("./index.html");
+    // win.loadFile("./ASTDifferTest.html");
     win.webContents.openDevTools()
-
-    // win.webContents.on("did-finish-load", () => {
-    //     win.webContents.send("log-value-result", "starting app");
-    // })
 
     win.on("close", (e) => {
         console.log("closing");
@@ -62,9 +30,9 @@ app.whenReady().then(() => {
             app.quit();
         }
     })
-})
+}
 
-app.addRecentDocument("./recent")
+app.whenReady().then(createWindow);
 
 ipcMain.on("close-complete-index", (event, arg) => {
     console.log(arg);
@@ -96,6 +64,7 @@ app.on("close-complete", (event, args) => {
 })
 
 app.on('activate', () => {
+    console.log("activated");
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow()
     }

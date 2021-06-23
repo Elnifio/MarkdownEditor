@@ -96,11 +96,27 @@ Vue.component(ASTType.TODO, {
 
 Vue.component(ASTType.CodeBlock, {
     props: ["content"],
+    data: function() {
+        return {
+            codes: this.content,
+        }
+    },
+    methods: {
+        toggleStatus: function() {
+            console.log("toggling status");
+            console.log(this.content);
+            this.content.activated = !this.content.activated;
+        }
+    },
     template: `
-    <p class="codeblock">
-        <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
-            <span>{{index+1}} {{ codes }}</span>
-            <br />
+    <p class="codeblock" >
+        <template>
+            <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
+                <span>{{index+1}} {{ codes }}</span>
+                <br />
+            </template>
+            <hr />
+            <v-btn @click.stop=toggleStatus>{{ content.activated }}</v-btn>
         </template>
     </p>
     `

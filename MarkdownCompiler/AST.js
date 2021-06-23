@@ -1,10 +1,9 @@
-// --------
-// ENUMERATIONS OF AST NODES
+// requires katex for latex support
 
-const { TouchBarSlider } = require("electron");
 const katex = require("katex");
 
 // --------
+// ENUMERATIONS OF AST NODES
 let ASTType = {
     // General Purpose AST Abstract Type
     AST: "ast",
@@ -32,16 +31,20 @@ let ASTType = {
     Latex: "inline-latex",
     Link: "inline-link",
 
+    // Other elements
     Others: "others",
 }
 Object.freeze(ASTType);
 exports.ASTTypes = ASTType;
 
+// --------
+// ENUMERATIONS OF SENTENCE STYLES
 let Style = {
     bold: "Bold",
     italic: "Italic",
     strikethrough: "Strike Through",
-    underline: "Underline"
+    underline: "Underline",
+    code: "Code"
 }
 Object.freeze(Style);
 exports.Style = Style;
@@ -64,12 +67,14 @@ let AST = function(type=ASTType.AST) {
 }
 
 // --------
+// 
 // MARKDOWN CONTAINER
+//      Concrete Tree Node
 // --------
-// Markdown Top block
-// inherit from AST
-// export module.MD() constructor
 let MD = function() {
+    // Markdown Top block
+    // inherit from AST
+    // export module.MD() constructor
     this.blocks = [];
     this.addBlock = function(block) { this.blocks.push(block); };
 
@@ -90,15 +95,17 @@ exports.MD = MD;
 //      Reference
 //      Header
 // --------
-// Block constructor
-// should not be explicitly used
-// do not export it
+// Abstract Tree Node
 let Block = function(type=ASTType.Block) {
+    // Block constructor
+    // should not be explicitly used
+    // do not export it
     this.type = type;
 }
 Block.prototype = new AST(ASTType.Block);
 
 // Paragraph block
+// Concrete Tree Node
 let Paragraph = function() {
     this.sentences = [];
     this.addSentence = function(sentence) {
@@ -163,6 +170,7 @@ let CodeBlock = function() {
     this.setType = function(content) { this.codetype = content; }
     this.getType = function() { return this.codetype; }
     this.visit = function(visitor, arg)  { return visitor.visitCodeBlock(this, arg); }
+    this.activated=false;
 }
 CodeBlock.prototype = new ContentableBlock(ASTType.CodeBlock);
 exports.CodeBlock = CodeBlock;

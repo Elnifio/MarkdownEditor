@@ -1,4 +1,49 @@
-const { TouchBarScrubber } = require("electron");
+/**
+ *  --------------------------------
+ *  
+ *  Module Description
+ * 
+ *  --------------------------------
+ *  Methods:
+ *      FSFactory: (storage:String) -> FS
+ *          parameter: 
+ *              storage: String
+ *                  represents the storage string read from storage.json
+ *          return:
+ *              an object of type FS that represents the constructed FS instance
+ *                  based on the storage string
+ *          instantiates a new FS object and returns it as a result,
+ *          should be called as FSFactory(storage);
+ *      
+ *      visualize: (fs:FS, msg?:String) -> undefined
+ *          parameter:
+ *              fs: FS
+ *                  the File System instance that needs to be visualized
+ *              msg?: String
+ *                  the optional message printed before each visualized nodes
+ *          visualizes the provided file system in the console
+ *          In particular, it visualizes 
+ *              current file cursor, 
+ *              current folder cursor,
+ *              current root cursor
+ *  ----------------
+ *  Classes: 
+ *      FS: File System representation
+ *          properties:
+ *              fs.filecursor: 
+ *                  points to currently editing document
+ *                  undefined if did not open any document
+ *              fs.foldercursor: 
+ *                  points to current working folder
+ *              
+ *  ----------------
+ *  Errors:
+ *      
+ *  ----------------
+ *  Components: 
+ * 
+ */
+
 let FSNode = require("./FSNode");
 let rootInitDescription = "this is a placeholder value - FSModule.js line 2";
 let placeholder = rootInitDescription;
@@ -351,14 +396,16 @@ exports.FS = FS;
  * @param {FS} fs fs to visualize
  */
 let visualize = function(fs, msg="") {
-    console.log("----------------Visualizing FS----------------");
-    console.log(msg);
-    console.log("--------\nFile Cursor:")
-    console.log(FSNode.visualizer(fs.filecursor));
-    console.log("--------\nFolder Cursor:")
-    console.log(FSNode.visualizer(fs.foldercursor));
-    console.log("--------\nRoot:");
-    console.log(FSNode.visualizer(fs.root));
+    if (debug) {
+        console.log("----------------Visualizing FS----------------");
+        console.log(msg);
+        console.log("--------\nFile Cursor:")
+        console.log(FSNode.visualizer(fs.filecursor));
+        console.log("--------\nFolder Cursor:")
+        console.log(FSNode.visualizer(fs.foldercursor));
+        console.log("--------\nRoot:");
+        console.log(FSNode.visualizer(fs.root));
+    }
 }
 exports.visualize = visualize;
 
@@ -410,8 +457,8 @@ Vue.component("fsmodule", {
          * @param {FSNode.FSNode} newnode 
          */
         fileClickHandler: function(newnode) {
-            console.log("Clicking node:");
-            console.log(newnode);
+            log("Clicking node:");
+            log(newnode);
             this.fs.setFileCursorStatus(false);
             this.fs.resetFileCursor(newnode[0]);
             this.fs.setFileCursorStatus(true);
@@ -432,7 +479,7 @@ Vue.component("fsmodule", {
         },
 
         deleteNodeHandler: function(node) {
-            console.log("deleting node:" + node.path);
+            log("deleting node:" + node.path);
             this.fs.deleteGivenNode(node);
         }
     },
@@ -462,14 +509,17 @@ Vue.component("fsmodule", {
                 </template>
 
                 <template v-slot:label="{ item, open }">
-                    {{ item.getCanonicalName() }}
-                </template>
-
-                <template v-slot:append="{ item }">
-                    <fs-node-menu 
-                    :initval="item" 
-                    @node-relocate="relocationHandler" 
-                    @delete-node="deleteNodeHandler"></fs-node-menu>
+                    <v-hover v-slot="{ hover }">
+                        <v-row justify="space-between" dense :elevation="0">
+                            <v-col>{{ item.getCanonicalName() }}</v-col>
+                            <v-col v-show="hover">
+                                <fs-node-menu 
+                                    :initval="item" 
+                                    @node-relocate="relocationHandler" 
+                                    @delete-node="deleteNodeHandler"></fs-node-menu>
+                            </v-col>
+                        </v-row>
+                    </v-hover>
                 </template>
             </v-treeview>
         </div>

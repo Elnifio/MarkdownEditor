@@ -1,6 +1,8 @@
 let Parser = require("../MarkdownCompiler/parser");
-let Components = require("../MarkdownCompiler/Components")
+let Components = require("../MarkdownCompiler/Components");
+let Diff = require("../MarkdownCompiler/ASTDiffer");
 let pobj = new Parser.Parser();
+let differ = new Diff.Differ();
 
 let Editor = function() {
     this.state = {
@@ -39,21 +41,28 @@ Vue.component("editor", {
         },
     },
     template: `
-    <v-textarea @blur="updator($event)" @select="select($event)" :value="value" @input="inputUpdate($event)">
+    <v-textarea @blur="updator($event)" @select="select($event)" :value="value" @input="inputUpdate($event)" auto-grow>
     </v-textarea>
     `
 });
 
+let newAST;
 Vue.component("editor-control", {
     props: ['estore'],
     data: function() {
         return {
             editorstore: this.estore,
+            ast: pobj.parse(this.estore.getCurrent()),
+            selector: {
+                start: 0, end: 0
+            }
         }
     },
-    computed: {
-        ast: function() {
-            return pobj.parse(this.editorstore.getCurrent());
+    watch: {
+        "editorstore.state.currval": function(newval, oldval) {
+            newAST = pobj.parse(newval);
+            differ.diff(newAST, this.ast);
+            this.ast = newAST;
         }
     },
     methods: { 
@@ -62,6 +71,9 @@ Vue.component("editor-control", {
         },
         update: function(event) {
             this.editorstore.setCurrent(event);
+            // newAST = pobj.parse(this.estore.getCurrent());
+            // differ.diff(newAST, this.ast);
+            // this.ast = newAST;
         },
         select: function(event) {
             console.log(event);

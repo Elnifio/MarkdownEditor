@@ -47,11 +47,21 @@ let vm = new Vue({
         storage: FS,
         initval: "initialization",
         emstore: EMStore,
+        showNavbar: true,
+        showStorage: true,
     },
 
     methods: {
         log: function(e) {
             console.log(e);
+        },
+
+        adjustNavbar: function() {
+            this.showNavbar = !this.showNavbar;
+        },
+        adjustStorage: function() {
+            console.log(`showNavbar: ${this.showNavbar}, showStorage: ${this.showStorage}`);
+            this.showStorage = (!this.showNavbar) && (!this.showStorage);
         },
 
         switchNote: function(newvalue) {
