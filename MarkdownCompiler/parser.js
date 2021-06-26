@@ -478,9 +478,11 @@ let Parser = function() {
         // not a TODO list, but we parse it as a single block-level element
         // accept a single TODO indicator and start parsing a paragraph element
         let line = this.curr.line;
+        let start = this.curr.index;
+        let end = start + this.curr.content.length;
         this.acceptAny();
         this.emptyAccumulator();
-        let todo = new AST.TODO();
+        let todo = new AST.TODO(new AST.InteractIndex(start, end));
         todo.status = todoSuccess;
         todo = this.parseParagraph(todo);
         todo.line = line;

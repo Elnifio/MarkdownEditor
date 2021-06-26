@@ -130,6 +130,14 @@ let FS = function(rootNode, currentlyOpened, openList) {
         }
     }
 
+    this.updateFileTODO = function(todolist) {
+        if (this.hasFileCursor()) {
+            this.filecursor.todos = todolist;
+        } else {
+            throw new FSError("FSModule.updateFileTODO(): do not have a file cursor");
+        }
+    };
+
     this.getWorkingFolder = function() {
         if (!this.hasFileCursor()) {
             return this.foldercursor;
@@ -381,6 +389,13 @@ let FS = function(rootNode, currentlyOpened, openList) {
 
     this.resetToRoot = function() {
         this.foldercursor = this.root;
+    }
+
+    /**
+     * returns {FSNode[]} a list of nodes with type File
+     */
+    this.collectFiles = function() {
+        return this.root.collectChildFile();
     }
 
     this.export = function() {

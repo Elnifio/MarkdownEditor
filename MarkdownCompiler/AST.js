@@ -49,6 +49,12 @@ let Style = {
 Object.freeze(Style);
 exports.Style = Style;
 
+let InteractIndex = function(start, end)  {
+    this.start = start;
+    this.end = end;
+}
+exports.InteractIndex = InteractIndex;
+
 // --------
 // GENERAL AST ABSTRACT CLASS
 // --------
@@ -138,12 +144,13 @@ ListItem.prototype = new Block(ASTType.ListItem);
 exports.ListItem = ListItem;
 
 // \TODO block
-let TODOBlock = function() {
+let TODOBlock = function(idx) {
     this.sentences = [];
     this.status = false;
     this.addSentence = function(sentence) {
         this.sentences.push(sentence);
     }
+    this.todoIndex = idx;
     this.visit = function(visitor, arg) { return visitor.visitTODO(this, arg); }
 }
 TODOBlock.prototype = new Block(ASTType.TODO);
@@ -277,6 +284,15 @@ let StyleConstructor = function() {
             'text-decoration-line-through': this.strikethrough,
         }
     };
+
+    this.toObject = function() {
+        let out = [];
+        let key;
+        for (key in Style) {
+            if (this[key]) out.push(key);
+        }
+        return out;
+    }
 
     this.toString = function() {
         if (this.bold || this.italic || this.underline || this.strikethrough || this.code) {

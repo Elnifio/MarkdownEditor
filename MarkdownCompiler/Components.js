@@ -87,16 +87,51 @@ Vue.component(ASTType.ListItem, {
     `
 })
 
-// TODO: REDESIGN TODO ITEMS
 Vue.component(ASTType.TODO, {
     props: ["content"],
+    methods: {
+        updateStatus: function() {
+            this.$emit("change", 
+            {   index: this.content.todoIndex, 
+                newcontent: this.content.status?"- [ ] ":"- [x] "
+            });
+        }
+    },
     template: `
-    <div>
-        <span>Complete? {{content.status}}</span>
-        <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
-    </div>
+    <v-list-item 
+        dense>
+
+        <v-list-item-icon @click.prevent.stop="updateStatus">
+            <v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon>
+        </v-list-item-icon>
+
+        <div>
+            <component 
+                v-for="metasen in content.sentences" 
+                v-bind:is="metasen.type" 
+                v-bind:sentence="metasen">
+            </component>
+        </div>
+
+    </v-list-item>
     `
 })
+// Old template: 
+/*
+<div>
+    <v-btn icon @click.prevent.stop="logger"><v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon></v-btn>
+    <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
+</div>
+
+<v-list-item>
+    <v-list-item-icon @click.prevent.stop="logger">
+        <v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon>
+    </v-list-item-icon>
+    <v-list-item-content>
+        <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
+    </v-list-item-content>
+</v-list-item>
+*/
 
 Vue.component(ASTType.CodeBlock, {
     props: ["content"],
@@ -208,8 +243,13 @@ Vue.component(ASTType.Header, {
 // ----------------
 Vue.component(ASTType.MD, {
     props: ['ast'],
+    methods: {
+        propagateChange: function(index, content) {
+            this.$emit("change", index, content);
+        }
+    },
     template: `
     <div class="markdown-container">
-        <component v-for="block in ast.blocks" v-bind:is="block.type" v-bind:content="block"></component>
+        <component v-for="block in ast.blocks" v-bind:is="block.type" v-bind:content="block" @change="propagateChange"></component>
     </div>`
 })

@@ -56,7 +56,7 @@ exports.zip = zip;
  * @param {FSNode} unzipped unzipped general FSNode
  */
 let ziphelper = function(unzipped) {
-    return [unzipped.name, unzipped.type, unzipped.content, unzipped.opened, unzipped.children.map(ziphelper)];
+    return [unzipped.name, unzipped.type, unzipped.content, unzipped.opened, unzipped.children.map(ziphelper), {todos: unzipped.todos}];
 }
 
 /**
@@ -100,9 +100,9 @@ exports.unzip = unzip;
 let unziphelper = function(zipped, path="") {
     // [ <root>, <last-opened-file>, [<opened-folder-path>, ...]]
     let returned = [undefined, undefined, []];
-    // [<name>, <type>, <content>, <opened>, [...children]]
+    // [<name>, <type>, <content>, <opened>, [...children], {todos: [...todo-items], }]
     let newpath = path + PathSep + zipped[0];
-    let out = new FSNode(zipped[0], zipped[1], zipped[2], zipped[3], [], undefined, newpath);
+    let out = new FSNode(zipped[0], zipped[1], zipped[2], zipped[3], [], undefined, newpath, zipped.length==6?zipped[5].todos:[]);
     returned[0] = out;
 
     if (out.opened) {
@@ -124,6 +124,13 @@ let unziphelper = function(zipped, path="") {
     return returned;
 }
 
+let Tab = function(name, icon, color) {
+    this.name = name;
+    this.icon = icon;
+    this.color = color;
+    this.children = [];
+}
+
 let id = 0;
 
 /**
@@ -136,7 +143,7 @@ let id = 0;
  * @param {FSNode} parent       : parent of this node
  * @param {String} path         : path of this node
  */
-let FSNode = function(name, type, content="", opened=false, children=[], parent=undefined, path="") {
+let FSNode = function(name, type, content="", opened=false, children=[], parent=undefined, path="", todos=[]) {
     id += 1;
     this.id = id;
     this.name=name;
@@ -146,6 +153,8 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     this.children=children;
     this.parent=parent;
     this.path = path;
+    this.todos = todos;
+
     this.description = "";
     this.deletable = true;
     this.renamable = true;
@@ -314,6 +323,7 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     // Get & set for content
     this.getContent = function() { return this.content; }
     this.setContent = function(new_content) { this.content = new_content; }
+    this.updateAtIndex = function(index, newcontent) { this.content = this.content.substring(0, index.start) + newcontent + this.content.substring(index.end); }
 
     this.toggleOpen = function() {
         this.opened = !this.opened;
@@ -327,6 +337,14 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     this.unlock = function() {
         this.deletable = true;
         this.renamable = true;
+    }
+
+    this.collectChildFile = function() {
+        return this.children.filter(
+            x => x.isFolder()
+            ).reduce(
+                (accumulator, current) => accumulator.concat(current.collectChildFile()), this.children.filter(x => x.isFile())
+                );
     }
 }
 exports.FSNode = FSNode;

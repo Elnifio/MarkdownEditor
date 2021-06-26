@@ -1,8 +1,12 @@
 let Parser = require("../MarkdownCompiler/parser");
 let Components = require("../MarkdownCompiler/Components");
 let Diff = require("../MarkdownCompiler/ASTDiffer");
+let AST = require("../MarkdownCompiler/AST");
+let ASTZipper = require("../MarkdownCompiler/ASTZipper");
+
 let pobj = new Parser.Parser();
 let differ = new Diff.Differ();
+let zipper = new ASTZipper.ASTZipper();
 
 let Editor = function() {
     this.state = {
@@ -17,17 +21,21 @@ let Editor = function() {
 }
 exports.Editor = Editor;
 
+/**
+ * 
+ * @param {AST.MD} ast root Markdown Block container
+ */
+let TODOCollector = function(ast) {
+    if (ast) return ast.blocks.filter(x => x.type == AST.ASTTypes.TODO).map(x => zipper.zip(x));
+}
+exports.TODOCollector = TODOCollector;
+
 Vue.component("editor", {
     props: {
         "estore": Editor,
         "value": String,
         "editable": Boolean,
     },
-    // data: function() {
-    //     return {
-    //         currentval: this.initval,
-    //     }
-    // }, 
 
     methods: {
         updator: function(event) {
@@ -74,16 +82,18 @@ Vue.component("editor-control", {
     },
     methods: { 
         store: function(event) {
-            this.$emit("store-to-system");
+            this.$emit("store-to-system", TODOCollector(this.ast));
         },
         update: function(event) {
             this.editorstore.setCurrent(event);
-            // newAST = pobj.parse(this.estore.getCurrent());
-            // differ.diff(newAST, this.ast);
-            // this.ast = newAST;
         },
         select: function(event) {
             console.log(event);
+        },
+        change: function(newobject) {
+            let oldvalue = this.editorstore.getCurrent();
+            this.editorstore.setCurrent(oldvalue.substring(0, newobject.index.start) + newobject.newcontent + oldvalue.substring(newobject.index.end));
+            this.$emit("store-to-system", TODOCollector(this.ast));
         }
     },
     template: `
@@ -96,7 +106,7 @@ Vue.component("editor-control", {
                 :editable="editable"></editor>
         </v-col>
         <v-col cols=6>
-            <markdown-block :ast="ast" v-if="ast"></markdown-block>
+            <markdown-block :ast="ast" v-if="ast" @change="change"></markdown-block>
         </v-col>
     </v-row>
     `

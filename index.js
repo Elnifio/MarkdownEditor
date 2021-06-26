@@ -3,6 +3,7 @@ const FSModule = require("./FileSystem/FSModule");
 const FSControlKit = require("./FileSystem/FSControlKit");
 const EditorModule = require("./Editor/EditorModule");
 const Conponents = require("./MarkdownCompiler/Components");
+const TODOComponents = require("./TODOSystem/TODOModule");
 const fs = require("fs");
 
 const { ipcRenderer } = require("electron");
@@ -27,6 +28,7 @@ if (storage == "") {
     storage = FSNode.zip(rootEle.children);
 }
 let FS = FSModule.FSFactory(storage);
+FS.collectFiles();
 let EMStore = new EditorModule.Editor();
 EMStore.setCurrent(FS.current);
 
@@ -38,16 +40,6 @@ ipcRenderer.on('close-app', (event, message) => {
     ipcRenderer.send("close-complete-index", "closed");
 })
 
-let Central = {
-    navbar: {
-        show: true,
-        storage: true,
-    },
-    editor: {
-        editable: FS.hasFileCursor(),
-    }
-}
-
 let vm = new Vue({
     el: "#app",
     vuetify: new Vuetify(),
@@ -57,7 +49,20 @@ let vm = new Vue({
         storage: FS,
         initval: "initialization",
         emstore: EMStore,
-        central: Central,
+
+        showNavbar: true,
+        showStorage: true,
+
+        editable: FS.hasFileCursor(),
+        showEditor: true,
+        
+        showTODO: false,
+    },
+
+    computed: {
+        todos: function() {
+            return FS.collectFiles().filter(x => x.todos.length != 0);
+        }
     },
 
     methods: {
@@ -66,26 +71,34 @@ let vm = new Vue({
         },
 
         adjustNavbar: function() {
-            this.central.showNavbar = !this.central.showNavbar;
+            this.showNavbar = !this.showNavbar;
         },
         adjustStorage: function() {
-            console.log(`showNavbar: ${this.central.navbar.storage}, showStorage: ${this.central.navbar.storage}`);
-            this.central.navbar.storage = (!this.central.navbar.show) && (!this.central.navbar.storage);
+            console.log(`showNavbar: ${this.showNavbar}, showStorage: ${this.showStorage}`);
+            this.showStorage = (!this.showNavbar) && (!this.showStorage);
         },
 
-        showStorage: function() {
-            return !(this.central.navbar.show || this.central.navbar.storage);
+        adjustTODO: function() {
+            this.showTODO = true;
+            this.showEditor = false;
+        },
+
+        showFile: function() {
+            return !(this.showNavbar || this.showStorage);
         },
 
         switchNote: function(newvalue) {
             console.log("updated new value: "+ newvalue);
             this.emstore.setCurrent(newvalue);
-            this.central.editor.editable = true;
+            this.editable = true;
+            this.showTODO = false;
+            this.showEditor = true;
         },
 
-        storeToSystem: function() {
+        storeToSystem: function(newTODOList) {
             console.log("storing to system");
             this.storage.current = this.emstore.getCurrent();
+            this.storage.updateFileTODO(newTODOList);
             ipcRenderer.send("log-value", "storing to system");
         },
 
@@ -98,14 +111,17 @@ let vm = new Vue({
             console.log("create a new file");
             this.storage.createFile(this.emstore.getCurrent());
             this.emstore.setCurrent(this.storage.current);
-            this.central.editor.editable = true;
+            this.editable = true;
+            this.showEditor = true;
+            this.showTODO = false;
         },
 
         clearEditor: function() {
-            this.central.editor.editable = false;
+            this.editable = false;
+            this.showEditor = false;
             this.emstore.setCurrent("Did not open any file"); 
             /*
-            刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量
+                刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量
             */
         }
 

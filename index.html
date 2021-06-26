@@ -82,7 +82,7 @@
                 <v-navigation-drawer 
                 app 
                 permanent 
-                :mini-variant.sync="central.navbar.show">
+                :mini-variant.sync="showNavbar">
 
                     <!-- Slots for Title, Settings -->
                     <!-- Placeholder for app brand -->
@@ -105,7 +105,7 @@
 
                     <!-- Slots for TODO, Calendars, etc -->
                     <!-- Activator for TODO board -->
-                    <v-list-item>
+                    <v-list-item @click="adjustTODO">
                         <v-list-item-icon>
                             <v-icon>mdi-checkbox-marked-outline</v-icon>
                         </v-list-item-icon>
@@ -126,7 +126,7 @@
                             <v-icon>mdi-file-plus-outline</v-icon>
                         </v-btn>
                     </v-list-item>
-                    <fsmodule :initfs="storage" @switch-note="switchNote" v-if="showStorage()" @clear-editor="clearEditor"></fsmodule>
+                    <fsmodule :initfs="storage" @switch-note="switchNote" v-if="showFile()" @clear-editor="clearEditor"></fsmodule>
                     <v-divider></v-divider>
 
                     <v-list-item>
@@ -140,7 +140,8 @@
                 
                 <v-main app>
                     <v-container fluid>
-                        <editor-control :estore="emstore" :editable="central.editor.editable" @store-to-system="storeToSystem" id="editor"></editor-control>
+                        <todo-lists :todonodes="todos" v-show="showTODO"></todo-lists>
+                        <editor-control :estore="emstore" :editable="editable" @store-to-system="storeToSystem" id="editor" v-show="showEditor"></editor-control>
                     </v-container>
                 </v-main>
             </v-app>

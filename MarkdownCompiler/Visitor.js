@@ -59,17 +59,17 @@ let GeneralVisitor = function() {
         report();
     }
 
-    this.visitRefBlock = function(ref, args) {
-        // TODO: REPLACE THIS
-        report();
-    }
-
     this.visitHeader = function(header, args) {
         // TODO: REPLACE THIS
         report();
     }
 
     this.visitSentence = function(sen, args) {
+        // TODO: REPLACE THIS
+        report();
+    }
+
+    this.visitReferenceSeparator = function(refsep, args) {
         // TODO: REPLACE THIS
         report();
     }

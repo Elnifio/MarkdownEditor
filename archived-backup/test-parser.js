@@ -4,7 +4,7 @@
 
 // import Lexer from "./lexer.js";
 let LexerTester = function() {
-    let Lexer = require("./lexer");
+    let Lexer = require("../MarkdownCompiler/lexer");
     
     let word = ["#### this is a header", "", "and this should be a new paragraph", 
     "**with bold here** and *italic here* and ___bold italic here___", 
@@ -38,8 +38,8 @@ let LexerTester = function() {
 
 // tests the AST constructor
 let ASTTester = function() {
-    let AST = require("./AST");
-    let Visitor = require("./ASTDisplay");
+    let AST = require("../MarkdownCompiler/AST");
+    let Visitor = require("../MarkdownCompiler/ASTDisplay");
 
     let ast = new AST.MD();
 
@@ -69,8 +69,8 @@ let ASTTester = function() {
 let parserTester01 = function() {
     // Initialization of Parser and Displayer
     // module imports
-    let Parser = require("./parser");
-    let Displayer = require("./ASTDisplay");
+    let Parser = require("../MarkdownCompiler/parser");
+    let Displayer = require("../MarkdownCompiler/ASTDisplay");
     // displayer and parser initialization
     let disp = new Displayer.Displayer();
     let ps = new Parser.Parser();
@@ -100,8 +100,8 @@ let parserTester01 = function() {
 let parserTester02 = function() {
         // Initialization of Parser and Displayer
     // module imports
-    let Parser = require("./parser");
-    let Displayer = require("./ASTDisplay");
+    let Parser = require("../MarkdownCompiler/parser");
+    let Displayer = require("../MarkdownCompiler/ASTDisplay");
     let fs = require("fs");
     // displayer and parser initialization
     let disp = new Displayer.Displayer();
