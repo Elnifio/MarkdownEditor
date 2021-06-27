@@ -70,7 +70,7 @@ let Parser = function() {
     this.curr = undefined;
     this.lexer = new Lexer.Lexer();
     this.liststack = [];
-    this.todoList = false;
+    this.todoList = [];
     this.eof = false;
     this.ref = undefined;
 
@@ -79,7 +79,7 @@ let Parser = function() {
         this.indentation = 0;
         this.curr = undefined;
         this.liststack = [];
-        this.todoList = false;
+        this.todoList = [];
         this.eof = false;
         this.ref = undefined;
     }
@@ -112,6 +112,7 @@ let Parser = function() {
                 // only starter for Reference
                 case TokenType.ge:
                     this.collectLists(md);
+                    this.collectTODO(md);
                     md.addBlock(this.parseReference());
                     this.indentation = 0;
                     break;
@@ -119,35 +120,46 @@ let Parser = function() {
                 // only starter for header
                 case TokenType.hashtag:
                     this.collectLists(md);
+                    this.collectTODO(md);
                     md.addBlock(this.parseHeader());
                     this.indentation = 0;
                     break;
 
                 // starter for separator and unordered list
                 case TokenType.minus:
+                    this.collectTODO(md);
                     this.parseMinus(md);
                     this.indentation = 0;
                     break;
 
                 case TokenType.number:
+                    this.collectTODO(md);
                     this.parseOL(this.indentation, md);
                     this.indentation = 0;
                     break;
 
                 case TokenType.todo:
+                case TokenType.todoSuccess:
                     this.collectLists(md);
-                    md.addBlock(this.parseTODO(false));
+                    this.parseTODOList(this.indentation, md);
                     this.indentation = 0;
                     break;
 
-                case TokenType.todoSuccess:
-                    this.collectLists(md);
-                    md.addBlock(this.parseTODO(true));
-                    this.indentation = 0;
-                    break;
+                // case TokenType.todo:
+                //     this.collectLists(md);
+                //     md.addBlock(this.parseTODO(false));
+                //     this.indentation = 0;
+                //     break;
+
+                // case TokenType.todoSuccess:
+                //     this.collectLists(md);
+                //     md.addBlock(this.parseTODO(true));
+                //     this.indentation = 0;
+                //     break;
 
                 case TokenType.imageSt:
                     this.collectLists(md);
+                    this.collectTODO(md);
                     md.addBlock(this.parseImg());
                     this.indentation = 0;
                     break;
@@ -159,11 +171,14 @@ let Parser = function() {
 
                 case TokenType.enter:
                     this.collectLists(md);
+                    this.collectTODO(md);
                     this.indentation = 0;
                     this.consume(TokenType.enter);
                     break;
 
                 case TokenType.backtick:
+                    this.collectLists(md);
+                    this.collectTODO(md);
                     if (this.is(TokenType.backtick, 3)) {
                         md.addBlock(this.parseCodeBlock());
                     } else {
@@ -172,18 +187,24 @@ let Parser = function() {
                     break;
                 
                 case TokenType.dollar:
+                    this.collectLists(md);
+                    this.collectTODO(md);
                     if (this.is(TokenType.dollar, 2)) {
                         md.addBlock(this.parseLatexBlock());
                     } else {
                         md.addBlock(this.parseParagraph());
                     }
                     break;
+
                 default:
+                    this.collectLists(md);
+                    this.collectTODO(md);
                     md.addBlock(this.parseParagraph());
                     this.indentation = 0;
             }
         }
         this.collectLists(md);
+        this.collectTODO(md);
         return md;
     }
 
@@ -209,7 +230,16 @@ let Parser = function() {
             this.liststack[this.liststack.length-1].insertBlock(lastBlock);
         }
         markdownContainer.addBlock(this.liststack.pop());
-        return;
+    }
+
+    this.collectTODO = function(markdownContainer)  {
+        if (this.todoList.length  == 0) return;
+        let lastBlock;
+        while (this.todoList.length > 1) {
+            lastBlock = this.todoList.pop();
+            this.todoList[this.todoList.length - 1].insertBlock(lastBlock);
+        }
+        markdownContainer.addBlock(this.todoList.pop());
     }
 
     this.parseCodeBlock = function() {
@@ -472,6 +502,44 @@ let Parser = function() {
         newli = this.parseParagraph(newli);
         newli.line = line;
         lastBlock.subBlocks.push(newli);
+    }
+
+    this.parseTODOList = function(indent, markdownContainer) {
+        let line = this.curr.line;
+        if (this.todoList.length == 0) {
+            let newtd = new AST.TODOList();
+            newtd.indent = indent;
+            newtd.line = line;
+            this.todoList.push(newtd);
+            newtd.subBlocks.push(this.parseTODO(this.curr.type == TokenType.todoSuccess));
+            return;
+        }
+
+        let lastBlock = this.todoList[this.todoList.length-1];
+        while (lastBlock.indent > indent) {
+            lastBlock = this.todoList.pop();
+            if (this.todoList.length == 0) {
+                markdownContainer.addBlock(lastBlock);
+                let newtd = new AST.TODOList();
+                newtd.line = line;
+                newtd.indent = indent;
+                this.todoList.push(newtd);
+                newtd.insertBlock(this.parseTODO(this.curr.type == TokenType.todoSuccess));
+                return;
+            } else {
+                this.todoList[this.todoList.length-1].subBlocks.push(lastBlock);
+                lastBlock = this.todoList[this.todoList.length-1];
+            }
+        }
+
+        if (lastBlock.indent != indent && this.todoList.length == 1) {
+            lastBlock = new AST.TODOList();
+            lastBlock.indent = indent;
+            lastBlock.line = line;
+            this.todoList.push(lastBlock);
+        }
+
+        lastBlock.subBlocks.push(this.parseTODO(this.curr.type == TokenType.todoSuccess));
     }
 
     this.parseTODO = function(todoSuccess) {

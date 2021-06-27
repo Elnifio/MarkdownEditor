@@ -4,11 +4,21 @@
 let report = () => { throw "Unimplemented Abstract Method" };
 
 let AST = require("./AST");
+let Disp = require("./ASTDisplay");
+let disper = new Disp.Displayer();
+let debug = false;
 
 let GeneralVisitor = function() {
 
     // migrates the old AST's status to new AST
     this.diff = function(newAST, oldAST) {
+        if (debug) {
+            console.log("----------------\nDiffing AST\n----------------");
+            console.log("New AST: \n--------");
+            disper.visit(newAST);
+            console.log("Old AST: \n--------");
+            disper.visit(oldAST);
+        }
         if (newAST && oldAST) newAST.visit(this, oldAST);
     }
 
@@ -103,6 +113,10 @@ let GeneralVisitor = function() {
     }
 
     this.visitOL = function(ol, args) {
+        return false;
+    }
+
+    this.visitTODOList = function(tl, args) {
         return false;
     }
 

@@ -140,8 +140,8 @@
                 
                 <v-main app>
                     <v-container fluid>
-                        <todo-lists :todonodes="todos" v-show="showTODO"></todo-lists>
-                        <editor-control :estore="emstore" :editable="editable" @store-to-system="storeToSystem" id="editor" v-show="showEditor"></editor-control>
+                        <todo-lists :todonodes="collectTODOS()" v-if="showTODO"></todo-lists>
+                        <editor-control :estore="emstore" :editable="editable" @store-to-system="storeToSystem" id="editor" v-if="showEditor"></editor-control>
                     </v-container>
                 </v-main>
             </v-app>

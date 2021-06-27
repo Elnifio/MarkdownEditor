@@ -59,13 +59,11 @@ let vm = new Vue({
         showTODO: false,
     },
 
-    computed: {
-        todos: function() {
-            return FS.collectFiles().filter(x => x.todos.length != 0);
-        }
-    },
-
     methods: {
+        collectTODOS: function() {
+            return FS.collectFiles().filter(x => x.todos.length != 0);
+        },
+
         log: function(e) {
             console.log(e);
         },

@@ -99,6 +99,15 @@ let GeneralVisitor = function() {
         }
     }
 
+    this.visitTODOList = function(tl, args) {
+        return {
+            type: tl.type,
+            children: tl.subBlocks.map(x => x.visit(this, args)),
+            line: tl.line,
+            indent: tl.indent,
+        }
+    }
+
     this.visitTODO = function(todo, args) {
         return {
             type: todo.type,
@@ -204,6 +213,11 @@ let ASTUnzipper = function(zipped) {
             break;
         case AST.ASTTypes.OL:
             out = new AST.OL();
+            out.indent = zipped.indent;
+            zipped.children.forEach(x => out.insertBlock(ASTUnzipper(x)));
+            break;
+        case AST.ASTTypes.TODOList:
+            out = new AST.TODOList();
             out.indent = zipped.indent;
             zipped.children.forEach(x => out.insertBlock(ASTUnzipper(x)));
             break;

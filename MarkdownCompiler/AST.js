@@ -21,6 +21,7 @@ let ASTType = {
     UL: "unordered-list-block",
     OL: "ordered-list-block",
     TODO: "todo-block",
+    TODOList: "todo-list",
     Reference: "reference-block",
     Header: "header-block",
     ListItem: "list-item-block",
@@ -151,6 +152,14 @@ let TODOBlock = function(idx) {
         this.sentences.push(sentence);
     }
     this.todoIndex = idx;
+    this.subActions = [];
+    this.addAction = function(todo) {
+        this.subActions.push(todo);
+    }
+    this.getActions = function() {
+        return this.subActions;
+    }
+    this.hasAction = function() { return this.subActions.length != 0; }
     this.visit = function(visitor, arg) { return visitor.visitTODO(this, arg); }
 }
 TODOBlock.prototype = new Block(ASTType.TODO);
@@ -240,7 +249,19 @@ let OLBlock = function() {
 OLBlock.prototype = new ListBlock(ASTType.OL);
 exports.OL = OLBlock;
 
+let TODOList = function(idx) {
+    this.subBlocks = [];
+    this.insertBlock = function(block) {
+        this.subBlocks.push(block);
+    }
+    this.getBlock = function() {
+        return this.subBlocks;
+    }
 
+    this.visit = function(visitor, arg) { return visitor.visitTODOList(this, arg); }
+}
+TODOList.prototype = new ListBlock(ASTType.TODOList);
+exports.TODOList = TODOList;
 
 let Header = function() {
     this.level=0;

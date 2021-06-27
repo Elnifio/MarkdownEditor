@@ -3,10 +3,12 @@ let Components = require("../MarkdownCompiler/Components");
 let Diff = require("../MarkdownCompiler/ASTDiffer");
 let AST = require("../MarkdownCompiler/AST");
 let ASTZipper = require("../MarkdownCompiler/ASTZipper");
+let Disp = require("../MarkdownCompiler/ASTDisplay");
 
 let pobj = new Parser.Parser();
 let differ = new Diff.Differ();
 let zipper = new ASTZipper.ASTZipper();
+let disp = new Disp.Displayer();
 
 let Editor = function() {
     this.state = {
@@ -26,7 +28,7 @@ exports.Editor = Editor;
  * @param {AST.MD} ast root Markdown Block container
  */
 let TODOCollector = function(ast) {
-    if (ast) return ast.blocks.filter(x => x.type == AST.ASTTypes.TODO).map(x => zipper.zip(x));
+    if (ast) return ast.blocks.filter(x => x.type == AST.ASTTypes.TODOList).map(x => zipper.zip(x));
 }
 exports.TODOCollector = TODOCollector;
 
@@ -82,6 +84,7 @@ Vue.component("editor-control", {
     },
     methods: { 
         store: function(event) {
+            disp.visit(this.ast);
             this.$emit("store-to-system", TODOCollector(this.ast));
         },
         update: function(event) {

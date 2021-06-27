@@ -5,6 +5,7 @@ let show = function(prefix, content) {
 let Displayer = function(defaultprefix="") {
 
     this.visit = function(ast) {
+        if (!ast) console.log("Empty ast");
         ast.visit(this, defaultprefix);
     }
 
@@ -59,6 +60,12 @@ let Displayer = function(defaultprefix="") {
         show(args, ol.toString() + `: Sublist[${ol.getBlock().length}]`);
         let prefix = args + " | ";
         ol.getBlock().forEach((x) => x.visit(this, prefix));
+    }
+
+    this.visitTODOList = function(tl, args) {
+        show(args, tl.toString() + `: Sublist[${tl.getBlock().length}]`);
+        let prefix = args + " | ";
+        tl.getBlock().forEach(x => x.visit(this, prefix));
     }
 
     this.visitTODO = function(todo, args) {

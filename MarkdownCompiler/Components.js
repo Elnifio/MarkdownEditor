@@ -87,6 +87,20 @@ Vue.component(ASTType.ListItem, {
     `
 })
 
+Vue.component(ASTType.TODOList, {
+    props: ["content"],
+    methods: {
+        propagateChange: function(args) {
+            this.$emit("change", args);
+        }
+    },
+    template: `
+        <v-list dense>
+            <component v-for="item in content.subBlocks" v-bind:is="item.type" v-bind:content="item"></component>
+        </v-list>
+    `
+})
+
 Vue.component(ASTType.TODO, {
     props: ["content"],
     methods: {
