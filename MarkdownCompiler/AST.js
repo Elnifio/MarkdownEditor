@@ -148,15 +148,18 @@ exports.ListItem = ListItem;
 let TODOBlock = function(idx) {
     this.sentences = [];
     this.status = false;
+    this.level = 0;
     this.addSentence = function(sentence) {
         this.sentences.push(sentence);
     }
     this.todoIndex = idx;
+    this.indent = -1;
     this.subActions = [];
     this.addAction = function(todo) {
         this.subActions.push(todo);
+        todo.level += 1;
     }
-    this.getActions = function() {
+    this.getAction = function() {
         return this.subActions;
     }
     this.hasAction = function() { return this.subActions.length != 0; }

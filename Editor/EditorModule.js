@@ -28,7 +28,7 @@ exports.Editor = Editor;
  * @param {AST.MD} ast root Markdown Block container
  */
 let TODOCollector = function(ast) {
-    if (ast) return ast.blocks.filter(x => x.type == AST.ASTTypes.TODOList).map(x => zipper.zip(x));
+    if (ast) return ast.blocks.filter(x => x.type == AST.ASTTypes.TODO).map(x => zipper.zip(x));
 }
 exports.TODOCollector = TODOCollector;
 
@@ -41,7 +41,6 @@ Vue.component("editor", {
 
     methods: {
         updator: function(event) {
-            // console.log(event.target.value);
             this.$emit("value-update", event.target.value);
         },
         inputUpdate: function(event) {
@@ -84,7 +83,6 @@ Vue.component("editor-control", {
     },
     methods: { 
         store: function(event) {
-            disp.visit(this.ast);
             this.$emit("store-to-system", TODOCollector(this.ast));
         },
         update: function(event) {

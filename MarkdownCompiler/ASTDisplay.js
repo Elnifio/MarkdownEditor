@@ -69,9 +69,13 @@ let Displayer = function(defaultprefix="") {
     }
 
     this.visitTODO = function(todo, args) {
-        show(args, todo.toString() + `: Sentences[${todo.sentences.length}], finished? ${todo.status}`);
+        show(args, todo.toString() + `: Sentences[${todo.sentences.length}], finished? ${todo.status};` + (todo.hasAction()?`SubActions: [${todo.getAction().length}]`:""));
         let prefix = args + " | ";
         todo.sentences.forEach((x) => x.visit(this, `${prefix}[${x.status?"x":" "}] `));
+        if (todo.hasAction()) {
+            show(args, `-------- Actions: [${todo.getAction().length}] --------`);
+            todo.getAction().forEach(x => x.visit(this, `${prefix}[${x.status?"x":" "}]`));
+        }
     }
 
     this.visitReference = function(ref, args) {

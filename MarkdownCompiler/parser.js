@@ -70,7 +70,7 @@ let Parser = function() {
     this.curr = undefined;
     this.lexer = new Lexer.Lexer();
     this.liststack = [];
-    this.todoList = [];
+    this.currtodo = undefined;
     this.eof = false;
     this.ref = undefined;
 
@@ -79,7 +79,7 @@ let Parser = function() {
         this.indentation = 0;
         this.curr = undefined;
         this.liststack = [];
-        this.todoList = [];
+        this.currtodo = undefined;
         this.eof = false;
         this.ref = undefined;
     }
@@ -233,13 +233,10 @@ let Parser = function() {
     }
 
     this.collectTODO = function(markdownContainer)  {
-        if (this.todoList.length  == 0) return;
-        let lastBlock;
-        while (this.todoList.length > 1) {
-            lastBlock = this.todoList.pop();
-            this.todoList[this.todoList.length - 1].insertBlock(lastBlock);
+        if (this.currtodo) { 
+            markdownContainer.addBlock(this.currtodo);
+            this.currtodo = undefined;
         }
-        markdownContainer.addBlock(this.todoList.pop());
     }
 
     this.parseCodeBlock = function() {
@@ -505,41 +502,29 @@ let Parser = function() {
     }
 
     this.parseTODOList = function(indent, markdownContainer) {
-        let line = this.curr.line;
-        if (this.todoList.length == 0) {
-            let newtd = new AST.TODOList();
-            newtd.indent = indent;
-            newtd.line = line;
-            this.todoList.push(newtd);
-            newtd.subBlocks.push(this.parseTODO(this.curr.type == TokenType.todoSuccess));
-            return;
-        }
-
-        let lastBlock = this.todoList[this.todoList.length-1];
-        while (lastBlock.indent > indent) {
-            lastBlock = this.todoList.pop();
-            if (this.todoList.length == 0) {
-                markdownContainer.addBlock(lastBlock);
-                let newtd = new AST.TODOList();
-                newtd.line = line;
-                newtd.indent = indent;
-                this.todoList.push(newtd);
-                newtd.insertBlock(this.parseTODO(this.curr.type == TokenType.todoSuccess));
-                return;
+        /* 
+        if we do not have current todo: 
+            we create a new TODO block, parse it, set its indent as indent, and set it as current todo;
+        else:
+            we compare currtodo's indent with given indent
+            if currtodo's indent >= this.indent: 
+                we are under a new todo item, we push currtodo into markdownContainer, 
+                parse a new TODO, set its indent as current indent, and set it to current todo;
+            else:
+                we should parse a new TODO, and add it as a sub-action of currtodo
+        */
+        if (!this.currtodo) {
+            this.currtodo = this.parseTODO(this.is(TokenType.todoSuccess));
+            this.currtodo.indent = indent;
+        } else {
+            if (this.currtodo.indent >= indent) {
+                markdownContainer.addBlock(this.currtodo);
+                this.currtodo = this.parseTODO(this.is(TokenType.todoSuccess));
+                this.currtodo.indent = indent;
             } else {
-                this.todoList[this.todoList.length-1].subBlocks.push(lastBlock);
-                lastBlock = this.todoList[this.todoList.length-1];
+                this.currtodo.addAction(this.parseTODO(this.is(TokenType.todoSuccess)));
             }
         }
-
-        if (lastBlock.indent != indent && this.todoList.length == 1) {
-            lastBlock = new AST.TODOList();
-            lastBlock.indent = indent;
-            lastBlock.line = line;
-            this.todoList.push(lastBlock);
-        }
-
-        lastBlock.subBlocks.push(this.parseTODO(this.curr.type == TokenType.todoSuccess));
     }
 
     this.parseTODO = function(todoSuccess) {

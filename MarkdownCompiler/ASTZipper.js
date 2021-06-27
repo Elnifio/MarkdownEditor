@@ -114,7 +114,9 @@ let GeneralVisitor = function() {
             children: todo.sentences.map(x => x.visit(this, args)),
             line: todo.line,
             status: todo.status,
-            idx: todo.todoIndex
+            idx: todo.todoIndex,
+            actions: todo.subActions.map(x => x.visit(this, args)),
+            opened: todo.opened,
         }
     }
 
@@ -226,6 +228,8 @@ let ASTUnzipper = function(zipped) {
             out.status = zipped.status;
             out.todoIndex = zipped.idx;
             zipped.children.forEach(x => out.addSentence(ASTUnzipper(x)));
+            zipped.actions.forEach(x => out.addAction(ASTUnzipper(x)));
+            out.opened = zipped.opened;
             break;
         case AST.ASTTypes.Reference:
             out = new AST.Reference();

@@ -109,42 +109,110 @@ Vue.component(ASTType.TODO, {
             {   index: this.content.todoIndex, 
                 newcontent: this.content.status?"- [ ] ":"- [x] "
             });
-        }
+        },
+        propagateChange: function(item) {
+            this.$emit("change", item);
+        },
     },
+    // 在嵌套第三个div中使用pt-2来将右侧内容和左侧按钮对齐
     template: `
+    <div>
+        <div class="d-flex">
+            <v-btn icon @click.prevent.stop="logger"><v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon></v-btn>
+            <div class="pt-2">
+                <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
+            </div>
+        </div>
+        <div v-if="content.hasAction()" class="d-flex">
+            <v-divider vertical class="mx-4"></v-divider>
+            <div>
+                <component 
+                    v-for="action in content.subActions"
+                    :is="action.type"
+                    :content="action">
+                </component>
+            </div>
+        </div>
+    </div>
+    `
+})
+/** Old template: 
+<!-- 纯粹div的实现，无subActions ->
+<div>
+    <v-btn icon @click.prevent.stop="logger"><v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon></v-btn>
+    <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
+</div>
+
+<!-- ListItem实现，有subActions，排版有问题 ->
     <v-list-item 
         dense>
-
         <v-list-item-icon @click.prevent.stop="updateStatus">
             <v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon>
         </v-list-item-icon>
-
         <div>
             <component 
                 v-for="metasen in content.sentences" 
                 v-bind:is="metasen.type" 
                 v-bind:sentence="metasen">
             </component>
+            <div v-if="content.hasAction()">
+                <component 
+                    v-for="action in content.subActions"
+                    :is="action.type"
+                    :content="action">
+                </component>
+            </div>  
         </div>
-
     </v-list-item>
-    `
-})
-// Old template: 
-/*
-<div>
-    <v-btn icon @click.prevent.stop="logger"><v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon></v-btn>
-    <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
-</div>
 
-<v-list-item>
-    <v-list-item-icon @click.prevent.stop="logger">
-        <v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon>
-    </v-list-item-icon>
-    <v-list-item-content>
-        <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
-    </v-list-item-content>
-</v-list-item>
+<!-- ListGroup实现，有subActions，排版有问题 ->
+<div>
+        <v-list-group 
+            v-if="!content.level" 
+            no-action>
+            <template v-slot:prependIcon>
+                
+            </template>
+
+            <template v-slot:activator>
+                <v-icon @click.prevent.stop="updateStatus">
+                    {{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}
+                </v-icon>
+                <div>
+                    <component 
+                        v-for="metasen in content.sentences" 
+                        v-bind:is="metasen.type" 
+                        v-bind:sentence="metasen">
+                    </component>
+                </div>
+            </template>
+
+            <div class="ml-2">
+                <component 
+                    v-for="item in content.getAction()" 
+                    v-bind:is="item.type" 
+                    v-bind:content="item" 
+                    @change="propagateChange"></component>
+            </div>
+        </v-list-group>
+        <v-list-item v-else>
+            <v-list-item-icon 
+                @click.prevent.stop="updateStatus">
+                <v-icon>
+                    {{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}
+                </v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+                <div>
+                    <component 
+                        v-for="metasen in content.sentences" 
+                        v-bind:is="metasen.type" 
+                        v-bind:sentence="metasen">
+                    </component>
+                </div>
+            </v-list-item-content>
+        </v-list-item>
+    </div>
 */
 
 Vue.component(ASTType.CodeBlock, {
@@ -260,10 +328,13 @@ Vue.component(ASTType.MD, {
     methods: {
         propagateChange: function(index, content) {
             this.$emit("change", index, content);
+        },
+        propagateReStoreAST: function() {
+            this.$emit("re-store-ast");
         }
     },
     template: `
     <div class="markdown-container">
-        <component v-for="block in ast.blocks" v-bind:is="block.type" v-bind:content="block" @change="propagateChange"></component>
+        <component v-for="block in ast.blocks" v-bind:is="block.type" v-bind:content="block" @change="propagateChange" @re-store-ast="propagateReStoreAST"></component>
     </div>`
 })
