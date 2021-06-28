@@ -152,16 +152,19 @@ Vue.component(ASTType.CodeBlock, {
         }
     },
     template: `
-    <p class="code" >
-        <template>
-            <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
-                <span>{{index+1}} {{ codes }}</span>
+    <v-card outlined>
+        <v-card-text class="text-body-1">
+            <template v-for="(codes, index) in content.get().trim().split('\\n')" class="d-flex">
+                <span>{{index+1}}</span>
+                <v-divider class="mx-2" vertical></v-divider>
+                <span>{{ codes }}</span>
                 <br />
             </template>
-            <hr />
-            <v-btn @click.stop=toggleStatus>{{ content.activated }}</v-btn>
-        </template>
-    </p>
+        </v-card-text>
+        <v-card-actions>
+            <v-btn outlined rounded text @click.stop=toggleStatus>Activated? {{ content.activated }}</v-btn>
+        </v-card-actions>
+    </v-card>
     `
 })
 
@@ -174,6 +177,17 @@ Vue.component(ASTType.CodeBlock, {
     </template>
     <hr />
 </div>
+
+<p class="code" >
+        <template>
+            <template v-for="(codes, index) in content.get().split('\\n')" v-if="codes">
+                <span>{{index+1}} {{ codes }}</span>
+                <br />
+            </template>
+            <hr />
+            <v-btn @click.stop=toggleStatus>{{ content.activated }}</v-btn>
+        </template>
+    </p>
 */
 Vue.component(ASTType.LatexBlock, {
     props: ["content"],
