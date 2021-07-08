@@ -19,7 +19,7 @@ Vue.component("todo-item", {
         },
     },
     template: `
-    <v-card>
+    <v-card height="20vh">
         <v-card-title>
             {{ node.getCanonicalName() }}
         </v-card-title>

@@ -57,7 +57,8 @@ Vue.component("editor", {
         :value="value" 
         @input="inputUpdate($event)" 
         auto-grow
-        :disabled="!editable">
+        :disabled="!editable"
+        overflow="auto">
     </v-textarea>
     `
 });
@@ -100,14 +101,19 @@ Vue.component("editor-control", {
     template: `
     <v-row>
         <v-col cols=6>
-            <editor 
-                v-model="editorstore.getCurrent()" 
-                @value-update="store($event)" 
-                @input-update="update($event)"
-                :editable="editable"></editor>
+            <v-card height="93vh" style="overflow:auto" flat>
+                <editor 
+                    v-model="editorstore.getCurrent()" 
+                    @value-update="store($event)" 
+                    @input-update="update($event)"
+                    :editable="editable" height="100vh"></editor>
+            </v-card>
         </v-col>
-        <v-col cols=6>
-            <markdown-block :ast="ast" v-if="ast" @change="change"></markdown-block>
+        <v-divider vertical></v-divider>
+        <v-col cols=6 >
+            <v-card height="93vh" style="overflow:auto" flat>
+                <markdown-block :ast="ast" v-if="ast" @change="change"></markdown-block>
+            </v-card>
         </v-col>
     </v-row>
     `
