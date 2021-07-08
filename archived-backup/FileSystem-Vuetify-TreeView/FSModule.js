@@ -320,6 +320,15 @@ let FS = function(rootNode, currentlyOpened, openList) {
         // return node;
     }
 
+    // delete currently selected file and set filecursor to be undefined
+    // silently fail if filecursor is undefined
+    this.deleteCurrentFile = function() {
+        if (this.filecursor) {
+            this.deleteNodePrimitive(this.filecursor);
+            this.filecursor = undefined;
+        }
+    }
+
     this.deleteNodePrimitive = function(node) {
         node.parent.deleteChild(node);
     }
@@ -327,8 +336,8 @@ let FS = function(rootNode, currentlyOpened, openList) {
     this.deleteGivenNode = function(node) {
         if (!node.deletable) return;
 
-        if (this.folderCursorInNode(node)) {
-            if (this.fileCursorInFolderCursor()) {
+        if (this.foldercursor == node) {
+            if (this.in()) {
                 this.filecursor = undefined;
             }
             this.foldercursor = this.root;
@@ -341,20 +350,27 @@ let FS = function(rootNode, currentlyOpened, openList) {
         this.deleteNodePrimitive(node);
     }
 
-    this.folderCursorInNode = function(node) {
-        if (this.foldercursor) {
-            let cursor = this.foldercursor;
-            while (cursor) {
-                if (cursor == node) {
-                    return true;
-                }
-                cursor = cursor.parent;
-            }
+    // delete currently selected folder and set foldercursor to be root
+    // silently fail if: 
+    //      foldercursor is undefined
+    //      foldercursor is root ( folder is not deletable )
+    // if currently editing file is also in foldercursor, 
+    // we also select filecursor as undefined
+    this.deleteCurrentFolder = function() {
+        // edge cases
+        if (!this.foldercursor) return;
+        // if (this.foldercursor == this.root) return;
+        if (!this.foldercursor.deletable) return;
+
+        // file cursor inside folder cursor
+        if (this.in()) {
+            this.filecursor = undefined;
         }
-        return false;
+        this.deleteNodePrimitive(this.foldercursor);
+        this.foldercursor = this.root;
     }
 
-    this.fileCursorInFolderCursor = function() {
+    this.in = function() {
         if (this.filecursor && this.foldercursor) {
             let cursor = this.filecursor;
             while (cursor) {
@@ -397,16 +413,16 @@ let visualize = function(fs, msg="") {
         console.log("----------------Visualizing FS----------------");
         console.log(msg);
         console.log("--------\nFile Cursor:")
-        console.log(fs.filecursor?FSNode.visualizer(fs.filecursor):"undefined");
+        console.log(FSNode.visualizer(fs.filecursor));
         console.log("--------\nFolder Cursor:")
-        console.log(fs.foldercursor?FSNode.visualizer(fs.foldercursor):"undefined");
+        console.log(FSNode.visualizer(fs.foldercursor));
         console.log("--------\nRoot:");
         console.log(FSNode.visualizer(fs.root));
     }
 }
 exports.visualize = visualize;
 
-Vue.component("fs-module", {
+Vue.component("fsmodule", {
     props: ["initfs"],
     data: function() {
         return {
@@ -419,28 +435,54 @@ Vue.component("fs-module", {
         },
         /**
          * 
-         * @param {FSNode.FSNode} clicked 
+         * @param {FSNode.FSNode[]} openedList a list of nodes that are open
          */
-        nodeClickHandler: function(clicked) {
-            if (clicked.isFolder()) {
-                clicked.toggleOpen();
-                this.fs.resetFolderCursor(clicked);
+        folderClickHandler: function(openedList) { 
+            console.log(openedList);
+            console.log(this.fs.opened);
+            let closedNode = this.fs.opened.filter(x => !openedList.includes(x));
+            let openedNode = openedList.filter(x => !this.fs.opened.includes(x));
+            if ((closedNode.length > 1 || openedNode.length > 1)) {
+                log("Opened node or closed node contain more than one item:");
+                loglist(closedNode);
+                loglist(openedNode);
+                throw new FSError("Opened node or closed node contain more than one item");
+            }
+            if (closedNode.length >=1 && openedNode.length >= 1) {
+                log("Opened node and closed node do not agree:");
+                loglist(closedNode);
+                loglist(openedNode);
+                throw new FSError("Opened node or closed node do not agree");
+            } else if (closedNode.length == 1) {
+                this.fs.resetFolderCursor(closedNode[0]);
+            } else if (openedNode.length == 1) {
+                this.fs.resetFolderCursor(openedNode[0]);
             } else {
-                if (!clicked.opened) {
-                    this.fs.setFileCursorStatus(false);
-                    this.fs.resetFileCursor(clicked);
-                    this.fs.setFileCursorStatus(true);
-                    this.$emit("switch-note", this.fs.current);
-                }
+                log("did not find a different item: ");
             }
-            if (this.fs.filecursor) {
-                this.$emit("bring-editor-to-front");
-            }
+            log("set new folder cursor as " + this.fs.getSelectedFolder().path);
+            this.fs.opened = openedList;
+            this.fs.setFolderCursorStatus(this.fs.opened.includes(this.fs.foldercursor));
         },
-        nodeRelocationHandler: function(node, newpath) {
-            log("Handling Relocation inside FSModule: \n--------");
-            log(node);
-            log(newpath);
+
+        /**
+         * 
+         * @param {FSNode.FSNode} newnode 
+         */
+        fileClickHandler: function(newnode) {
+            log("Clicking node:");
+            log(newnode);
+            this.fs.setFileCursorStatus(false);
+            this.fs.resetFileCursor(newnode[0]);
+            this.fs.setFileCursorStatus(true);
+            this.$emit("switch-note", this.fs.current);
+        },
+
+        /**
+         * 
+         * @param {{FSNode, String}} newconfig 
+         */
+        relocationHandler: function(node, newpath) {
             visualize(this.fs, `Relocating node ${node.path} -> ${newpath}`);
             if (node.isFile()) {
                 this.fs.relocateFile(node, newpath);
@@ -448,142 +490,52 @@ Vue.component("fs-module", {
                 this.fs.relocateFolder(node, newpath);
             }
         },
-        nodeDeleteHandler: function(node) {
-            log("Handling Node Deletion inside FSModule: \n--------");
-            log("Deleting node: " + node.getCanonicalName());
+
+        deleteNodeHandler: function(node) {
+            log("deleting node:" + node.path);
             this.fs.deleteGivenNode(node);
-            visualize(this.fs, `After Deletion of node ${node.path}`);
-            if (!this.fs.filecursor) this.$emit("clear-editor");
-        },
+            this.$emit("clear-editor");
+        }
     },
+
     template: `
         <div>
-            <fs-node 
-                v-for="child in fs.getDB()"
-                :fsnode="child"
-                :key="child.path"
-                @relocate-node="nodeRelocationHandler"
-                @delete-node="nodeDeleteHandler"
-                @click-node="nodeClickHandler">
-            </fs-node>
+            <v-treeview
+                :items="fs.getDB()"
+                :open="fs.opened"
+                activatable
+                item-key="id"
+                open-on-click
+                dense
+                shaped
+                color="primary"
+                return-object
+                @update:active="fileClickHandler"
+                @update:open="folderClickHandler">
+
+                <template v-slot:prepend="{ item, open }">
+                    <template v-if="item.isFile()">
+                        <v-icon color="primary">{{ item.opened? 'mdi-file-edit-outline' : 'mdi-file-outline' }}</v-icon>
+                    </template>
+                    <template v-else>
+                        <v-icon color="primary">{{ item.opened? 'mdi-folder-open-outline' : 'mdi-folder-outline' }}</v-icon>
+                    </template>
+                </template>
+
+                <template v-slot:label="{ item, open }">
+                    <v-hover v-slot="{ hover }">
+                        <v-row justify="space-between" dense :elevation="0">
+                            <v-col>{{ item.getCanonicalName() }}</v-col>
+                            <v-col v-show="hover">
+                                <fs-node-menu 
+                                    :initval="item" 
+                                    @node-relocate="relocationHandler" 
+                                    @delete-node="deleteNodeHandler"></fs-node-menu>
+                            </v-col>
+                        </v-row>
+                    </v-hover>
+                </template>
+            </v-treeview>
         </div>
     `
 })
-
-// Vue.component("fsmodule", {
-//     props: ["initfs"],
-//     data: function() {
-//         return {
-//             fs: this.initfs,
-//         }
-//     },
-//     methods: {
-//         log: function(e) {
-//             console.log(e);
-//         },
-//         /**
-//          * 
-//          * @param {FSNode.FSNode[]} openedList a list of nodes that are open
-//          */
-//         folderClickHandler: function(openedList) { 
-//             console.log(openedList);
-//             console.log(this.fs.opened);
-//             let closedNode = this.fs.opened.filter(x => !openedList.includes(x));
-//             let openedNode = openedList.filter(x => !this.fs.opened.includes(x));
-//             if ((closedNode.length > 1 || openedNode.length > 1)) {
-//                 log("Opened node or closed node contain more than one item:");
-//                 loglist(closedNode);
-//                 loglist(openedNode);
-//                 throw new FSError("Opened node or closed node contain more than one item");
-//             }
-//             if (closedNode.length >=1 && openedNode.length >= 1) {
-//                 log("Opened node and closed node do not agree:");
-//                 loglist(closedNode);
-//                 loglist(openedNode);
-//                 throw new FSError("Opened node or closed node do not agree");
-//             } else if (closedNode.length == 1) {
-//                 this.fs.resetFolderCursor(closedNode[0]);
-//             } else if (openedNode.length == 1) {
-//                 this.fs.resetFolderCursor(openedNode[0]);
-//             } else {
-//                 log("did not find a different item: ");
-//             }
-//             log("set new folder cursor as " + this.fs.getSelectedFolder().path);
-//             this.fs.opened = openedList;
-//             this.fs.setFolderCursorStatus(this.fs.opened.includes(this.fs.foldercursor));
-//         },
-
-//         /**
-//          * 
-//          * @param {FSNode.FSNode} newnode 
-//          */
-//         fileClickHandler: function(newnode) {
-//             log("Clicking node:");
-//             log(newnode);
-//             this.fs.setFileCursorStatus(false);
-//             this.fs.resetFileCursor(newnode[0]);
-//             this.fs.setFileCursorStatus(true);
-//             this.$emit("switch-note", this.fs.current);
-//         },
-
-//         /**
-//          * 
-//          * @param {{FSNode, String}} newconfig 
-//          */
-//         relocationHandler: function(node, newpath) {
-//             visualize(this.fs, `Relocating node ${node.path} -> ${newpath}`);
-//             if (node.isFile()) {
-//                 this.fs.relocateFile(node, newpath);
-//             } else {
-//                 this.fs.relocateFolder(node, newpath);
-//             }
-//         },
-
-//         deleteNodeHandler: function(node) {
-//             log("deleting node:" + node.path);
-//             this.fs.deleteGivenNode(node);
-//             this.$emit("clear-editor");
-//         }
-//     },
-
-//     template: `
-//         <div>
-//             <v-treeview
-//                 :items="fs.getDB()"
-//                 :open="fs.opened"
-//                 activatable
-//                 item-key="id"
-//                 open-on-click
-//                 dense
-//                 shaped
-//                 color="primary"
-//                 return-object
-//                 @update:active="fileClickHandler"
-//                 @update:open="folderClickHandler">
-
-//                 <template v-slot:prepend="{ item, open }">
-//                     <template v-if="item.isFile()">
-//                         <v-icon color="primary">{{ item.opened? 'mdi-file-edit-outline' : 'mdi-file-outline' }}</v-icon>
-//                     </template>
-//                     <template v-else>
-//                         <v-icon color="primary">{{ item.opened? 'mdi-folder-open-outline' : 'mdi-folder-outline' }}</v-icon>
-//                     </template>
-//                 </template>
-
-//                 <template v-slot:label="{ item, open }">
-//                     <v-hover v-slot="{ hover }">
-//                         <v-row justify="space-between" dense :elevation="0">
-//                             <v-col>{{ item.getCanonicalName() }}</v-col>
-//                             <v-col v-show="hover">
-//                                 <fs-node-menu 
-//                                     :initval="item" 
-//                                     @node-relocate="relocationHandler" 
-//                                     @delete-node="deleteNodeHandler"></fs-node-menu>
-//                             </v-col>
-//                         </v-row>
-//                     </v-hover>
-//                 </template>
-//             </v-treeview>
-//         </div>
-//     `
-// })

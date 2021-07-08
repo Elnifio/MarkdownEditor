@@ -118,7 +118,7 @@ Vue.component(ASTType.TODO, {
     template: `
     <div>
         <div class="d-flex">
-            <v-btn icon @click.prevent.stop="logger"><v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon></v-btn>
+            <v-btn icon @click.prevent.stop="updateStatus"><v-icon>{{ content.status? 'mdi-checkbox-marked-outline':'mdi-checkbox-blank-outline' }}</v-icon></v-btn>
             <div class="pt-2">
                 <component v-for="metasen in content.sentences" v-bind:is="metasen.type" v-bind:sentence="metasen"></component>
             </div>
@@ -129,7 +129,8 @@ Vue.component(ASTType.TODO, {
                 <component 
                     v-for="action in content.subActions"
                     :is="action.type"
-                    :content="action">
+                    :content="action"
+                    @change="propagateChange">
                 </component>
             </div>
         </div>

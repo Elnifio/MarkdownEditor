@@ -61,6 +61,17 @@
             }
         </style>
 
+        <style>
+            .unselectable {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+        </style>
+
     </head>
     <body>
         <!-- App entry -->
@@ -126,7 +137,7 @@
                             <v-icon>mdi-file-plus-outline</v-icon>
                         </v-btn>
                     </v-list-item>
-                    <fsmodule :initfs="storage" @switch-note="switchNote" v-if="showFile()" @clear-editor="clearEditor"></fsmodule>
+                    <fs-module :initfs="storage" @switch-note="switchNote" v-if="showFile()" @clear-editor="clearEditor" @bring-editor-to-front="bringEditorToFront"></fs-module>
                     <v-divider></v-divider>
 
                     <v-list-item>

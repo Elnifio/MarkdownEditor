@@ -155,7 +155,6 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     this.path = path;
     this.todos = todos;
 
-    this.selected = false;
     this.description = "";
     this.deletable = true;
     this.renamable = true;
@@ -362,119 +361,6 @@ exports.createFile = createFile;
 
 exports.createFolder = createFolder;
 
-Vue.component("fs-node", {
-    props: ["fsnode"],
-    data: function() {
-        return {
-            node: this.fsnode,
-            menu: false,
-            nodepath: this.fsnode.path,
-        }
-    },
-    methods: {
-        log: function(event) {
-            console.log(event);
-        },
-        propagateNodeRelocate: function(node, newpath) {
-            this.$emit("relocate-node", node, newpath);
-        },
-        propagateDeleteNode: function(node) {
-            this.$emit("delete-node", node);
-        },
-        clickNode: function() {
-            this.$emit("click-node", this.node);
-        },
-        propagateClickNode: function(node) {
-            this.$emit("click-node", node);
-        },
-        pathchecker: value => {
-            let newval = value;
-            if (value[0] == "/") newval = value.substring(1);
-            return !newval.split("/").includes("") || "Path item should be of form \"/<folder-name>\""
-        },
-        sendUpdate: function(menuOpen) {
-            console.log(menuOpen);
-            console.log(`configured node path: ${this.nodepath}`);
-            console.log(`actual node path: ${this.node.path}`);
-            if (!menuOpen && this.nodepath != this.node.path) {
-                console.log("sending update");
-                this.$emit("relocate-node", this.node, this.nodepath);
-            } else return;
-        },
-        updatePath: function(newpath) {
-            this.nodepath = newpath;
-        },
-        sendDelete: function(event) {
-            this.menu=false;
-            this.$emit("delete-node", this.node);
-        }
-    },
-    template: `
-    <div class="ml-4">
-        <v-menu
-        v-model="menu"
-        :close-on-content-click="false"
-        offset-x
-        @input="sendUpdate">
-            <template v-slot:activator="{ on, attrs }">
-                <v-hover v-slot="{ hover }">
-                    <div dense :elevation="0" @click="clickNode" @contextmenu="menu=!menu" :class="hover?'grey lighten-4':''">
-                        <div>
-                            <v-icon v-if="node.isFile()"> {{ node.opened? 'mdi-file-edit-outline' : 'mdi-file-outline' }} </v-icon>
-                            <v-icon v-else> {{ node.opened? 'mdi-chevron-down' : 'mdi-chevron-right' }} </v-icon>
-                            <span class="unselectable">{{ node.getCanonicalName() }}</span>
-                        </div>
-                    </div>
-                </v-hover>
-            </template>
-
-            
-            <v-card>
-                <v-card-title>
-                    <v-text-field 
-                        dense 
-                        label="Storage Path" 
-                        @change="updatePath" 
-                        v-model="nodepath"
-                        ref="newpath"
-                        :readonly="!node.renamable"
-                        :rules="[ () => !!nodepath || 'Required.', pathchecker]"
-                        :hint="'New Path: ' + nodepath">
-                    </v-text-field>
-                </v-card-title>
-
-                <v-card-actions>
-                    <v-row align="center" justify="end">
-                        <v-btn 
-                            color="warning" 
-                            text 
-                            @click.prevent="sendDelete" 
-                            :disabled="!node.deletable">
-                                <v-icon>mdi-trash-can-outline</v-icon> Delete 
-                            </v-btn>
-                    </v-row>
-                </v-card-actions>
-            </v-card>
-        </v-menu>
-            
-        <div v-if="node.opened && node.isFolder()" class="d-flex">
-            <v-divider vertical class="mx-2"></v-divider>
-            <div>
-                <fs-node
-                    v-for="child in node.children"
-                    :fsnode="child"
-                    :key="child.path"
-                    @relocate-node="propagateNodeRelocate"
-                    @delete-node="propagateDeleteNode"
-                    @click-node="propagateClickNode"
-                    >
-                </fs-node>
-            </div>
-        </div>
-    </div>
-    `
-})
-
 Vue.component("fs-node-menu", {
     props: ["initval"],
     data: function() {
@@ -499,7 +385,7 @@ Vue.component("fs-node-menu", {
             console.log(`actual node path: ${this.node.path}`);
             if (!menuOpen && this.nodepath != this.node.path) {
                 console.log("sending update");
-                this.$emit("relocate-node", this.node, this.nodepath);
+                this.$emit("node-relocate", this.node, this.nodepath);
             } else return;
         },
         updatePath: function(newpath) {

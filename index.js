@@ -1,6 +1,6 @@
-const FSNode = require("./FileSystem/FSNode");
+const FSNode = require("./archived-backup/FileSystem-Vuetify-TreeView/FSNode");
 const FSModule = require("./FileSystem/FSModule");
-const FSControlKit = require("./FileSystem/FSControlKit");
+const FSControlKit = require("./archived-backup/FileSystem-Vuetify-TreeView/FSControlKit");
 const EditorModule = require("./Editor/EditorModule");
 const Conponents = require("./MarkdownCompiler/Components");
 const TODOComponents = require("./TODOSystem/TODOModule");
@@ -121,8 +121,12 @@ let vm = new Vue({
             /*
                 刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量
             */
-        }
+        },
 
+        bringEditorToFront: function() {
+            this.showEditor = true;
+            this.showTODO = false;
+        }
     }
 })
 

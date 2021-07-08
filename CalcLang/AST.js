@@ -48,6 +48,7 @@ let ASTType = {
 
     finder: (type) => { for (let item in ASTType) { if (ASTType[item] == type) return item; } },
 }
+exports.ASTType = ASTType;
 
 // ------------------------
 //
@@ -338,7 +339,7 @@ class LiteralDef extends Definition {
 exports.LiteralDef = LiteralDef;
 
 class ParameterDef extends Definition {
-    constructor(paramid, defaultval=undefined, posn) {
+    constructor(paramid, defaultval=undefined, posn=undefined) {
         super(ASTType.ParameterDef, posn);
         this.identifier = paramid;
         this.defaultval = defaultval;
