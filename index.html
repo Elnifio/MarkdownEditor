@@ -79,16 +79,13 @@
             <v-app>
 
                 <!--    App bar container -->
-                <v-app-bar
-                    app
-                    elevate-on-scroll
-                    scroll-target="#editor"
-                    color="white">
+                <!-- <v-app-bar
+                    app color="white">
                     <v-app-bar-nav-icon @click.prevent.stop="adjustNavbar">
                         <v-icon>mdi-iframe-outline</v-icon>
                     </v-app-bar-nav-icon>
                     <v-toolbar-title>Title</v-toolbar-title>
-                </v-app-bar>
+                </v-app-bar> -->
 
                 <v-navigation-drawer 
                 app 
@@ -152,9 +149,13 @@
                 <v-main app>
                     <v-container fluid>
                         <todo-lists :todonodes="collectTODOS()" v-if="showTODO"></todo-lists>
-                        <editor-control :estore="emstore" :editable="editable" @store-to-system="storeToSystem" id="editor" v-if="showEditor" ></editor-control>
+                        <editor-control :estore="emstore" :editable="editable" @store-to-system="storeToSystem" id="editor" v-if="showEditor"></editor-control>
                     </v-container>
                 </v-main>
+
+                <v-footer app>
+                    <v-icon>mdi-checkbox-marked-outline</v-icon> test content
+                </v-footer>
             </v-app>
         </div>
 

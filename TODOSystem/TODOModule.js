@@ -19,14 +19,16 @@ Vue.component("todo-item", {
         },
     },
     template: `
-    <v-card height="20vh">
+    <v-card>
         <v-card-title>
             {{ node.getCanonicalName() }}
         </v-card-title>
         <v-card-subtitle>
             {{ node.path }}
         </v-card-subtitle>
-        <component v-for="block in asts" :is="block.type" :content="block" @change="updateAtIndex($event, block)"></component>
+        <v-card flat height="15vh" style="overflow:auto">
+            <component v-for="block in asts" :is="block.type" :content="block" @change="updateAtIndex($event, block)"></component>
+        </v-card>
     </v-card>
     `
 })

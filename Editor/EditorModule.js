@@ -101,7 +101,7 @@ Vue.component("editor-control", {
     template: `
     <v-row>
         <v-col cols=6>
-            <v-card height="93vh" style="overflow:auto" flat>
+            <v-card height="95vh" style="overflow:auto" flat tile>
                 <editor 
                     v-model="editorstore.getCurrent()" 
                     @value-update="store($event)" 
@@ -111,7 +111,7 @@ Vue.component("editor-control", {
         </v-col>
         <v-divider vertical></v-divider>
         <v-col cols=6 >
-            <v-card height="93vh" style="overflow:auto" flat>
+            <v-card height="95vh" style="overflow:auto" flat tile>
                 <markdown-block :ast="ast" v-if="ast" @change="change"></markdown-block>
             </v-card>
         </v-col>
