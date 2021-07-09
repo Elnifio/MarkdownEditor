@@ -1,9 +1,15 @@
 let unzipper = require("../MarkdownCompiler/ASTZipper").ASTUnzipper;
+let disp = require("../MarkdownCompiler/ASTDisplay");
+let disper = new disp.Displayer();
+let Parser = require("../MarkdownCompiler/parser");
+let pobj = new Parser.Parser();
+let TODOCollector = require("../Editor/EditorModule").TODOCollector;
 
 let collectTabs = function(listnodes) {
     return [];
 }
 
+let newtodo;
 Vue.component("todo-item", {
     props: ['fileNode'],
     data: function() {
@@ -15,24 +21,40 @@ Vue.component("todo-item", {
     methods: {
         updateAtIndex: function(newobject, block) {
             this.node.updateAtIndex(newobject.index, newobject.newcontent);
-            block.status = !block.status;
+            newtodo = TODOCollector(pobj.parse(this.node.content));
+            this.fileNode.todos = newtodo;
+            this.asts = this.fileNode.todos.map(x => unzipper(x));
+            this.$emit("update-editor-content");
         },
     },
     template: `
-    <v-card>
+    <v-card max-width="25vw" min-width="200px" max-height="80vh" class="my-2" color="grey lighten-4">
         <v-card-title>
             {{ node.getCanonicalName() }}
         </v-card-title>
-        <v-card-subtitle>
-            {{ node.path }}
-        </v-card-subtitle>
-        <v-card flat height="15vh" style="overflow:auto">
-            <component v-for="block in asts" :is="block.type" :content="block" @change="updateAtIndex($event, block)"></component>
-        </v-card>
+        <v-divider></v-divider>
+        <v-sheet :elevation="0" max-height="70vh" style="overflow:auto" class="mx-2" color="grey lighten-4">
+            <v-hover v-slot="{ hover }" v-for="block in asts">
+                <v-card class="ma-2 pa-2" :class="hover?'grey lighten-5':''">
+                    <component 
+                        :is="block.type" 
+                        :content="block" 
+                        @change="updateAtIndex($event, block)">
+                    </component>
+                </v-card>
+            </v-hover>
+        </v-sheet>
+        <v-divider></v-divider>
+        <v-card-text class="d-flex">
+            <span class="mr-auto">{{ node.path }}</span>
+            <v-icon class="float-right">mdi-file-edit-outline</v-icon>
+        </v-card-text>
     </v-card>
     `
 })
 
+/** deleted contents
+ * 
 Vue.component("todo-lists", {
     props: ['todonodes'],
     template: `
@@ -43,6 +65,33 @@ Vue.component("todo-lists", {
     </v-row>
     `
 })
+ */
+
+Vue.component("todo-lists", {
+    props: ['todonodes'],
+    methods: {
+        propagateUpdateEditor: function() {
+            this.$emit("update-editor-content")
+        }
+    },
+    template: `
+    <v-slide-group>
+        <v-slide-item v-for="node in todonodes">
+            <v-sheet max-height="80vh">
+                <todo-item :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor">
+                </todo-item>
+            </v-sheet>
+        </v-slide-item>
+    </v-slide-group>
+    `
+})
+
+/** Deleted Templates
+ * 
+<v-sheet max-height="100vh" width="auto" style="overflow:auto;white-space:nowrap">
+    <todo-item v-for="node in todonodes" :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor"></todo-item>
+</v-sheet>
+ */
 
 Vue.component("todo-page", {
     props: ["nodes"],

@@ -72,6 +72,20 @@
             }
         </style>
 
+        <style>
+            .v-slide-group__wrapper {
+                overflow-x: auto; /* Enables the horizontal scrollbar */
+                /* Next lines hides scrollbar in different browsers for styling purposes */
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+            }
+            .v-slide-group__wrapper::-webkit-scrollbar {
+                display: none; /* Chrome opera and Safary */
+                width: 0px;
+                background: transparent;
+            }
+        </style>
+
     </head>
     <body>
         <!-- App entry -->
@@ -80,7 +94,7 @@
 
                 <!--    App bar container -->
                 <!-- <v-app-bar
-                    app color="white">
+                    app color="white" max-height="10vh">
                     <v-app-bar-nav-icon @click.prevent.stop="adjustNavbar">
                         <v-icon>mdi-iframe-outline</v-icon>
                     </v-app-bar-nav-icon>
@@ -148,14 +162,10 @@
                 
                 <v-main app>
                     <v-container fluid>
-                        <todo-lists :todonodes="collectTODOS()" v-if="showTODO"></todo-lists>
+                        <todo-lists :todonodes="collectTODOS()" v-if="showTODO" @update-editor-content="updateCurrentEditor"></todo-lists>
                         <editor-control :estore="emstore" :editable="editable" @store-to-system="storeToSystem" id="editor" v-if="showEditor"></editor-control>
                     </v-container>
                 </v-main>
-
-                <v-footer app>
-                    <v-icon>mdi-checkbox-marked-outline</v-icon> test content
-                </v-footer>
             </v-app>
         </div>
 

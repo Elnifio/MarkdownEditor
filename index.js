@@ -93,6 +93,11 @@ let vm = new Vue({
             this.showEditor = true;
         },
 
+        updateCurrentEditor: function() {
+            console.log(FS.current);
+            this.emstore.setCurrent(FS.current);
+        },
+
         storeToSystem: function(newTODOList) {
             console.log("storing to system");
             this.storage.current = this.emstore.getCurrent();

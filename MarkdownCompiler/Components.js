@@ -107,7 +107,7 @@ Vue.component(ASTType.TODO, {
         updateStatus: function() {
             this.$emit("change", 
             {   index: this.content.todoIndex, 
-                newcontent: this.content.status?"- [ ] ":"- [x] "
+                newcontent: this.content.status?"- [ ] ":"- [x] ",
             });
         },
         propagateChange: function(item) {
@@ -156,8 +156,7 @@ Vue.component(ASTType.CodeBlock, {
     <v-card outlined>
         <v-card-text class="text-body-1">
             <template v-for="(codes, index) in content.get().trim().split('\\n')" class="d-flex">
-                <span>{{index+1}}</span>
-                <v-divider class="mx-2" vertical></v-divider>
+                <span class="pr-2">{{index+1}}</span>
                 <span>{{ codes }}</span>
                 <br />
             </template>

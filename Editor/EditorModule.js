@@ -95,7 +95,8 @@ Vue.component("editor-control", {
         change: function(newobject) {
             let oldvalue = this.editorstore.getCurrent();
             this.editorstore.setCurrent(oldvalue.substring(0, newobject.index.start) + newobject.newcontent + oldvalue.substring(newobject.index.end));
-            this.$emit("store-to-system", TODOCollector(this.ast));
+            newAST = pobj.parse(this.editorstore.state.currval);
+            this.$emit("store-to-system", TODOCollector(newAST));
         }
     },
     template: `
