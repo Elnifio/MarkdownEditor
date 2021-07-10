@@ -151,12 +151,67 @@
                     <fs-module :initfs="storage" @switch-note="switchNote" v-if="showFile()" @clear-editor="clearEditor" @bring-editor-to-front="bringEditorToFront"></fs-module>
                     <v-divider></v-divider>
 
+                    <!-- Tag 系统 -->
                     <v-list-item @click="adjustTag">
                         <v-list-item-icon>
                             <v-icon>mdi-tag</v-icon>
                         </v-list-item-icon>
                         
                         <v-list-item-title>Tags</v-list-item-title>
+                            <v-menu v-model="showCreateTag" offset-x @input="log" :close-on-content-click="false">
+                                <!-- 弹出新建tag菜单的按钮 -->
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-btn icon @click.prevent.stop="showCreateTag=!showCreateTag">
+                                        <v-icon>mdi-tag-plus-outline</v-icon>
+                                    </v-btn>
+                                </template>
+
+                                <!-- 新建tag的弹出菜单 -->
+                                <v-card max-width="300px">
+                                    <v-card-title>
+                                        <v-text-field
+                                            dense
+                                            label="Tag Name"
+                                            @change="log"
+                                            v-model="defaultTagName"
+                                            :rules="[ () => !!defaultTagName || 'Required.', ]"
+                                            :hint="'Tag name: ' + defaultTagName">
+    
+                                            <template v-slot:append>
+                                                <v-icon :color="defaultTagColor">{{defaultTagIcon}}</v-icon>
+                                            </template>
+    
+                                            <template v-slot:append-outer>
+                                                <v-icon 
+                                                    color="success" 
+                                                    @click.prevent.stop="createTag">
+                                                    mdi-check
+                                                </v-icon>
+                                            </template>
+                                        </v-text-field>
+                                    </v-card-title>
+
+                                    <v-color-picker
+                                        dot-size="25"
+                                        hide-canvas
+                                        hide-mode-switch
+                                        mode="rgba"
+                                        swatches-max-height="200"
+                                        v-model="defaultTagColor"></v-color-picker>
+                                    
+                                        <v-sheet 
+                                            max-height="10vh" 
+                                            min-height="100px" 
+                                            style="overflow:auto" class="mx-auto">
+                                            <icon-picker 
+                                                :chosen="defaultTagIcon" 
+                                                :color="defaultTagColor" 
+                                                @chosen-icon="defaultTagIcon=$event">
+                                            </icon-picker>
+                                        </v-sheet>
+                                </v-card>
+                            </v-menu>
+                        
                     </v-list-item>
                     <tab-manager :manager="tabManager" v-if="showTag()"></tab-manager>
                 </v-navigation-drawer>

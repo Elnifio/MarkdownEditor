@@ -32,7 +32,9 @@ Vue.component("todo-item", {
         <v-card-title>
             {{ node.getCanonicalName() }}
         </v-card-title>
+
         <v-divider></v-divider>
+
         <v-sheet :elevation="0" max-height="70vh" style="overflow:auto" class="mx-2" color="grey lighten-4">
             <v-hover v-slot="{ hover }" v-for="block in asts">
                 <v-card class="ma-2 pa-2" :class="hover?'grey lighten-5':''">
@@ -44,7 +46,17 @@ Vue.component("todo-item", {
                 </v-card>
             </v-hover>
         </v-sheet>
+
         <v-divider></v-divider>
+
+        <v-chip-group v-if="node.tabs.length!=0">
+            <tab-chip
+                v-for="tab in node.tabs"
+                :tab="tab"
+                :tabDelete="false">
+            </tab-chip>
+        </v-chip-group>
+
         <v-card-text class="d-flex">
             <span class="mr-auto">{{ node.path }}</span>
             <v-icon class="float-right">mdi-file-edit-outline</v-icon>

@@ -149,7 +149,7 @@ Vue.component("editor-control", {
 
                     <v-menu v-model="tabchooser" offset-x>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-chip class="ma-1" label @click="tabchooser=!tabchooser">
+                            <v-chip class="ma-1" label @click="tabchooser=!tabchooser" outlined>
                                 <v-icon>
                                     mdi-plus
                                 </v-icon>

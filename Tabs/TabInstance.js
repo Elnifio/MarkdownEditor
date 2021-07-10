@@ -107,9 +107,12 @@ Vue.component("tab-list-item", {
             console.log(x);
             this.$emit("change-name", this.tab);
         },
+        propagateDeleteTab: function(x) {
+            this.$emit("delete-tab", x);
+        }
     },
     template: `
-    <v-sheet elevation="0" class="pa-2">
+    <v-sheet elevation="0" class="pl-2">
 
         <v-menu
             v-model="menu"
@@ -126,13 +129,13 @@ Vue.component("tab-list-item", {
                         @contextmenu="menu=!menu">
 
                         <v-icon class="mr-2" :color="tab.color">{{ tab.icon }}</v-icon>
-                        <span class="unselectable">{{ tab.name }}</span>
-
+                        <span class="unselectable mr-auto">{{ tab.name }}</span>
+                        <v-icon>mdi-chevron-{{ tab.opened?"down":"left" }}</v-icon>
                     </v-sheet>
                 </v-hover>
             </template>
 
-            <tab-editor :givenTab="tab"></tab-editor>
+            <tab-editor :givenTab="tab" @delete-tab="propagateDeleteTab"></tab-editor>
         </v-menu>
 
         <v-sheet elevation="0" v-if="tab.opened" class="pl-2">
@@ -154,12 +157,23 @@ Vue.component("tab-editor", {
         return {
             tab: this.givenTab,
             icons: Icons,
+            confirm: false,
         }
     },
     methods: {
         log: function(x) {
             console.log(x);
         },
+        handleDelete: function() {
+            if (!this.confirm) {
+                this.confirm = true;
+            } else {
+                this.$emit("delete-tab", this.tab);
+            }
+        },
+        revertDelete: function() {
+            this.confirm = false;
+        }
     },
     template: `
     <v-card max-width="300px">
@@ -172,11 +186,22 @@ Vue.component("tab-editor", {
                 ref="newname"
                 :rules="[ () => !!tab.name || 'Required.', ]"
                 :hint="'New Name: ' + tab.name">
+
                 <template v-slot:append>
                     <v-icon :color="tab.color"> {{tab.icon}} </v-icon>
                 </template>
+
+                <template v-slot:append-outer>
+                    <v-icon
+                        :color="confirm?'error':'warning'"
+                        @click.prevent.stop="handleDelete"
+                        @blur="revertDelete">
+                        {{ confirm?'mdi-trash-can':'mdi-trash-can-outline' }}
+                    </v-icon>
+                </template>
             </v-text-field>
         </v-card-title> 
+
         <v-color-picker
             dot-size="25"
             hide-canvas
@@ -185,13 +210,20 @@ Vue.component("tab-editor", {
             swatches-max-height="200"
             v-model="tab.color">
         </v-color-picker>
+
         <v-sheet max-height="10vh" min-height="100px" style="overflow:auto" class="mx-auto">
-            <v-icon 
-                v-for="icon in icons" 
-                class="ma-2" 
-                :color="icon==tab.icon?tab.color:''"
-                @click.prevent.stop="tab.icon=icon">{{icon}}</v-icon>
+            <icon-picker 
+                :chosen="tab.icon" 
+                :color="tab.color" 
+                @chosen-icon="tab.icon=$event">
+            </icon-picker>
         </v-sheet>
     </v-card>
     `
 })
+
+{/* <v-icon 
+                v-for="icon in icons" 
+                class="ma-2" 
+                :color="icon==tab.icon?tab.color:''"
+                @click.prevent.stop="tab.icon=icon">{{icon}}</v-icon> */}

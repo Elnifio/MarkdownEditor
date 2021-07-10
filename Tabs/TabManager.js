@@ -28,7 +28,7 @@ class TabManager {
         this.tabs = [];
     }
 
-    createTab(newname="unnamed") {
+    createTab(newname="unnamed", color="#62C6F2FF", icon="mdi-tag") {
         let filterResult = this.tabs.filter(tab => tab.name == newname);
         let usename = newname;
         if (filterResult.length > 0) {
@@ -40,7 +40,7 @@ class TabManager {
             }
             usename = newname + counter;
         }
-        let out = new TabInstance(usename)
+        let out = new TabInstance(usename, color, icon);
         this.tabs.push(out);
         return out;
     }
@@ -108,11 +108,19 @@ Vue.component("tab-manager", {
     methods: {
         validateChange: function(tag) {
             this.manager.changeTabName(tag);
+        },
+        deleteTab: function(tab) {
+            this.manager.deleteTab(tab);
         }
     },
     template: `
     <v-sheet elevation="0">
-        <tab-list-item v-for="tab in manager.tabs" :givenTab="tab" @change-name="validateChange"></tab-list-item>
+        <tab-list-item 
+            v-for="tab in manager.tabs"
+            :givenTab="tab"
+            :key="tab.name"
+            @change-name="validateChange"
+            @delete-tab="deleteTab"></tab-list-item>
     </v-sheet>
     `
 })

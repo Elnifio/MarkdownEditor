@@ -6,6 +6,7 @@ const Conponents = require("./MarkdownCompiler/Components");
 const TODOComponents = require("./TODOSystem/TODOModule");
 const fs = require("fs");
 const TabManager = require("./Tabs/TabManager");
+const IconPicker = require("./utils/IconPicker");
 
 const { ipcRenderer } = require("electron");
 
@@ -39,6 +40,8 @@ if (tags == "") {
     TM.createTab('test 01');
     TM.createTab("test 02");
     TM.createTab("test 03");
+    TM.createTab("test 04");
+    TM.createTab("test 05");
     tags = TabManager.ZipTabManager(TM);
 }
 
@@ -77,6 +80,11 @@ let vm = new Vue({
         showEditor: true,
         
         showTODO: false,
+
+        showCreateTag: false,
+        defaultTagName: "New Tag",
+        defaultTagColor: "#62C6F2FF",
+        defaultTagIcon: "mdi-tag",
     },
 
     methods: {
@@ -162,6 +170,19 @@ let vm = new Vue({
             */
         },
 
+        /**
+         * 点击新建tag按钮时触发
+         */
+        createTag: function() {
+            this.showCreateTag = false;
+            this.tabManager.createTab(this.defaultTagName, this.defaultTagColor, this.defaultTagIcon);
+        },
+
+        /**
+         * 
+         * @param {TabInstance} tag 
+         * 由向笔记中添加tag时触发，将笔记归类到特定tag下
+         */
         addTag: function(tag) {
             this.storage.addTag(tag);
         },
