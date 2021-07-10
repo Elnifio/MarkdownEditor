@@ -109,13 +109,6 @@ Vue.component("editor-control", {
         },
         deleteTag: function(tag) {
             this.$emit("delete-tag", tag);
-            // taglist = this.editorstore.tags();
-            // idx = taglist.indexOf(tag);
-            // if (idx < 0) {
-            //     console.log("Cannot find such tag: " + tag.name);
-            // } else {
-            //     taglist.splice(idx, 1);
-            // }
         },
         store: function(event) {
             this.$emit("store-to-system", TODOCollector(this.ast));
@@ -180,10 +173,3 @@ Vue.component("editor-control", {
     </v-row>
     `
 })
-
-/*
-deleted content: 
-<editor v-model="editorvalue" @input="update($event)"></editor>
-            <v-textarea @input="update($event)" @select="select($event)" :value="evalue">
-            </v-textarea>
-*/

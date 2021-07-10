@@ -53,20 +53,6 @@ Vue.component("todo-item", {
     `
 })
 
-/** deleted contents
- * 
-Vue.component("todo-lists", {
-    props: ['todonodes'],
-    template: `
-    <v-row dense>
-        <v-col v-for="node in todonodes" :key="node.path" xs="12" sm="6" md="3">
-            <todo-item :fileNode="node"></todo-item>
-        </v-col>
-    </v-row>
-    `
-})
- */
-
 Vue.component("todo-lists", {
     props: ['todonodes'],
     methods: {
@@ -85,13 +71,6 @@ Vue.component("todo-lists", {
     </v-slide-group>
     `
 })
-
-/** Deleted Templates
- * 
-<v-sheet max-height="100vh" width="auto" style="overflow:auto;white-space:nowrap">
-    <todo-item v-for="node in todonodes" :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor"></todo-item>
-</v-sheet>
- */
 
 Vue.component("todo-page", {
     props: ["nodes"],
