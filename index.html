@@ -213,7 +213,11 @@
                             </v-menu>
                         
                     </v-list-item>
-                    <tab-manager :manager="tabManager" v-if="showTag()"></tab-manager>
+                    <tab-manager v-if="showTag()" 
+                        :manager="tabManager"
+                        @relocate-node="tagFileRelocationHandler"
+                        @delete-node="tagFileDeletionHandler"
+                        @click-node="tagFileClickHandler"></tab-manager>
                 </v-navigation-drawer>
                 
                 <v-main app>

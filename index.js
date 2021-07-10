@@ -194,6 +194,36 @@ let vm = new Vue({
         bringEditorToFront: function() {
             this.showEditor = true;
             this.showTODO = false;
+        },
+
+        tagFileRelocationHandler: function(node, newpath) {
+            if (node.isFile()) {
+                this.storage.relocateFile(node, newpath);
+            } else {
+                this.storage.relocateFolder(node, newpath);
+            }
+        },
+
+        tagFileDeletionHandler: function(node) {
+            this.storage.deleteGivenNode(node);
+            if (!this.storage.filecursor) this.clearEditor();
+        },
+
+        tagFileClickHandler: function(clicked) {
+            if (clicked.isFolder()) {
+                clicked.toggleOpen();
+                this.storage.resetFolderCursor(clicked);
+            } else {
+                if (!clicked.opened) {
+                    this.storage.setFileCursorStatus(false);
+                    this.storage.resetFileCursor(clicked);
+                    this.storage.setFileCursorStatus(true);
+                    this.switchNote(this.storage.current);
+                }
+            }
+            if (this.storage.filecursor) {
+                this.bringEditorToFront();
+            }
         }
     }
 })

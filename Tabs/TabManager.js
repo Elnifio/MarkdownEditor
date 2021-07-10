@@ -111,7 +111,16 @@ Vue.component("tab-manager", {
         },
         deleteTab: function(tab) {
             this.manager.deleteTab(tab);
-        }
+        },
+        propagateRelocation: function(node, newpath) {
+            this.$emit("relocate-node", node, newpath);
+        },
+        propagateDeletion: function(node) {
+            this.$emit("delete-node", node);
+        },
+        propagateClick: function(node) {
+            this.$emit("click-node", node);
+        },
     },
     template: `
     <v-sheet elevation="0">
@@ -120,7 +129,10 @@ Vue.component("tab-manager", {
             :givenTab="tab"
             :key="tab.name"
             @change-name="validateChange"
-            @delete-tab="deleteTab"></tab-list-item>
+            @delete-tab="deleteTab"
+            @relocate-node="propagateRelocation"
+            @click-node="propagateClick"
+            @delete-node="propagateDeletion"></tab-list-item>
     </v-sheet>
     `
 })

@@ -109,6 +109,15 @@ Vue.component("tab-list-item", {
         },
         propagateDeleteTab: function(x) {
             this.$emit("delete-tab", x);
+        },
+        propagateRelocation: function(node, newpath) {
+            this.$emit("relocate-node", node, newpath);
+        },
+        propagateDeletion: function(node) {
+            this.$emit("delete-node", node);
+        },
+        propagateClick: function(node) {
+            this.$emit("click-node", node);
         }
     },
     template: `
@@ -142,9 +151,9 @@ Vue.component("tab-list-item", {
             <fs-node v-for="child in tab.children"
                 :fsnode="child"
                 :key="child.path"
-                @relocate-node="log"
-                @delete-node="log"
-                @click-node="log">
+                @relocate-node="propagateRelocation"
+                @delete-node="propagateDeletion"
+                @click-node="propagateClick">
             </fs-node>
         </v-sheet>
     </v-sheet>

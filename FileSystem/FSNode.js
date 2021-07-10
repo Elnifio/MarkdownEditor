@@ -461,7 +461,6 @@ Vue.component("fs-node", {
                 </v-hover>
             </template>
 
-            
             <v-card>
                 <v-card-title>
                     <v-text-field 
