@@ -269,6 +269,22 @@ exports.TODOList = TODOList;
 let Header = function() {
     this.level=0;
     this.visit = function(visitor, arg) { return visitor.visitHeader(this, arg); }
+    this.getDecorationClass = function() {
+        switch(this.level) {
+            case 0: 
+            case 1:
+            case 2:
+            case 3:
+            case 4: 
+                return "text-h"+(this.level+2);
+            case 5:
+                return "text-subtitle-1";
+            case 6:
+                return "text-subtitle-2";
+            default:
+                return "text-body-1";
+        }
+    }
 }
 Header.prototype = new ContentableBlock(ASTType.Header);
 exports.Header = Header;

@@ -56,14 +56,19 @@ exports.zip = zip;
  * @param {FSNode} unzipped unzipped general FSNode
  */
 let ziphelper = function(unzipped) {
-    return [unzipped.name, unzipped.type, unzipped.content, unzipped.opened, unzipped.children.map(ziphelper), {todos: unzipped.todos}];
+    return [unzipped.name, 
+            unzipped.type, 
+            unzipped.content, 
+            unzipped.opened, 
+            unzipped.children.map(ziphelper), 
+            {todos: unzipped.todos, tabs: unzipped.zipTabs()}];
 }
 
 /**
  * 
  * @param {String} zipped zipped string
  */
-let unzip = function(zipped) {
+let unzip = function(zipped, tabManager) {
     let nodes;
     try {
         nodes = JSON.parse(zipped);
@@ -81,7 +86,7 @@ let unzip = function(zipped) {
     let xres;
     let root = new FSNode("", Type.folder, "", true, children, undefined);
     nodes.forEach(x => {
-        xres = unziphelper(x);
+        xres = unziphelper(x, "", tabManager);
         // children = children.concat(xres[0]);
         root.addChild(xres[0]);
         opens.lastOpened = (xres[1])?xres[1]:opens.lastOpened;
@@ -96,13 +101,28 @@ exports.unzip = unzip;
  * 
  * @param {FSNode[]} zipped a list of objects of form [<name>, <type>, <content>, <opened>, [...children]]
  * @param {String} path default path of this node
+ * @param {TabManager} 
  */
-let unziphelper = function(zipped, path="") {
+let unziphelper = function(zipped, path, tabManager) {
     // [ <root>, <last-opened-file>, [<opened-folder-path>, ...]]
     let returned = [undefined, undefined, []];
     // [<name>, <type>, <content>, <opened>, [...children], {todos: [...todo-items], }]
     let newpath = path + PathSep + zipped[0];
-    let out = new FSNode(zipped[0], zipped[1], zipped[2], zipped[3], [], undefined, newpath, zipped.length==6?zipped[5].todos:[]);
+
+    let out = new FSNode(
+        zipped[0], 
+        zipped[1], 
+        zipped[2], 
+        zipped[3], 
+        [], 
+        undefined, 
+        newpath, 
+        zipped.length==6?zipped[5].todos:[]);
+    
+    if (zipped[5] && zipped[5].tabs) {
+        zipped[5].tabs.forEach(x => tabManager.findTab(x).addChild(out));
+    }
+
     returned[0] = out;
 
     if (out.opened) {
@@ -124,13 +144,6 @@ let unziphelper = function(zipped, path="") {
     return returned;
 }
 
-let Tab = function(name, icon, color) {
-    this.name = name;
-    this.icon = icon;
-    this.color = color;
-    this.children = [];
-}
-
 let id = 0;
 
 /**
@@ -143,7 +156,7 @@ let id = 0;
  * @param {FSNode} parent       : parent of this node
  * @param {String} path         : path of this node
  */
-let FSNode = function(name, type, content="", opened=false, children=[], parent=undefined, path="", todos=[]) {
+let FSNode = function(name, type, content="", opened=false, children=[], parent=undefined, path="", todos=[], tabs=[]) {
     id += 1;
     this.id = id;
     this.name=name;
@@ -154,6 +167,7 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     this.parent=parent;
     this.path = path;
     this.todos = todos;
+    this.tabs = tabs
 
     this.selected = false;
     this.description = "";
@@ -168,6 +182,25 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
     this.getName = function() { return this.name + "-" + this.type; };
     this.getCanonicalName = function() { return this.name; };
     this.setName = function(newname)  { this.name = newname; };
+    
+    this.addTab = (tab) => { 
+        this.tabs.push(tab);
+        console.log(this.tabs);
+    };
+    this.deleteTab = (tab) => {
+        let idx = this.tabs.indexOf(tab);
+        console.log(this.tabs);
+        if (idx < 0) {
+            throw new FSNodeError(`FSNode.deleteTab(): Cannot find tab ${tab.name}`);
+        } else {
+            this.tabs.splice(idx, 1);
+        }
+    }
+    this.destructTabs = () => {
+        this.tabs.forEach(x => x.deleteChild(this));
+    }
+
+    this.zipTabs = () => this.tabs.map(tab => tab.name);
 
     this.isFile = function() { return this.type == Type.file; } 
     this.isFolder = function() { return this.type == Type.folder; }
@@ -475,6 +508,7 @@ Vue.component("fs-node", {
     `
 })
 
+/*
 Vue.component("fs-node-menu", {
     props: ["initval"],
     data: function() {
@@ -544,3 +578,4 @@ Vue.component("fs-node-menu", {
         </v-menu>
     `,
 })
+*/

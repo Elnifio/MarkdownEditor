@@ -197,9 +197,19 @@ Vue.component(ASTType.LatexBlock, {
 Vue.component(ASTType.Image, {
     props: ["content"],
     template: `
-    <img v-bind:src="content.get('src')" v-bind:alt="content.get('alt')">
+    <v-card outlined max-width="30vw" class="mx-auto my-2">
+        <v-img 
+            :src="content.get('src')">
+        </v-img>
+        <v-divider></v-divider>
+        <v-card-text class="subtitle-1" v-if="content.get('alt')">{{ content.get('alt') }}</v-card-text>
+    </v-card>
     `
 })
+/**Old Template:
+ * <img v-bind:src="content.get('src')" v-bind:alt="content.get('alt')" style="max-width=40vw">
+ */
+
 
 Vue.component(ASTType.UL, {
     props: ['content'],
@@ -234,6 +244,15 @@ Vue.component(ASTType.Reference, {
 Vue.component(ASTType.Header, {
     props: ["content"],
     template: `
+    <div>
+        <span :class="content.getDecorationClass()" class="text-center">{{content.get()}}</span>
+        <v-divider v-if="content.level<=2" class="my-2"></v-divider>
+    </div>
+    `,
+})
+/**
+ * Old Template
+`
     <h1 v-if="content.level === 1">
         {{ content.get() }}
     </h1>
@@ -251,8 +270,9 @@ Vue.component(ASTType.Header, {
     </h5>
     <h6 v-else-if="content.level === 6">
         {{ content.get() }}
-    </h6>`,
-})
+    </h6>`
+ */
+
 
 // ----------------
 // 
@@ -271,6 +291,11 @@ Vue.component(ASTType.MD, {
     },
     template: `
     <div class="markdown-container">
-        <component v-for="block in ast.blocks" v-bind:is="block.type" v-bind:content="block" @change="propagateChange" @re-store-ast="propagateReStoreAST"></component>
+        <component 
+            v-for="block in ast.blocks" 
+            v-bind:is="block.type" 
+            v-bind:content="block" 
+            @change="propagateChange" 
+            @re-store-ast="propagateReStoreAST"></component>
     </div>`
 })

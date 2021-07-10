@@ -70,8 +70,8 @@ let loglist = function(nodelist) {
     }
 }
 
-let FSFactory = function(storage) {
-    let buildResult = FSNode.unzip(storage);
+let FSFactory = function(storage, tabManager) {
+    let buildResult = FSNode.unzip(storage, tabManager);
     let newfs = new FS(buildResult[0], buildResult[1], buildResult[2]);
     Object.defineProperty(newfs, "current", {
         get: function() { return this.getCurrentContent() },
@@ -142,7 +142,6 @@ let FS = function(rootNode, currentlyOpened, openList) {
         if (!this.hasFileCursor()) {
             return this.foldercursor;
         } else {
-            console.log(this.filecursor);
             if (this.filecursor.parent.isFile()) {
                 throw new FSError("FSModule.getWorkingFolder(): unexpected file nested within file.");
             } else 
@@ -321,6 +320,7 @@ let FS = function(rootNode, currentlyOpened, openList) {
     }
 
     this.deleteNodePrimitive = function(node) {
+        node.destructTabs();
         node.parent.deleteChild(node);
     }
 
@@ -384,6 +384,31 @@ let FS = function(rootNode, currentlyOpened, openList) {
 
     this.export = function() {
         return FSNode.zip(this.root.children);
+    }
+
+    /**
+     * 
+     * @param {TabInstance} tag 
+     */
+    this.addTag = (tag) => {
+        if (this.filecursor) {
+            console.log("Adding tag: " + tag.name + " to File: " + this.filecursor.getCanonicalName());
+            tag.addChild(this.filecursor);
+        }
+    }
+
+    this.deleteTag = (tag) => {
+        if (this.filecursor) {
+            tag.deleteChild(this.filecursor);
+        }
+    }
+
+    this.getTags = () => {
+        if (this.filecursor) {
+            return this.filecursor.tabs;
+        } else {
+            return [];
+        }
     }
 };
 exports.FS = FS;
@@ -470,120 +495,3 @@ Vue.component("fs-module", {
     `
 })
 
-// Vue.component("fsmodule", {
-//     props: ["initfs"],
-//     data: function() {
-//         return {
-//             fs: this.initfs,
-//         }
-//     },
-//     methods: {
-//         log: function(e) {
-//             console.log(e);
-//         },
-//         /**
-//          * 
-//          * @param {FSNode.FSNode[]} openedList a list of nodes that are open
-//          */
-//         folderClickHandler: function(openedList) { 
-//             console.log(openedList);
-//             console.log(this.fs.opened);
-//             let closedNode = this.fs.opened.filter(x => !openedList.includes(x));
-//             let openedNode = openedList.filter(x => !this.fs.opened.includes(x));
-//             if ((closedNode.length > 1 || openedNode.length > 1)) {
-//                 log("Opened node or closed node contain more than one item:");
-//                 loglist(closedNode);
-//                 loglist(openedNode);
-//                 throw new FSError("Opened node or closed node contain more than one item");
-//             }
-//             if (closedNode.length >=1 && openedNode.length >= 1) {
-//                 log("Opened node and closed node do not agree:");
-//                 loglist(closedNode);
-//                 loglist(openedNode);
-//                 throw new FSError("Opened node or closed node do not agree");
-//             } else if (closedNode.length == 1) {
-//                 this.fs.resetFolderCursor(closedNode[0]);
-//             } else if (openedNode.length == 1) {
-//                 this.fs.resetFolderCursor(openedNode[0]);
-//             } else {
-//                 log("did not find a different item: ");
-//             }
-//             log("set new folder cursor as " + this.fs.getSelectedFolder().path);
-//             this.fs.opened = openedList;
-//             this.fs.setFolderCursorStatus(this.fs.opened.includes(this.fs.foldercursor));
-//         },
-
-//         /**
-//          * 
-//          * @param {FSNode.FSNode} newnode 
-//          */
-//         fileClickHandler: function(newnode) {
-//             log("Clicking node:");
-//             log(newnode);
-//             this.fs.setFileCursorStatus(false);
-//             this.fs.resetFileCursor(newnode[0]);
-//             this.fs.setFileCursorStatus(true);
-//             this.$emit("switch-note", this.fs.current);
-//         },
-
-//         /**
-//          * 
-//          * @param {{FSNode, String}} newconfig 
-//          */
-//         relocationHandler: function(node, newpath) {
-//             visualize(this.fs, `Relocating node ${node.path} -> ${newpath}`);
-//             if (node.isFile()) {
-//                 this.fs.relocateFile(node, newpath);
-//             } else {
-//                 this.fs.relocateFolder(node, newpath);
-//             }
-//         },
-
-//         deleteNodeHandler: function(node) {
-//             log("deleting node:" + node.path);
-//             this.fs.deleteGivenNode(node);
-//             this.$emit("clear-editor");
-//         }
-//     },
-
-//     template: `
-//         <div>
-//             <v-treeview
-//                 :items="fs.getDB()"
-//                 :open="fs.opened"
-//                 activatable
-//                 item-key="id"
-//                 open-on-click
-//                 dense
-//                 shaped
-//                 color="primary"
-//                 return-object
-//                 @update:active="fileClickHandler"
-//                 @update:open="folderClickHandler">
-
-//                 <template v-slot:prepend="{ item, open }">
-//                     <template v-if="item.isFile()">
-//                         <v-icon color="primary">{{ item.opened? 'mdi-file-edit-outline' : 'mdi-file-outline' }}</v-icon>
-//                     </template>
-//                     <template v-else>
-//                         <v-icon color="primary">{{ item.opened? 'mdi-folder-open-outline' : 'mdi-folder-outline' }}</v-icon>
-//                     </template>
-//                 </template>
-
-//                 <template v-slot:label="{ item, open }">
-//                     <v-hover v-slot="{ hover }">
-//                         <v-row justify="space-between" dense :elevation="0">
-//                             <v-col>{{ item.getCanonicalName() }}</v-col>
-//                             <v-col v-show="hover">
-//                                 <fs-node-menu 
-//                                     :initval="item" 
-//                                     @node-relocate="relocationHandler" 
-//                                     @delete-node="deleteNodeHandler"></fs-node-menu>
-//                             </v-col>
-//                         </v-row>
-//                     </v-hover>
-//                 </template>
-//             </v-treeview>
-//         </div>
-//     `
-// })

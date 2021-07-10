@@ -5,6 +5,7 @@ const EditorModule = require("./Editor/EditorModule");
 const Conponents = require("./MarkdownCompiler/Components");
 const TODOComponents = require("./TODOSystem/TODOModule");
 const fs = require("fs");
+const TabManager = require("./Tabs/TabManager");
 
 const { ipcRenderer } = require("electron");
 
@@ -14,6 +15,9 @@ ipcRenderer.on("log-value-result", (event, message) => {
 
 let storage = fs.readFileSync("storage.json").toString();
 
+/**
+ * Debug Usage
+ */
 if (storage == "") {
     console.log("re-creating root elements");
     const rootEle = new FSNode.FSNode("root", FSNode.Type.folder, "", true);
@@ -27,10 +31,24 @@ if (storage == "") {
     rootEle.addChild(n02);
     storage = FSNode.zip(rootEle.children);
 }
-let FS = FSModule.FSFactory(storage);
+
+let tags = ""
+
+if (tags == "") {
+    let TM = new TabManager.TabManager();
+    TM.createTab('test 01');
+    TM.createTab("test 02");
+    TM.createTab("test 03");
+    tags = TabManager.ZipTabManager(TM);
+}
+
+let TM = TabManager.UnzipTabManager(tags);
+
+let FS = FSModule.FSFactory(storage, TM);
 FS.collectFiles();
-let EMStore = new EditorModule.Editor();
+let EMStore = new EditorModule.Editor(TM.tabs);
 EMStore.setCurrent(FS.current);
+EMStore.setTag(FS.getTags());
 
 Vue.use(Vuetify);
 
@@ -49,9 +67,11 @@ let vm = new Vue({
         storage: FS,
         initval: "initialization",
         emstore: EMStore,
+        tabManager: TM,
 
-        showNavbar: true,
-        showStorage: true,
+        hideNavbar: true,
+        hideStorage: true,
+        hideTags: false,
 
         editable: FS.hasFileCursor(),
         showEditor: true,
@@ -69,11 +89,17 @@ let vm = new Vue({
         },
 
         adjustNavbar: function() {
-            this.showNavbar = !this.showNavbar;
+            this.hideNavbar = !this.hideNavbar;
         },
+
         adjustStorage: function() {
-            console.log(`showNavbar: ${this.showNavbar}, showStorage: ${this.showStorage}`);
-            this.showStorage = (!this.showNavbar) && (!this.showStorage);
+            this.hideStorage = (!this.hideNavbar) && (!this.hideStorage);
+            this.hideTags = true;
+        },
+
+        adjustTag: function() {
+            this.hideTags = (!this.hideNavbar) && (!this.hideTags);
+            this.hideStorage = true;
         },
 
         adjustTODO: function() {
@@ -82,12 +108,19 @@ let vm = new Vue({
         },
 
         showFile: function() {
-            return !(this.showNavbar || this.showStorage);
+            return !(this.hideNavbar || this.hideStorage);
+        },
+
+        showTag: function() {
+            return !(this.hideNavbar || this.hideTags);
         },
 
         switchNote: function(newvalue) {
-            console.log("updated new value: "+ newvalue);
+            // console.log("updated new value: "+ newvalue);
+            console.log("updated to document: " + this.storage.filecursor.getCanonicalName());
             this.emstore.setCurrent(newvalue);
+            this.emstore.setTag(this.storage.getTags());
+            console.log(this.emstore.tags());
             this.editable = true;
             this.showTODO = false;
             this.showEditor = true;
@@ -96,6 +129,7 @@ let vm = new Vue({
         updateCurrentEditor: function() {
             console.log(FS.current);
             this.emstore.setCurrent(FS.current);
+            this.emstore.setTag(this.storage.getTags());
         },
 
         storeToSystem: function(newTODOList) {
@@ -126,6 +160,14 @@ let vm = new Vue({
             /*
                 刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量
             */
+        },
+
+        addTag: function(tag) {
+            this.storage.addTag(tag);
+        },
+
+        deleteTag: function(tag) {
+            this.storage.deleteTag(tag);
         },
 
         bringEditorToFront: function() {
