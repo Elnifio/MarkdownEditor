@@ -221,7 +221,7 @@
                 </v-navigation-drawer>
                 
                 <v-main app>
-                    <v-container fluid>
+                    <v-container fluid style="padding:0px;height:100vh">
                         <todo-lists 
                             :todonodes="collectTODOS()" 
                             v-if="showTODO" 
@@ -237,6 +237,10 @@
                             @delete-tag="deleteTag"></editor-control>
                     </v-container>
                 </v-main>
+
+                <!-- <v-footer app max-height="5vh">
+                    测试版本
+                </v-footer> -->
             </v-app>
         </div>
 

@@ -65,11 +65,13 @@ Vue.component("editor", {
     },
     template: `
     <v-textarea 
+        class="ml-2"
         @blur="updator($event)" 
         @select="select($event)" 
         :value="value" 
         @input="inputUpdate($event)" 
         auto-grow
+        dense
         :disabled="!editable"
         overflow="auto">
     </v-textarea>
@@ -127,19 +129,19 @@ Vue.component("editor-control", {
         }
     },
     template: `
-    <v-row>
-        <v-col cols=6>
-            <v-card height="95vh" style="overflow:auto" flat tile>
+    <v-row style="height:inherit">
+        <v-col cols=6 style="height:inherit">
+            <v-card height="inherit" style="overflow:auto" flat tile>
                 <editor 
                     v-model="editorstore.getCurrent()" 
                     @value-update="store($event)" 
                     @input-update="update($event)"
-                    :editable="editable" height="100vh"></editor>
+                    :editable="editable"></editor>
             </v-card>
         </v-col>
         <v-divider vertical></v-divider>
-        <v-col cols=6>
-            <v-card height="95vh" style="overflow:auto" flat tile>
+        <v-col cols=6 style="height:inherit">
+            <v-card height="inherit" style="overflow:auto" flat tile>
                 <v-chip-group>
                     <tab-chip 
                         v-for="tab in editorstore.state.tags" 
@@ -167,7 +169,7 @@ Vue.component("editor-control", {
                     </v-menu>
                 </v-chip-group>
 
-                <markdown-block :ast="ast" v-if="ast" @change="change"></markdown-block>
+                <markdown-block :ast="ast" v-if="ast" @change="change" class="pb-2"></markdown-block>
             </v-card>
         </v-col>
     </v-row>

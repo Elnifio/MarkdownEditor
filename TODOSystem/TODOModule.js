@@ -28,14 +28,14 @@ Vue.component("todo-item", {
         },
     },
     template: `
-    <v-card max-width="25vw" min-width="200px" max-height="80vh" class="my-2" color="grey lighten-4">
-        <v-card-title>
+    <v-card max-width="25vw" min-width="200px" max-height="100%" class="my-2" color="grey lighten-4">
+        <v-card-title style="height:fit-content">
             {{ node.getCanonicalName() }}
         </v-card-title>
 
         <v-divider></v-divider>
 
-        <v-sheet :elevation="0" max-height="70vh" style="overflow:auto" class="mx-2" color="grey lighten-4">
+        <v-sheet :elevation="0" style="overflow:auto;height:auto" class="mx-2" color="grey lighten-4">
             <v-hover v-slot="{ hover }" v-for="block in asts">
                 <v-card class="ma-2 pa-2" :class="hover?'grey lighten-5':''">
                     <component 
@@ -49,7 +49,7 @@ Vue.component("todo-item", {
 
         <v-divider></v-divider>
 
-        <v-chip-group v-if="node.tabs.length!=0">
+        <v-chip-group v-if="node.tabs.length!=0" style="height:fit-content">
             <tab-chip
                 v-for="tab in node.tabs"
                 :tab="tab"
@@ -73,9 +73,9 @@ Vue.component("todo-lists", {
         }
     },
     template: `
-    <v-slide-group>
-        <v-slide-item v-for="node in todonodes">
-            <v-sheet max-height="80vh">
+    <v-slide-group style="height:100%">
+        <v-slide-item v-for="node in todonodes" style="height:inherit">
+            <v-sheet height="inherit">
                 <todo-item :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor">
                 </todo-item>
             </v-sheet>
@@ -97,7 +97,7 @@ Vue.component("todo-page", {
         }
     },
     template: `
-        <div>
+        <v-sheet max-height="95vh">
             <v-tabs icons-and-text>
                 <v-tab v-for="tab in tablists" :key="tab.title">
                     <v-icon>
@@ -105,9 +105,7 @@ Vue.component("todo-page", {
                     </v-icon>
                     {{ tab.title }}
                 </v-tab>
-
-                
             </v-tabs>
-        </div>
+        </v-sheet>
     `
 })
