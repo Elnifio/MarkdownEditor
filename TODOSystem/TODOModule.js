@@ -105,29 +105,3 @@ Vue.component("todo-lists", {
     </v-sheet>
     `
 })
-
-Vue.component("todo-page", {
-    props: ["nodes"],
-    data: function() {
-        return {
-            todonodes: this.nodes,
-            tablists: [
-                {title: "All TODOs", 
-                icon: "mdi-checkbox-marked-outline", 
-                mask: (x) => { return true; }}
-            ]
-        }
-    },
-    template: `
-        <v-sheet max-height="95vh">
-            <v-tabs icons-and-text>
-                <v-tab v-for="tab in tablists" :key="tab.title">
-                    <v-icon>
-                        {{ tab.icon }}
-                    </v-icon>
-                    {{ tab.title }}
-                </v-tab>
-            </v-tabs>
-        </v-sheet>
-    `
-})
