@@ -67,20 +67,42 @@ Vue.component("todo-item", {
 
 Vue.component("todo-lists", {
     props: ['todonodes'],
+    data: function() {
+        return {
+            filter: []
+        }
+    },
+    computed: {
+        tabs: function() {
+            return Array.from(new Set(this.todonodes.map(x => x.tabs).flat()));
+        }
+    },
     methods: {
         propagateUpdateEditor: function() {
             this.$emit("update-editor-content")
+        },
+        log: function() {
+            console.log(this.tabs);
         }
     },
     template: `
-    <v-slide-group style="height:100%" class="py-2">
-        <v-slide-item v-for="node in todonodes" style="height:inherit">
-            <v-sheet height="inherit">
-                <todo-item :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor">
-                </todo-item>
-            </v-sheet>
-        </v-slide-item>
-    </v-slide-group>
+    <v-sheet style="height:100%;flex-direction:column;display:flex">
+        <v-chip-group v-if="tabs.length!=0" class="mx-1" style="flex:0 0 auto">
+            <tab-chip
+                v-for="tab in tabs"
+                :tab="tab"
+                :tabDelete="false">
+            </tab-chip>
+        </v-chip-group>
+        <v-slide-group class="py-2" style="flex:1 1 auto;overflow:auto">
+            <v-slide-item v-for="node in todonodes" style="height:inherit">
+                <v-sheet height="inherit">
+                    <todo-item :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor">
+                    </todo-item>
+                </v-sheet>
+            </v-slide-item>
+        </v-slide-group>
+    </v-sheet>
     `
 })
 

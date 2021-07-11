@@ -1,5 +1,6 @@
 let AST = require("./AST");
 let ASTType = AST.ASTTypes;
+const { shell } = require("electron");
 
 /** previous codes for styles as plugin
  // let styles = {
@@ -39,7 +40,12 @@ Vue.component(ASTType.Sentence, {
 
 Vue.component(ASTType.Link, {
     props: ['sentence'],
-    template: `<span><a v-bind:href="sentence.get('url')" target="_blank">{{ sentence.get('alt') }}</a></span>`
+    data: function() {
+        return {
+            shell: shell,
+        }
+    },
+    template: `<span><a v-bind:href="sentence.get('url')" @click.prevent.stop="shell.openExternal(sentence.get('url'))">{{ sentence.get('alt') }}</a></span>`
 })
 
 Vue.component(ASTType.Latex, {
@@ -196,13 +202,17 @@ Vue.component(ASTType.LatexBlock, {
 
 Vue.component(ASTType.Image, {
     props: ["content"],
+    data: function() {
+        return {
+            shell: shell,
+        }
+    },
     template: `
     <v-card outlined max-width="30vw" class="mx-auto my-2">
-        <a :href="content.get('src')" target="_blank">
-            <v-img 
-                :src="content.get('src')">
-            </v-img>
-        </a>
+        <v-img 
+            :src="content.get('src')"
+            @click.prevent.stop="shell.openPath(content.get('src'))">
+        </v-img>
         <v-divider></v-divider>
         <v-card-text class="subtitle-1" v-if="content.get('alt')">{{ content.get('alt') }}</v-card-text>
     </v-card>
