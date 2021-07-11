@@ -14,12 +14,14 @@ ipcRenderer.on("log-value-result", (event, message) => {
     console.log(message);
 })
 
-let storage = fs.readFileSync("storage.json").toString();
+let storage = fs.readFileSync("storage.json").toString().split("\n");
+let filestorage = storage[0];
+let tagstorage = storage[1];
 
 /**
  * Debug Usage
  */
-if (storage == "") {
+if (filestorage == "") {
     console.log("re-creating root elements");
     const rootEle = new FSNode.FSNode("root", FSNode.Type.folder, "", true);
     let n01 = FSNode.createFile("n01", true, "n01 content");
@@ -33,21 +35,23 @@ if (storage == "") {
     storage = FSNode.zip(rootEle.children);
 }
 
-let tags = ""
-
-if (tags == "") {
+/**
+ * Debug Usage
+ */
+if (tagstorage == "") {
+    console.log("re-creating tags");
     let TM = new TabManager.TabManager();
     TM.createTab('test 01');
     TM.createTab("test 02");
     TM.createTab("test 03");
     TM.createTab("test 04");
     TM.createTab("test 05");
-    tags = TabManager.ZipTabManager(TM);
+    tagstorage = TabManager.ZipTabManager(TM);
 }
 
-let TM = TabManager.UnzipTabManager(tags);
+let TM = TabManager.UnzipTabManager(tagstorage);
 
-let FS = FSModule.FSFactory(storage, TM);
+let FS = FSModule.FSFactory(filestorage, TM);
 FS.collectFiles();
 let EMStore = new EditorModule.Editor(TM.tabs);
 EMStore.setCurrent(FS.current);
@@ -57,7 +61,7 @@ Vue.use(Vuetify);
 
 ipcRenderer.on('close-app', (event, message) => {
     // if (FS.hasFileCursor()) FS.current = EMStore.getCurrent();
-    fs.writeFileSync('./storage.json', FS.export());
+    fs.writeFileSync('./storage.json', FS.export() + "\n" + TabManager.ZipTabManager(TM));
     ipcRenderer.send("close-complete-index", "closed");
 })
 

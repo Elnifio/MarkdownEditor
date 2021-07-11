@@ -144,9 +144,11 @@ Vue.component("editor-control", {
             <v-card height="inherit" style="overflow:auto" flat tile>
                 <v-chip-group>
                     <tab-chip 
-                        v-for="tab in editorstore.state.tags" 
+                        v-for="tab in editorstore.tags()" 
                         :tab="tab"
+                        :key="tab.name"
                         :tabDelete="true"
+                        :activated="true"
                         @tab-delete="deleteTag"></tab-chip>
 
                     <v-menu v-model="tabchooser" offset-x>
@@ -162,7 +164,9 @@ Vue.component("editor-control", {
                             <tab-chip 
                                 v-for="tag in editorstore.alltags()" 
                                 :tab="tag" 
+                                :key="tag.name"
                                 :tabDelete="false"
+                                :activated="true"
                                 @tab-click="addTag"
                                 v-if="editorstore.tags().indexOf(tag) < 0">
                             </tab-chip>

@@ -148,7 +148,9 @@
                             <v-icon>mdi-file-plus-outline</v-icon>
                         </v-btn>
                     </v-list-item>
-                    <fs-module :initfs="storage" @switch-note="switchNote" v-if="showFile()" @clear-editor="clearEditor" @bring-editor-to-front="bringEditorToFront"></fs-module>
+                    <v-expand-transition>
+                        <fs-module :initfs="storage" @switch-note="switchNote" v-show="showFile()" @clear-editor="clearEditor" @bring-editor-to-front="bringEditorToFront"></fs-module>
+                    </v-expand-transition>
                     <v-divider></v-divider>
 
                     <!-- Tag 系统 -->
@@ -213,11 +215,13 @@
                             </v-menu>
                         
                     </v-list-item>
-                    <tab-manager v-if="showTag()" 
-                        :manager="tabManager"
-                        @relocate-node="tagFileRelocationHandler"
-                        @delete-node="tagFileDeletionHandler"
-                        @click-node="tagFileClickHandler"></tab-manager>
+                    <v-expand-transition>
+                        <tab-manager v-show="showTag()" 
+                            :manager="tabManager"
+                            @relocate-node="tagFileRelocationHandler"
+                            @delete-node="tagFileDeletionHandler"
+                            @click-node="tagFileClickHandler"></tab-manager>
+                    </v-expand-transition>
                 </v-navigation-drawer>
                 
                 <v-main app>
@@ -225,7 +229,8 @@
                         <todo-lists 
                             :todonodes="collectTODOS()" 
                             v-if="showTODO" 
-                            @update-editor-content="updateCurrentEditor"></todo-lists>
+                            @update-editor-content="updateCurrentEditor"
+                            @editor-switch-to-file="tagFileClickHandler"></todo-lists>
 
                         <editor-control 
                             :estore="emstore" 
@@ -237,10 +242,6 @@
                             @delete-tag="deleteTag"></editor-control>
                     </v-container>
                 </v-main>
-
-                <!-- <v-footer app max-height="5vh">
-                    测试版本
-                </v-footer> -->
             </v-app>
         </div>
 

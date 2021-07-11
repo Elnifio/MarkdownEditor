@@ -76,15 +76,15 @@ class TabInstance {
 exports.TabInstance = TabInstance;
 
 Vue.component("tab-chip", {
-    props: ["tab", "tabDelete"],
+    props: ["tab", "tabDelete", "activated"],
     template: `
     <v-chip
         class="ma-1"
         small
         :color="tab.color"
-        outlined
         @click="$emit('tab-click', tab)"
         :close="tabDelete"
+        :outlined="activated"
         @click:close="$emit('tab-delete', tab)">
         <v-icon left>
             {{ tab.icon }}
@@ -144,7 +144,7 @@ Vue.component("tab-list-item", {
                 </v-hover>
             </template>
 
-            <tab-editor :givenTab="tab" @delete-tab="propagateDeleteTab"></tab-editor>
+            <tab-editor :givenTab="tab" @delete-tab="propagateDeleteTab" @change-name="tab.name=$event"></tab-editor>
         </v-menu>
 
         <v-sheet elevation="0" v-if="tab.opened" class="pl-2">
@@ -165,7 +165,7 @@ Vue.component("tab-editor", {
     data: function() {
         return {
             tab: this.givenTab,
-            icons: Icons,
+            tabname: this.givenTab.name,
             confirm: false,
         }
     },
@@ -182,6 +182,9 @@ Vue.component("tab-editor", {
         },
         revertDelete: function() {
             this.confirm = false;
+        },
+        changeName: function() {
+            this.$emit("change-name", this.tabname);
         }
     },
     template: `
@@ -190,8 +193,8 @@ Vue.component("tab-editor", {
             <v-text-field
                 dense
                 label="Tag Name"
-                @change="log"
-                v-model="tab.name"
+                @change="changeName"
+                v-model="tabname"
                 ref="newname"
                 :rules="[ () => !!tab.name || 'Required.', ]"
                 :hint="'New Name: ' + tab.name">

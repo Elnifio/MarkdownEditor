@@ -26,6 +26,9 @@ Vue.component("todo-item", {
             this.asts = this.fileNode.todos.map(x => unzipper(x));
             this.$emit("update-editor-content");
         },
+        openFile: function() {
+            this.$emit("editor-switch-to-file", this.node);
+        }
     },
     template: `
     <v-card max-width="25vw" min-width="200px" max-height="99%" style="flex-direction:column;display:flex;" color="grey lighten-4">
@@ -37,7 +40,8 @@ Vue.component("todo-item", {
             <tab-chip
                 v-for="tab in node.tabs"
                 :tab="tab"
-                :tabDelete="false">
+                :tabDelete="false"
+                :activated="true">
             </tab-chip>
         </v-chip-group>
 
@@ -57,19 +61,20 @@ Vue.component("todo-item", {
 
         <v-divider></v-divider>
 
-        <v-card-text class="d-flex" style="flex:0 0 auto">
+        <v-card-text class="d-flex py-1" style="flex:0 0 auto">
             <span class="mr-auto">{{ node.path }}</span>
-            <v-icon class="float-right">mdi-file-edit-outline</v-icon>
+            <v-icon class="float-right" @click.prevent.stop="openFile">mdi-file-edit-outline</v-icon>
         </v-card-text>
     </v-card>
     `
 })
 
+let idx;
 Vue.component("todo-lists", {
     props: ['todonodes'],
     data: function() {
         return {
-            filter: []
+            mask: []
         }
     },
     computed: {
@@ -81,23 +86,51 @@ Vue.component("todo-lists", {
         propagateUpdateEditor: function() {
             this.$emit("update-editor-content")
         },
-        log: function() {
-            console.log(this.tabs);
+        tabClickHandler: function(tab) {
+            idx = this.mask.indexOf(tab)
+            if (idx < 0) {
+                this.mask.push(tab);
+            } else {
+                this.mask.splice(idx, 1);
+            }
+        },
+        containLabel: function(node) {
+            // either this node contains all mask, or the mask length is 0
+            return (this.mask.map(
+                    x => node.tabs.indexOf(x) >= 0
+                ).reduce(
+                    (accu, curr) => accu && curr, 
+                true)) || this.mask.length==0;
+        },
+        propagateSwitch: function(node){
+            this.$emit("editor-switch-to-file", node);
         }
     },
     template: `
     <v-sheet style="height:100%;flex-direction:column;display:flex">
-        <v-chip-group v-if="tabs.length!=0" class="mx-1" style="flex:0 0 auto">
-            <tab-chip
-                v-for="tab in tabs"
-                :tab="tab"
-                :tabDelete="false">
-            </tab-chip>
-        </v-chip-group>
+        <v-sheet v-if="tabs.length!=0" class="mx-1 d-flex" style="flex:0 0 auto">
+            <span class="py-2">
+                Tag Filter:
+            </span>
+            <v-chip-group>
+                <tab-chip
+                    v-for="tab in tabs"
+                    :tab="tab"
+                    :tabDelete="false"
+                    :activated="mask.indexOf(tab)<0"
+                    @tab-click="tabClickHandler">
+                </tab-chip>
+            </v-chip-group>
+        </v-sheet>
         <v-slide-group class="py-2" style="flex:1 1 auto;overflow:auto">
-            <v-slide-item v-for="node in todonodes" style="height:inherit">
+            <v-slide-item v-for="node in todonodes" style="height:inherit" v-if="containLabel(node)">
                 <v-sheet height="inherit">
-                    <todo-item :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor">
+                    <todo-item 
+                        :fileNode="node" 
+                        :key="node.path" 
+                        class="mx-2" 
+                        @update-editor-content="propagateUpdateEditor"
+                        @editor-switch-to-file="propagateSwitch">
                     </todo-item>
                 </v-sheet>
             </v-slide-item>
