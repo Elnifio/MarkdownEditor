@@ -80,7 +80,7 @@ Vue.component("tab-chip", {
     template: `
     <v-chip
         class="ma-1"
-        label
+        small
         :color="tab.color"
         outlined
         @click="$emit('tab-click', tab)"

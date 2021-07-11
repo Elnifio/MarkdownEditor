@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, shell } = require('electron')
 
 console.log("started");
 
@@ -17,6 +17,12 @@ let createWindow = function() {
     win.loadFile("./index.html");
     // win.loadFile("./ASTDifferTest.html");
     win.webContents.openDevTools()
+
+    win.webContents.on('new-window', function(e, url) {
+        e.preventDefault();
+        console.log(url);
+        shell.openExternal(url);
+    });
 
     win.on("close", (e) => {
         console.log("closing");

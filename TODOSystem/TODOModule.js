@@ -28,14 +28,22 @@ Vue.component("todo-item", {
         },
     },
     template: `
-    <v-card max-width="25vw" min-width="200px" max-height="100%" class="my-2" color="grey lighten-4">
-        <v-card-title style="height:fit-content">
+    <v-card max-width="25vw" min-width="200px" max-height="99%" style="flex-direction:column;display:flex;" color="grey lighten-4">
+        <v-card-title style="flex:0 0 auto" :class="node.tabs.length!=0?'mb-0 pb-0':''">
             {{ node.getCanonicalName() }}
         </v-card-title>
 
+        <v-chip-group v-if="node.tabs.length!=0" style="flex:0 0 auto" class="mx-1">
+            <tab-chip
+                v-for="tab in node.tabs"
+                :tab="tab"
+                :tabDelete="false">
+            </tab-chip>
+        </v-chip-group>
+
         <v-divider></v-divider>
 
-        <v-sheet :elevation="0" style="overflow:auto;height:auto" class="mx-2" color="grey lighten-4">
+        <v-sheet :elevation="0" style="overflow:auto;flex:1 1 auto" class="mx-2" color="grey lighten-4">
             <v-hover v-slot="{ hover }" v-for="block in asts">
                 <v-card class="ma-2 pa-2" :class="hover?'grey lighten-5':''">
                     <component 
@@ -49,15 +57,7 @@ Vue.component("todo-item", {
 
         <v-divider></v-divider>
 
-        <v-chip-group v-if="node.tabs.length!=0" style="height:fit-content">
-            <tab-chip
-                v-for="tab in node.tabs"
-                :tab="tab"
-                :tabDelete="false">
-            </tab-chip>
-        </v-chip-group>
-
-        <v-card-text class="d-flex">
+        <v-card-text class="d-flex" style="flex:0 0 auto">
             <span class="mr-auto">{{ node.path }}</span>
             <v-icon class="float-right">mdi-file-edit-outline</v-icon>
         </v-card-text>
@@ -73,7 +73,7 @@ Vue.component("todo-lists", {
         }
     },
     template: `
-    <v-slide-group style="height:100%">
+    <v-slide-group style="height:100%" class="py-2">
         <v-slide-item v-for="node in todonodes" style="height:inherit">
             <v-sheet height="inherit">
                 <todo-item :fileNode="node" :key="node.path" class="mx-2" @update-editor-content="propagateUpdateEditor">

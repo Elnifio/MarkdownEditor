@@ -39,7 +39,7 @@ Vue.component(ASTType.Sentence, {
 
 Vue.component(ASTType.Link, {
     props: ['sentence'],
-    template: `<span><a v-bind:href="sentence.get('url')">{{ sentence.get('alt') }}</a></span>`
+    template: `<span><a v-bind:href="sentence.get('url')" target="_blank">{{ sentence.get('alt') }}</a></span>`
 })
 
 Vue.component(ASTType.Latex, {
@@ -198,9 +198,11 @@ Vue.component(ASTType.Image, {
     props: ["content"],
     template: `
     <v-card outlined max-width="30vw" class="mx-auto my-2">
-        <v-img 
-            :src="content.get('src')">
-        </v-img>
+        <a :href="content.get('src')" target="_blank">
+            <v-img 
+                :src="content.get('src')">
+            </v-img>
+        </a>
         <v-divider></v-divider>
         <v-card-text class="subtitle-1" v-if="content.get('alt')">{{ content.get('alt') }}</v-card-text>
     </v-card>

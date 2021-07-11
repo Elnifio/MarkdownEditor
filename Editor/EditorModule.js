@@ -151,7 +151,7 @@ Vue.component("editor-control", {
 
                     <v-menu v-model="tabchooser" offset-x>
                         <template v-slot:activator="{ on, attrs }">
-                            <v-chip class="ma-1" label @click="tabchooser=!tabchooser" outlined>
+                            <v-chip class="ma-1" @click="tabchooser=!tabchooser" outlined small>
                                 <v-icon>
                                     mdi-plus
                                 </v-icon>
@@ -163,7 +163,8 @@ Vue.component("editor-control", {
                                 v-for="tag in editorstore.alltags()" 
                                 :tab="tag" 
                                 :tabDelete="false"
-                                @tab-click="addTag">
+                                @tab-click="addTag"
+                                v-if="editorstore.tags().indexOf(tag) < 0">
                             </tab-chip>
                         </v-card>
                     </v-menu>
