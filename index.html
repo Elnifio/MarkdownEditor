@@ -91,7 +91,6 @@
         <!-- App entry -->
         <div id="app">
             <v-app>
-
                 <!--    App bar container -->
                 <!-- <v-app-bar
                     app color="white" max-height="10vh">
@@ -103,6 +102,9 @@
 
                 <v-navigation-drawer 
                 app 
+                ref="drawer"
+                max-width="50vw"
+                :width="navWidth"
                 permanent 
                 :mini-variant.sync="hideNavbar">
 

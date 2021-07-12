@@ -65,6 +65,8 @@ ipcRenderer.on('close-app', (event, message) => {
     ipcRenderer.send("close-complete-index", "closed");
 })
 
+const NAVBARMINSIZE = 200;
+
 let vm = new Vue({
     el: "#app",
     vuetify: new Vuetify(),
@@ -89,9 +91,12 @@ let vm = new Vue({
         defaultTagName: "New Tag",
         defaultTagColor: "#62C6F2FF",
         defaultTagIcon: "mdi-tag",
+
+        navWidth: 400,
     },
 
     methods: {
+
         collectTODOS: function() {
             return FS.collectFiles().filter(x => x.todos.length != 0);
         },
@@ -102,6 +107,7 @@ let vm = new Vue({
 
         adjustNavbar: function() {
             this.hideNavbar = !this.hideNavbar;
+            
         },
 
         adjustStorage: function() {
@@ -228,7 +234,46 @@ let vm = new Vue({
             if (this.storage.filecursor) {
                 this.bringEditorToFront();
             }
+        },
+
+        setBorderWidth() {
+            let i = this.$refs.drawer.$el.querySelector(
+                ".v-navigation-drawer__border"
+            );
+            i.style.width = "1px";
+            i.style.cursor = "ew-resize";
+        },
+
+        setEvents() {
+            const el = this.$refs.drawer.$el;
+            const drawerBorder = el.querySelector(".v-navigation-drawer__border");
+            function resize(e) {
+                document.body.style.cursor = "ew-resize";
+                let f = e.clientX;
+                el.style.width = f + "px";
+            };
+
+            drawerBorder.addEventListener(
+                "mousedown",
+                (e) => {
+                    if (e.offsetX < NAVBARMINSIZE) {
+                        el.style.transition = "initial";
+                        document.addEventListener("mousemove", resize, false);
+                    }
+                }, false
+            );
+
+            document.addEventListener("mouseup", () => {
+                el.style.transition = "";
+                this.navWidth = el.style.width;
+                document.body.style.cursor = "";
+                document.removeEventListener("mousemove", resize, false);
+            }, false);
         }
+    },
+    mounted() {
+        this.setBorderWidth();
+        this.setEvents();
     }
 })
 
