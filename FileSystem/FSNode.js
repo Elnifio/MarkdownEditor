@@ -443,7 +443,7 @@ Vue.component("fs-node", {
         }
     },
     template: `
-    <div class="ml-4">
+    <div class="mx-2">
         <v-menu
         v-model="menu"
         :close-on-content-click="false"

@@ -90,8 +90,6 @@ let vm = new Vue({
         defaultTagColor: "#62C6F2FF",
         defaultTagIcon: "mdi-tag",
         clicked: true,
-
-        navbarwidth: 200,
     },
 
     methods: {
@@ -108,12 +106,12 @@ let vm = new Vue({
         },
 
         adjustStorage: function() {
-            this.hideStorage = false;
+            this.hideStorage = (!this.hideNavbar) && (!this.hideStorage);
             this.hideTags = true;
         },
 
         adjustTag: function() {
-            this.hideTags = false;
+            this.hideTags = (!this.hideNavbar) && (!this.hideTags);
             this.hideStorage = true;
         },
 
@@ -123,11 +121,11 @@ let vm = new Vue({
         },
 
         showFile: function() {
-            return this.showEditor && !this.hideStorage;
+            return !(this.hideNavbar || this.hideStorage);
         },
 
         showTag: function() {
-            return this.showEditor && !this.hideTags;
+            return !(this.hideNavbar || this.hideTags);
         },
 
         switchNote: function(newvalue) {
@@ -231,7 +229,7 @@ let vm = new Vue({
             if (this.storage.filecursor) {
                 this.bringEditorToFront();
             }
-        },
-    },
+        }
+    }
 })
 

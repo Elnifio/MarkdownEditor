@@ -90,21 +90,14 @@
     <body>
         <!-- App entry -->
         <div id="app">
-            <v-app>
-
-                <!--    App bar container -->
-                <!-- <v-app-bar
-                    app color="white" max-height="10vh">
-                    <v-app-bar-nav-icon @click.prevent.stop="adjustNavbar">
-                        <v-icon>mdi-iframe-outline</v-icon>
-                    </v-app-bar-nav-icon>
-                    <v-toolbar-title>Title</v-toolbar-title>
-                </v-app-bar> -->
+            <v-app class="d-flex">
 
                 <v-navigation-drawer 
                 app 
                 permanent 
-                mini-variant>
+                :mini-variant.sync="hideNavbar"
+                class="flex-grow-0 flex-shrink-0"
+                :width="clicked?400:200">
 
                     <!-- Slots for Title, Settings -->
                     <!-- Placeholder for app brand -->
@@ -112,12 +105,17 @@
                         <v-list-item-icon>
                             <v-icon>mdi-iframe-outline</v-icon>
                         </v-list-item-icon> 
+                        <v-list-item-title>App name here</v-list-item-title>
+                        <v-btn icon @click.stop="adjustNavbar">
+                            <v-icon>mdi-chevron-left</v-icon>
+                        </v-btn>
                     </v-list-item>
 
-                    <v-list-item>
+                    <v-list-item @click.stop.prevent="clicked=!clicked">
                         <v-list-item-icon>
                             <v-icon>mdi-tune</v-icon>
                         </v-list-item-icon>
+                        <v-list-item-title>Settings</v-list-item-title>
                     </v-list-item>
                     <v-divider></v-divider>
 
@@ -127,6 +125,7 @@
                         <v-list-item-icon>
                             <v-icon>mdi-checkbox-marked-outline</v-icon>
                         </v-list-item-icon>
+                        <v-list-item-title>Todo Board</v-list-item-title>
                     </v-list-item>
                     <v-divider></v-divider>
                     
@@ -135,6 +134,7 @@
                         <v-list-item-icon>
                             <v-icon>mdi-folder</v-icon>
                         </v-list-item-icon>
+                        <v-list-item-title>Folders</v-list-item-title>
                         <v-btn icon @click.prevent.stop="createFolder">
                             <v-icon>mdi-folder-plus-outline</v-icon>
                         </v-btn>
@@ -142,6 +142,9 @@
                             <v-icon>mdi-file-plus-outline</v-icon>
                         </v-btn>
                     </v-list-item>
+                    <v-expand-transition>
+                        <fs-module :initfs="storage" @switch-note="switchNote" v-show="showFile()" @clear-editor="clearEditor" @bring-editor-to-front="bringEditorToFront"></fs-module>
+                    </v-expand-transition>
                     <v-divider></v-divider>
 
                     <!-- Tag 系统 -->
@@ -206,31 +209,17 @@
                             </v-menu>
                         
                     </v-list-item>
+                    <v-expand-transition>
+                        <tab-manager v-show="showTag()" 
+                            :manager="tabManager"
+                            @relocate-node="tagFileRelocationHandler"
+                            @delete-node="tagFileDeletionHandler"
+                            @click-node="tagFileClickHandler"></tab-manager>
+                    </v-expand-transition>
                 </v-navigation-drawer>
                 
-                <v-main app>
-                    <v-container fluid style="padding:0px;height:100vh;width:100vw" class="d-flex">
-                        <v-sheet max-height="100%" :width="navbarwidth">
-                            <v-scroll-x-transition>
-                                <v-sheet v-show="showTag()">
-                                    <tab-manager 
-                                    :manager="tabManager"
-                                    @relocate-node="tagFileRelocationHandler"
-                                    @delete-node="tagFileDeletionHandler"
-                                    @click-node="tagFileClickHandler"></tab-manager>
-                                </v-sheet>
-                            </v-scroll-x-transition>
-
-                            <v-scroll-x-transition>
-                                <v-sheet v-show="showFile()">
-                                    <fs-module 
-                                        :initfs="storage" 
-                                        @switch-note="switchNote" 
-                                        @clear-editor="clearEditor" 
-                                        @bring-editor-to-front="bringEditorToFront"></fs-module>
-                                </v-sheet>
-                            </v-scroll-x-transition>
-                        </v-sheet>
+                <v-main app class="flex-grow-1 flex-shrink-1">
+                    <v-container fluid style="padding:0px;height:100vh">
                         <todo-lists 
                             :todonodes="collectTODOS()" 
                             v-if="showTODO" 

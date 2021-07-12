@@ -121,7 +121,7 @@ Vue.component("tab-list-item", {
         }
     },
     template: `
-    <v-sheet elevation="0" class="pl-2">
+    <v-sheet elevation="0">
 
         <v-menu
             v-model="menu"
