@@ -89,6 +89,7 @@ let vm = new Vue({
         defaultTagName: "New Tag",
         defaultTagColor: "#62C6F2FF",
         defaultTagIcon: "mdi-tag",
+        clicked: true,
     },
 
     methods: {
