@@ -248,9 +248,11 @@ let vm = new Vue({
             const el = this.$refs.drawer.$el;
             const drawerBorder = el.querySelector(".v-navigation-drawer__border");
             function resize(e) {
-                document.body.style.cursor = "ew-resize";
-                let f = e.clientX;
-                el.style.width = f + "px";
+                if (!this.hideNavbar) {
+                    document.body.style.cursor = "ew-resize";
+                    let f = e.clientX < NAVBARMINSIZE?NAVBARMINSIZE:e.clientX;
+                    el.style.width = f + "px";
+                }
             };
 
             drawerBorder.addEventListener(
