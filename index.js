@@ -77,8 +77,8 @@ let vm = new Vue({
         tabManager: TM,
 
         hideNavbar: true,
-        hideStorage: true,
-        hideTags: false,
+        hideStorage: false,
+        hideTags: true,
 
         editable: FS.hasFileCursor(),
         showEditor: true,
@@ -108,13 +108,16 @@ let vm = new Vue({
         },
 
         adjustStorage: function() {
-            this.hideStorage = false;
-            this.hideTags = true;
+            this.showEditor = true;
+            this.showTODO = false;
+            this.hideStorage = !this.hideStorage;
+
         },
 
         adjustTag: function() {
-            this.hideTags = false;
-            this.hideStorage = true;
+            this.showEditor = true;
+            this.showTODO = false;
+            this.hideTags = !this.hideTags;
         },
 
         adjustTODO: function() {
@@ -123,11 +126,11 @@ let vm = new Vue({
         },
 
         showFile: function() {
-            return this.showEditor && !this.hideStorage;
+            return !this.hideStorage;
         },
 
         showTag: function() {
-            return this.showEditor && !this.hideTags;
+            return !this.hideTags;
         },
 
         switchNote: function(newvalue) {
@@ -232,6 +235,53 @@ let vm = new Vue({
                 this.bringEditorToFront();
             }
         },
+
+        setBorderWidth() {
+            let drawer = this.$refs.drawer.$el.querySelector(".v-navigation-drawer__border");
+            drawer.style.cursor = "ew-resize";
+            drawer.style.width = "2px";
+        },
+
+        setEvents() {
+            const containerWidth = document.getElementById("app").clientWidth;
+            const minSize = containerWidth * 0.2 < 200?containerWidth * 0.2:200;
+            const maxSize = containerWidth * 0.7;
+            const el = this.$refs.drawer.$el;
+            const drawerBorder = el.querySelector(".v-navigation-drawer__border");
+            function resize(e) {
+                document.body.style.cursor = "ew-resize";
+                let width = e.clientX;
+                if (width < minSize) width = minSize;
+                if (width > maxSize) width = maxSize;
+                el.style.width = width + "px";
+            }
+
+            drawerBorder.addEventListener(
+                "mousedown",
+                (e) => {
+                    if (e.offsetX < minSize) {
+                        el.style.transition = "initial";
+                        document.addEventListener("mousemove", resize, false);
+                    }
+                }, false );
+
+            document.addEventListener("mouseup", 
+            () => {
+                el.style.transition = "";
+                this.navbarwidth = el.style.width;
+                document.body.style.cursor = "";
+                document.removeEventListener("mousemove", resize, false);
+            }, false);
+        }
     },
+    mounted() {
+        this.setBorderWidth();
+        this.setEvents();
+        i = 0;
+        while (i < 50) {
+            this.createFile();
+            i += 1;
+        }
+    }
 })
 
