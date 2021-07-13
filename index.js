@@ -277,11 +277,6 @@ let vm = new Vue({
     mounted() {
         this.setBorderWidth();
         this.setEvents();
-        i = 0;
-        while (i < 50) {
-            this.createFile();
-            i += 1;
-        }
     }
 })
 

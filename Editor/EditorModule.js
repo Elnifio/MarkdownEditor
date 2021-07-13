@@ -73,7 +73,8 @@ Vue.component("editor", {
         auto-grow
         dense
         :disabled="!editable"
-        overflow="auto">
+        overflow="auto"
+        height="inherit">
     </v-textarea>
     `
 });
@@ -174,7 +175,7 @@ Vue.component("editor-control", {
                     </v-menu>
                 </v-chip-group>
 
-                <markdown-block :ast="ast" v-if="ast" @change="change" class="pb-2"></markdown-block>
+                <markdown-block :ast="ast" v-if="ast" @change="change" class="pb-2 pr-2"></markdown-block>
             </v-card>
         </v-col>
     </v-row>

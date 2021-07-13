@@ -167,9 +167,6 @@ Vue.component(ASTType.CodeBlock, {
                 <br />
             </template>
         </v-card-text>
-        <v-card-actions>
-            <v-btn outlined rounded text @click.stop=toggleStatus>Activated? {{ content.activated }}</v-btn>
-        </v-card-actions>
     </v-card>
     `
 })
@@ -183,6 +180,10 @@ Vue.component(ASTType.CodeBlock, {
     </template>
     <hr />
 </div>
+
+<v-card-actions>
+    <v-btn outlined rounded text @click.stop=toggleStatus>Activated? {{ content.activated }}</v-btn>
+</v-card-actions>
 
 <p class="code" >
         <template>
