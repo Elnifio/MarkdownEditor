@@ -1,12 +1,11 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
 
-console.log("started");
-
 let win = undefined;
 let closable = false;
 let quittable = false;
 
 let createWindow = function() {
+
     win = new BrowserWindow({
         width: 800, height: 600,
         webPreferences: {
@@ -15,8 +14,7 @@ let createWindow = function() {
         }
     })
     win.loadFile("./index.html");
-    // win.loadFile("./ASTDifferTest.html");
-    win.webContents.openDevTools()
+    win.webContents.openDevTools();
 
     win.webContents.on('new-window', function(e, url) {
         e.preventDefault();

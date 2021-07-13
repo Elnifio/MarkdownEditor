@@ -3,9 +3,21 @@
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
+  "build": {
+    "appId": "com.codedown.app",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": "dmg"
+    },
+    "electronDownload": {
+      "mirror": "https://cdn.npm.taobao.org/dist/electron/"
+    }
+  },
   "scripts": {
     "test": "node -r esm ./test.js",
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder",
+    "pack": "electron-builder --dir"
   },
   "repository": {
     "type": "git",
@@ -29,6 +41,7 @@
     "vuetify": "^2.5.3"
   },
   "devDependencies": {
+    "electron-builder": "^22.11.7",
     "electron": "^11.0.4"
   }
 }

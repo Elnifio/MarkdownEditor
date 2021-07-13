@@ -1,6 +1,5 @@
-const FSNode = require("./archived-backup/FileSystem-Vuetify-TreeView/FSNode");
+const FSNode = require("./FileSystem/FSNode");
 const FSModule = require("./FileSystem/FSModule");
-const FSControlKit = require("./archived-backup/FileSystem-Vuetify-TreeView/FSControlKit");
 const EditorModule = require("./Editor/EditorModule");
 const Conponents = require("./MarkdownCompiler/Components");
 const TODOComponents = require("./TODOSystem/TODOModule");
