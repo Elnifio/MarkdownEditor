@@ -115,18 +115,19 @@
                         <v-list-item-icon>
                             <v-icon>mdi-tune</v-icon>
                         </v-list-item-icon>
+                        <v-list-item-title>Settings</v-list-item-title>
                     </v-list-item>
                     <v-divider></v-divider>
 
                     <!-- Slots for File Systems, Tag Systems -->
-                    <v-list-item @click.prevent.stop="adjustStorage">
+                    <!-- <v-list-item @click.prevent.stop="adjustStorage">
                         <v-list-item-icon>
                             <v-icon>mdi-folder</v-icon>
                         </v-list-item-icon>
                         <v-list-item-title>Files</v-list-item-title>
                     </v-list-item>
 
-                    <!-- Tag 系统 -->
+                    /</!-- Tag 系统 --/>
                     <v-list-item @click.prevent.stop="adjustTag">
                         <v-list-item-icon>
                             <v-icon>mdi-tag</v-icon>
@@ -134,6 +135,16 @@
                         
                         <v-list-item-title>Tags</v-list-item-title>
                     </v-list-item> 
+                    <v-divider></v-divider> -->
+
+                    <v-list-item @click.prevent.stop="adjustEditor">
+                        <v-list-item-icon>
+                            <v-icon>mdi-file-edit-outline</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>
+                            Editor
+                        </v-list-item-title>
+                    </v-list-item>
                     <v-divider></v-divider>
 
                     <!-- Slots for TODO, Calendars, etc -->
@@ -159,110 +170,130 @@
                             :width="navbarwidth" 
                             class="flex-grow-0 flex-shrink-0" 
                             permanent
-                            v-show="showEditor"
                             ref="drawer">
                             <v-sheet style="display:flex;flex-direction:column;height:inherit;" width="inherit">
-                                <!-- 文件系统 -->
-                                <v-list-item @click.prevent.stop="adjustStorage" style="flex:0 0 auto">
-                                    <v-icon class="mr-2">{{ showFile()?'mdi-chevron-down':'mdi-chevron-right' }}</v-icon>
-                                    <span class="mr-auto">Files</span>
-                                    <v-btn icon @click.prevent.stop="createFolder">
-                                        <v-icon>mdi-folder-plus-outline</v-icon>
-                                    </v-btn>
-                                    <v-btn icon @click.prevent.stop="createFile">
-                                        <v-icon>mdi-file-plus-outline</v-icon>
-                                    </v-btn>
-                                </v-list-item>
-    
-                                <!-- 文件系统展示框 --> 
-                                <v-expand-transition>
-                                    <v-sheet v-show="showFile()" style="overflow:auto;flex:1 1 auto!important">
-                                        <fs-module 
-                                            :initfs="storage" 
-                                            @switch-note="switchNote" 
-                                            @clear-editor="clearEditor" 
-                                            @bring-editor-to-front="bringEditorToFront"></fs-module>
-                                    </v-sheet>
-                                </v-expand-transition>
-    
-                                <v-divider></v-divider>
-    
-                                <v-list-item @click.prevent.stop="adjustTag" style="flex:0 0 auto">
-                                    <v-icon class="mr-2">{{ showTag()?'mdi-chevron-down':'mdi-chevron-right' }}</v-icon>
-                                    <span class="mr-auto">Tags</span>
-                                    <v-menu v-model="showCreateTag" offset-x @input="log" :close-on-content-click="false">
-                                        <!-- 弹出新建tag菜单的按钮 -->
-                                        <template v-slot:activator="{on, attrs}">
-                                            <v-btn icon @click.prevent.stop="showCreateTag=!showCreateTag">
-                                                <v-icon>mdi-tag-plus-outline</v-icon>
-                                            </v-btn>
-                                        </template>
+                                <template v-if="showEditor">
+                                    <!-- 文件系统 -->
+                                    <v-list-item @click.prevent.stop="adjustStorage" style="flex:0 0 auto">
+                                        <v-icon class="mr-2">{{ showFile()?'mdi-chevron-down':'mdi-chevron-right' }}</v-icon>
+                                        <span class="mr-auto">Files</span>
+                                        <v-btn icon @click.prevent.stop="createFolder">
+                                            <v-icon>mdi-folder-plus-outline</v-icon>
+                                        </v-btn>
+                                        <v-btn icon @click.prevent.stop="createFile">
+                                            <v-icon>mdi-file-plus-outline</v-icon>
+                                        </v-btn>
+                                    </v-list-item>
         
-                                        <!-- 新建tag的弹出菜单 -->
-                                        <v-card max-width="300px">
-                                            <v-card-title>
-                                                <v-text-field
-                                                    dense
-                                                    label="Tag Name"
-                                                    @change="log"
-                                                    v-model="defaultTagName"
-                                                    :rules="[ () => !!defaultTagName || 'Required.', ]"
-                                                    :hint="'Tag name: ' + defaultTagName">
-            
-                                                    <template v-slot:append>
-                                                        <v-icon :color="defaultTagColor">{{defaultTagIcon}}</v-icon>
-                                                    </template>
-            
-                                                    <template v-slot:append-outer>
-                                                        <v-icon 
-                                                            color="success" 
-                                                            @click.prevent.stop="createTag">
-                                                            mdi-check
-                                                        </v-icon>
-                                                    </template>
-                                                </v-text-field>
-                                            </v-card-title>
+                                    <!-- 文件系统展示框 --> 
+                                    <v-expand-transition>
+                                        <v-sheet v-show="showFile()" style="overflow:auto" height="auto">
+                                            <fs-module 
+                                                :initfs="storage" 
+                                                @switch-note="switchNote" 
+                                                @clear-editor="clearEditor" 
+                                                @bring-editor-to-front="bringEditorToFront"></fs-module>
+                                        </v-sheet>
+                                    </v-expand-transition>
         
-                                            <v-color-picker
-                                                dot-size="25"
-                                                hide-canvas
-                                                hide-mode-switch
-                                                mode="rgba"
-                                                swatches-max-height="200"
-                                                v-model="defaultTagColor"></v-color-picker>
-                                            
-                                                <v-sheet 
-                                                    max-height="10vh" 
-                                                    min-height="100px" 
-                                                    style="overflow:auto" class="mx-auto">
-                                                    <icon-picker 
-                                                        :chosen="defaultTagIcon" 
-                                                        :color="defaultTagColor" 
-                                                        @chosen-icon="defaultTagIcon=$event">
-                                                    </icon-picker>
-                                                </v-sheet>
-                                        </v-card>
-                                    </v-menu>
-                                </v-list-item>
-    
-                                <v-expand-transition>
-                                    <v-sheet v-show="showTag()" class="mx-2" style="overflow:auto;flex:1 1 auto">
-                                        <tab-manager 
-                                            :manager="tabManager"
-                                            @relocate-node="tagFileRelocationHandler"
-                                            @delete-node="tagFileDeletionHandler"
-                                            @click-node="tagFileClickHandler"></tab-manager>
-                                    </v-sheet>
-                                </v-expand-transition>
+                                    <v-divider></v-divider>
+        
+                                    <v-list-item @click.prevent.stop="adjustTag" style="flex:0 0 auto">
+                                        <v-icon class="mr-2">{{ showTag()?'mdi-chevron-down':'mdi-chevron-right' }}</v-icon>
+                                        <span class="mr-auto">Tags</span>
+                                        <v-menu v-model="showCreateTag" offset-x @input="log" :close-on-content-click="false">
+                                            <!-- 弹出新建tag菜单的按钮 -->
+                                            <template v-slot:activator="{on, attrs}">
+                                                <v-btn icon @click.prevent.stop="showCreateTag=!showCreateTag">
+                                                    <v-icon>mdi-tag-plus-outline</v-icon>
+                                                </v-btn>
+                                            </template>
+            
+                                            <!-- 新建tag的弹出菜单 -->
+                                            <v-card max-width="300px">
+                                                <v-card-title>
+                                                    <v-text-field
+                                                        dense
+                                                        label="Tag Name"
+                                                        @change="log"
+                                                        v-model="defaultTagName"
+                                                        :rules="[ () => !!defaultTagName || 'Required.', ]"
+                                                        :hint="'Tag name: ' + defaultTagName">
+                
+                                                        <template v-slot:append>
+                                                            <v-icon :color="defaultTagColor">{{defaultTagIcon}}</v-icon>
+                                                        </template>
+                
+                                                        <template v-slot:append-outer>
+                                                            <v-icon 
+                                                                color="success" 
+                                                                @click.prevent.stop="createTag">
+                                                                mdi-check
+                                                            </v-icon>
+                                                        </template>
+                                                    </v-text-field>
+                                                </v-card-title>
+            
+                                                <v-color-picker
+                                                    dot-size="25"
+                                                    hide-canvas
+                                                    hide-mode-switch
+                                                    mode="rgba"
+                                                    swatches-max-height="200"
+                                                    v-model="defaultTagColor"></v-color-picker>
+                                                
+                                                    <v-sheet 
+                                                        max-height="10vh" 
+                                                        min-height="100px" 
+                                                        style="overflow:auto" class="mx-auto">
+                                                        <icon-picker 
+                                                            :chosen="defaultTagIcon" 
+                                                            :color="defaultTagColor" 
+                                                            @chosen-icon="defaultTagIcon=$event">
+                                                        </icon-picker>
+                                                    </v-sheet>
+                                            </v-card>
+                                        </v-menu>
+                                    </v-list-item>
+        
+                                    <v-expand-transition>
+                                        <v-sheet v-show="showTag()" class="mx-2" style="overflow:auto;flex:1 1 auto">
+                                            <tab-manager 
+                                                :manager="tabManager"
+                                                @relocate-node="tagFileRelocationHandler"
+                                                @delete-node="tagFileDeletionHandler"
+                                                @click-node="tagFileClickHandler"></tab-manager>
+                                        </v-sheet>
+                                    </v-expand-transition>
+                                </template>
+
+                                <v-list v-if="showTODO" dense>
+                                    <v-list-item-group v-model="TODOMaskID" mandatory>
+                                        <v-list-item>
+                                            <v-list-item-icon><v-icon color="black">mdi-archive-outline</v-icon></v-list-item-icon>
+                                            <span class="unselectable">All</span>
+                                        </v-list-item>
+                                        <v-list-item v-for="tab in tabManager.tabs" :key="tab.name">
+                                            <v-list-item-icon><v-icon :color="tab.color">{{tab.icon}}</v-icon></v-list-item-icon>
+                                            <span class="unselectable">{{ tab.name }}</span>
+                                        </v-list-item>
+                                    </v-list-item-group>
+                                </v-list>
                             </v-sheet>
                         </v-navigation-drawer >
 
                         <v-sheet class="flex-grow-1 flex-shrink-1" height="100%">
-                            <todo-lists 
+                            <!-- <todo-lists 
                                 :todonodes="collectTODOS()" 
                                 v-if="showTODO" 
                                 @update-editor-content="updateCurrentEditor"
-                                @editor-switch-to-file="tagFileClickHandler"></todo-lists>
+                                @editor-switch-to-file="tagFileClickHandler"></todo-lists> -->
+                            <todolists
+                                :todonodes="collectTODOS()"
+                                v-if="showTODO"
+                                :mask="todomask"
+                                @update-editor-content="updateCurrentEditor"
+                                @editor-switch-to-file="tagFileClickHandler"></todolists>
     
                             <editor-control 
                                 :estore="emstore" 

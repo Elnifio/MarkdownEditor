@@ -1,32 +1,21 @@
-const FSNode = require("./FileSystem/FSNode");
-const FSModule = require("./FileSystem/FSModule");
-const EditorModule = require("./Editor/EditorModule");
-const Conponents = require("./MarkdownCompiler/Components");
-const TODOComponents = require("./TODOSystem/TODOModule");
+const FSNode = require("../FileSystem/FSNode");
+const FSModule = require("../FileSystem/FSModule");
+const EditorModule = require("../Editor/EditorModule");
+const Conponents = require("../MarkdownCompiler/Components");
+const TODOComponents = require("../TODOSystem/TODOModule");
 const fs = require("fs");
-const TabManager = require("./Tabs/TabManager");
-const IconPicker = require("./utils/IconPicker");
+const TabManager = require("../Tabs/TabManager");
+const IconPicker = require("../utils/IconPicker");
 
 const { ipcRenderer } = require("electron");
-
-let tried = false;
 
 ipcRenderer.on("log-value-result", (event, message) => {
     console.log(message);
 })
 
-let  storageContent = ipcRenderer.sendSync("read-storage");
-
-let filestorage, tagstorage;
-
-if (storageContent == "") {
-    filestorage = "";
-    tagstorage = "";
-} else {
-    storageContent = storageContent.split("\n");
-    filestorage = storageContent[0];
-    tagstorage = storageContent[1];
-}
+let storage = fs.readFileSync("storage.json").toString().split("\n");
+let filestorage = storage[0];
+let tagstorage = storage[1];
 
 /**
  * Debug Usage
@@ -42,7 +31,7 @@ if (filestorage == "") {
     n02.addChild(n04);
     rootEle.addChild(n01);
     rootEle.addChild(n02);
-    filestorage = FSNode.zip(rootEle.children);
+    storage = FSNode.zip(rootEle.children);
 }
 
 /**
@@ -71,16 +60,8 @@ Vue.use(Vuetify);
 
 ipcRenderer.on('close-app', (event, message) => {
     // if (FS.hasFileCursor()) FS.current = EMStore.getCurrent();
-    try {
-        // fs.writeFileSync(FileStorage, FS.export() + "\n" + TabManager.ZipTabManager(TM));
-        let status = ipcRenderer.sendSync("write-storage", FS.export()  + "\n" + TabManager.ZipTabManager(TM));
-        console.log(status);
-    } catch (e) {
-        console.log(e);
-    } finally {
-        tried = !tried;
-        if (tried) ipcRenderer.send("close-complete-index", "closed");
-    }
+    fs.writeFileSync('./storage.json', FS.export() + "\n" + TabManager.ZipTabManager(TM));
+    ipcRenderer.send("close-complete-index", "closed");
 })
 
 let vm = new Vue({
@@ -110,16 +91,6 @@ let vm = new Vue({
         clicked: true,
 
         navbarwidth: 200,
-        TODOMaskID: 0,
-    },
-    computed: {
-        todomask: function() {
-            if (!this.TODOMaskID) {
-                return undefined;
-            } else {
-                return this.tabManager.tabs[this.TODOMaskID-1];
-            }
-        }
     },
 
     methods: {
@@ -151,11 +122,6 @@ let vm = new Vue({
         adjustTODO: function() {
             this.showTODO = true;
             this.showEditor = false;
-        },
-
-        adjustEditor: function() {
-            this.showEditor = true;
-            this.showTODO = false;
         },
 
         showFile: function() {
@@ -206,7 +172,7 @@ let vm = new Vue({
 
         clearEditor: function() {
             this.editable = false;
-            // this.showEditor = false;
+            this.showEditor = false;
             this.emstore.setCurrent("Did not open any file"); 
             /*
                 刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量

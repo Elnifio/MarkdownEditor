@@ -1,4 +1,11 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
+const fs = require("fs");
+
+const AppPath = app.getPath("appData") + "/CodeUp";
+if (!fs.existsSync(AppPath)) {
+    fs.mkdirSync(AppPath);
+}
+const storage = AppPath + "/storage.json";
 
 let win = undefined;
 let closable = false;
@@ -14,7 +21,6 @@ let createWindow = function() {
         }
     })
     win.loadFile("./index.html");
-    win.webContents.openDevTools();
 
     win.webContents.on('new-window', function(e, url) {
         e.preventDefault();
@@ -47,6 +53,23 @@ ipcMain.on("close-complete-index", (event, arg) => {
 ipcMain.on("log-value", (event, arg) => {
     console.log(arg);
     event.reply("log-value-result", "log-value-complete");
+})
+
+ipcMain.on("read-storage", (event) => {
+    if (!fs.existsSync(storage)) {
+        event.returnValue = "";
+    } else {
+        event.returnValue = fs.readFileSync(storage).toString();
+    }
+})
+
+ipcMain.on("write-storage", (event, givenStorage) => {
+    try {
+        fs.writeFileSync(storage, givenStorage);
+        event.returnValue = true;
+    } catch(e) {
+        event.returnValue = false;
+    }
 })
 
 app.on('window-all-closed', () => {

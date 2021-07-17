@@ -1,12 +1,12 @@
-const FSNode = require("./archived-backup/FileSystem-Vuetify-TreeView/FSNode");
-const FSModule = require("./FileSystem/FSModule");
-const FSControlKit = require("./archived-backup/FileSystem-Vuetify-TreeView/FSControlKit");
-const EditorModule = require("./Editor/EditorModule");
-const Conponents = require("./MarkdownCompiler/Components");
-const TODOComponents = require("./TODOSystem/TODOModule");
+const FSNode = require("./FileSystem-Vuetify-TreeView/FSNode");
+const FSModule = require("../FileSystem/FSModule");
+const FSControlKit = require("./FileSystem-Vuetify-TreeView/FSControlKit");
+const EditorModule = require("../Editor/EditorModule");
+const Conponents = require("../MarkdownCompiler/Components");
+const TODOComponents = require("../TODOSystem/TODOModule");
 const fs = require("fs");
-const TabManager = require("./Tabs/TabManager");
-const IconPicker = require("./utils/IconPicker");
+const TabManager = require("../Tabs/TabManager");
+const IconPicker = require("../utils/IconPicker");
 
 const { ipcRenderer } = require("electron");
 

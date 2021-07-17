@@ -380,6 +380,32 @@ let FSNode = function(name, type, content="", opened=false, children=[], parent=
                 (accumulator, current) => accumulator.concat(current.collectChildFile()), this.children.filter(x => x.isFile())
                 );
     }
+
+    this.reportTODOCount = function() {
+        // if a TODO is finished, then add it by 0, else add it by 1 + number of unfinished items in actions
+        return this.todos.reduce(
+            (accumulator, currentvalue) => 
+                accumulator + (1 + currentvalue.actions
+                    .filter(x => !x.status).length) // Calculate: 1 (self) + number of all items where status != true
+                    * !currentvalue.status,
+            0);
+    }
+
+    this.reportTODOProgress = function() {
+        if (this.todos.length == 0) {
+            return 100;
+        } else {
+            return this.todos.reduce((accumulator, currentvalue) => {
+                if (currentvalue.actions.length == 0) {
+                    return currentvalue.status * 100 + accumulator;
+                } else if (currentvalue.status) {
+                    return accumulator + 100;
+                } else {
+                    return accumulator + (currentvalue.actions.reduce((accu, currval) => accu + currval.status * 100, 0) / currentvalue.actions.length);
+                }
+            }, 0) / this.todos.length;
+        }
+    }
 }
 exports.FSNode = FSNode;
 
@@ -443,7 +469,7 @@ Vue.component("fs-node", {
         }
     },
     template: `
-    <div class="mx-2">
+    <div class="ml-2">
         <v-menu
         v-model="menu"
         :close-on-content-click="false"
@@ -491,7 +517,7 @@ Vue.component("fs-node", {
             
         <div v-if="node.opened && node.isFolder()" class="d-flex">
             <v-divider vertical class="mx-2"></v-divider>
-            <div>
+            <div class="flex-grow-1 flex-shrink-1">
                 <fs-node
                     v-for="child in node.children"
                     :fsnode="child"
