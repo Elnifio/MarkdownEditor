@@ -135,7 +135,7 @@ let unziphelper = function(zipped, path, tabManager) {
 
     let result;
     zipped[4].forEach( (child) => {
-        result = unziphelper(child, newpath);
+        result = unziphelper(child, newpath, tabManager);
         out.addChild(result[0]);
         if (result[1]) returned[1] = result[1];
         returned[2] = returned[2].concat(result[2]);

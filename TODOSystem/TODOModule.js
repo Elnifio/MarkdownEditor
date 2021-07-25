@@ -92,7 +92,7 @@ Vue.component("todoitem", {
     template: `
     <v-card class="ma-2 pa-2">
         <v-sheet class="d-flex" @click.prevent.stop="opened = !opened">
-            <v-icon @click.prevent.stop="openFile" class="mx-2 my-auto">mdi-file-edit-outline</v-icon>
+            <v-icon @click.prevent.stop="openFile" class="mx-2 my-auto">mdi-file-link-outline</v-icon>
             <span class="text-h4 mr-auto my-auto">{{node.getCanonicalName()}}</span>
             <v-chip-group v-if="node.tabs.length!=0" style="max-width:25%" class="mx-1">
                 <tab-chip
@@ -273,6 +273,7 @@ Vue.component("todolists", {
     template: `
     <v-sheet style="height:100%" class="mx-2">
         <v-sheet class="d-flex ma-2">
+        <v-icon class="pa-2" :color="mask?mask.color:'black'">{{mask?mask.icon:'mdi-archive-outline'}}</v-icon>
         <h2 
             class="text-h4 mr-auto" 
             style="font-family:'Courier New'!important;font-weight:bold" 

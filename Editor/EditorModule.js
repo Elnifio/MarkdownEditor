@@ -10,11 +10,11 @@ let differ = new Diff.Differ();
 let zipper = new ASTZipper.ASTZipper();
 let disp = new Disp.Displayer();
 
-let Editor = function(taglist) {
+let Editor = function(taglists) {
     this.state = {
         currval: "", 
         tags: [],
-        alltags: taglist,
+        alltags: taglists,
     };
 
     this.setCurrent = function(newval) {
