@@ -1,32 +1,22 @@
-const FSNode = require("./FileSystem/FSNode");
-const FSModule = require("./FileSystem/FSModule");
-const EditorModule = require("./Editor/EditorModule");
-const Conponents = require("./MarkdownCompiler/Components");
-const TODOComponents = require("./TODOSystem/TODOModule");
+const FSNode = require("./FileSystem-Vuetify-TreeView/FSNode");
+const FSModule = require("../FileSystem/FSModule");
+const FSControlKit = require("./FileSystem-Vuetify-TreeView/FSControlKit");
+const EditorModule = require("../Editor/EditorModule");
+const Conponents = require("../MarkdownCompiler/Components");
+const TODOComponents = require("../TODOSystem/TODOModule");
 const fs = require("fs");
-const TabManager = require("./Tabs/TabManager");
-const IconPicker = require("./utils/IconPicker");
+const TabManager = require("../Tabs/TabManager");
+const IconPicker = require("../utils/IconPicker");
 
 const { ipcRenderer } = require("electron");
-
-let tried = false;
 
 ipcRenderer.on("log-value-result", (event, message) => {
     console.log(message);
 })
 
-let  storageContent = ipcRenderer.sendSync("read-storage");
-
-let filestorage, tagstorage;
-
-if (storageContent == "") {
-    filestorage = "";
-    tagstorage = "";
-} else {
-    storageContent = storageContent.split("\n");
-    filestorage = storageContent[0];
-    tagstorage = storageContent[1];
-}
+let storage = fs.readFileSync("storage.json").toString().split("\n");
+let filestorage = storage[0];
+let tagstorage = storage[1];
 
 /**
  * Debug Usage
@@ -42,7 +32,7 @@ if (filestorage == "") {
     n02.addChild(n04);
     rootEle.addChild(n01);
     rootEle.addChild(n02);
-    filestorage = FSNode.zip(rootEle.children);
+    storage = FSNode.zip(rootEle.children);
 }
 
 /**
@@ -71,19 +61,9 @@ Vue.use(Vuetify);
 
 ipcRenderer.on('close-app', (event, message) => {
     // if (FS.hasFileCursor()) FS.current = EMStore.getCurrent();
-    try {
-        // fs.writeFileSync(FileStorage, FS.export() + "\n" + TabManager.ZipTabManager(TM));
-        let status = ipcRenderer.sendSync("write-storage", FS.export()  + "\n" + TabManager.ZipTabManager(TM));
-        console.log(status);
-    } catch (e) {
-        console.log(e);
-    } finally {
-        tried = !tried;
-        if (tried) ipcRenderer.send("close-complete-index", "closed");
-    }
+    fs.writeFileSync('./storage.json', FS.export() + "\n" + TabManager.ZipTabManager(TM));
+    ipcRenderer.send("close-complete-index", "closed");
 })
-
-const NAVBARMINSIZE = 200;
 
 let vm = new Vue({
     el: "#app",
@@ -97,8 +77,8 @@ let vm = new Vue({
         tabManager: TM,
 
         hideNavbar: true,
-        hideStorage: false,
-        hideTags: true,
+        hideStorage: true,
+        hideTags: false,
 
         editable: FS.hasFileCursor(),
         showEditor: true,
@@ -110,22 +90,9 @@ let vm = new Vue({
         defaultTagColor: "#62C6F2FF",
         defaultTagIcon: "mdi-tag",
         clicked: true,
-
-        navbarwidth: 200,
-        TODOMaskID: 0,
-    },
-    computed: {
-        todomask: function() {
-            if (!this.TODOMaskID) {
-                return undefined;
-            } else {
-                return this.tabManager.tabs[this.TODOMaskID-1];
-            }
-        }
     },
 
     methods: {
-
         collectTODOS: function() {
             return FS.collectFiles().filter(x => x.todos.length != 0);
         },
@@ -136,20 +103,16 @@ let vm = new Vue({
 
         adjustNavbar: function() {
             this.hideNavbar = !this.hideNavbar;
-            
         },
 
         adjustStorage: function() {
-            this.showEditor = true;
-            this.showTODO = false;
-            this.hideStorage = !this.hideStorage;
-
+            this.hideStorage = (!this.hideNavbar) && (!this.hideStorage);
+            this.hideTags = true;
         },
 
         adjustTag: function() {
-            this.showEditor = true;
-            this.showTODO = false;
-            this.hideTags = !this.hideTags;
+            this.hideTags = (!this.hideNavbar) && (!this.hideTags);
+            this.hideStorage = true;
         },
 
         adjustTODO: function() {
@@ -157,17 +120,12 @@ let vm = new Vue({
             this.showEditor = false;
         },
 
-        adjustEditor: function() {
-            this.showEditor = true;
-            this.showTODO = false;
-        },
-
         showFile: function() {
-            return !this.hideStorage;
+            return !(this.hideNavbar || this.hideStorage);
         },
 
         showTag: function() {
-            return !this.hideTags;
+            return !(this.hideNavbar || this.hideTags);
         },
 
         switchNote: function(newvalue) {
@@ -210,7 +168,7 @@ let vm = new Vue({
 
         clearEditor: function() {
             this.editable = false;
-            // this.showEditor = false;
+            this.showEditor = false;
             this.emstore.setCurrent("Did not open any file"); 
             /*
                 刚打开app时如果没有打开任何笔记，则显示内容由FS.getCurrentContent()控制，具体值被设置为FSModule.rootInitDescrption变量
@@ -271,49 +229,7 @@ let vm = new Vue({
             if (this.storage.filecursor) {
                 this.bringEditorToFront();
             }
-        },
-
-        setBorderWidth() {
-            let drawer = this.$refs.drawer.$el.querySelector(".v-navigation-drawer__border");
-            drawer.style.cursor = "ew-resize";
-            drawer.style.width = "2px";
-        },
-
-        setEvents() {
-            const containerWidth = document.getElementById("app").clientWidth;
-            const minSize = containerWidth * 0.2 < 200?containerWidth * 0.2:200;
-            const maxSize = containerWidth * 0.7;
-            const el = this.$refs.drawer.$el;
-            const drawerBorder = el.querySelector(".v-navigation-drawer__border");
-            function resize(e) {
-                document.body.style.cursor = "ew-resize";
-                let width = e.clientX;
-                if (width < minSize) width = minSize;
-                if (width > maxSize) width = maxSize;
-                el.style.width = width + "px";
-            }
-
-            drawerBorder.addEventListener(
-                "mousedown",
-                (e) => {
-                    if (e.offsetX < minSize) {
-                        el.style.transition = "initial";
-                        document.addEventListener("mousemove", resize, false);
-                    }
-                }, false );
-
-            document.addEventListener("mouseup", 
-            () => {
-                el.style.transition = "";
-                this.navbarwidth = el.style.width;
-                document.body.style.cursor = "";
-                document.removeEventListener("mousemove", resize, false);
-            }, false);
         }
-    },
-    mounted() {
-        this.setBorderWidth();
-        this.setEvents();
     }
 })
 

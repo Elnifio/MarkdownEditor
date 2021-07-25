@@ -40,7 +40,7 @@ class TabManager {
             }
             usename = newname + counter;
         }
-        let out = new TabInstance(usename, color, icon);
+        let out = new TabInstance(usename, [], icon, color);
         this.tabs.push(out);
         return out;
     }

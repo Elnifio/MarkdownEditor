@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>App Title here</title>
+
+        <!-- Vue resources -->
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+        <!-- Vuetify resources -->
+        <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+        <!-- katex resources -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.11/dist/katex.min.css" integrity="sha384-Um5gpz1odJg5Z4HAmzPtgZKdTBHZdw8S29IecapCSB31ligYPhHQZMIlWLYQGVoc" crossorigin="anonymous">
+
+        <!-- styles for markdown container and AST -->
+        <style id="markdown-container-style">
+            .markdown-container {
+                font-family:"Arial";
+            }
+    
+            .markdown-container .bold {
+                font-weight:bold;
+            }
+            .markdown-container .italic {
+                font-style:italic;
+            }
+            .markdown-container .underline {
+                text-decoration:underline;
+            }
+            .markdown-container .strikethrough {
+                text-decoration:line-through;
+            }
+            .markdown-container .code {
+                font-family:"Courier New";
+                background-color:#e6e6e6;
+                border-radius:2px;
+                /* border:1px solid black;
+                border-radius:2px; */
+            }
+    
+            .markdown-container .reference {
+                padding-left:5px;
+                border-left:3px solid #e6e6e6;
+                color: grey
+            }
+    
+            .markdown-container .codeblock {
+                font-family:"Courier New";
+                background-color:#e6e6e6;
+                border-radius:2px;
+                padding:10px;
+            }
+            .markdown-container .latex-result {
+                margin:auto;
+                width:50%;
+                text-align:center;
+            }
+        </style>
+
+        <style>
+            .unselectable {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+        </style>
+
+        <style>
+            .v-slide-group__wrapper {
+                overflow-x: auto; /* Enables the horizontal scrollbar */
+                /* Next lines hides scrollbar in different browsers for styling purposes */
+                -ms-overflow-style: none; /* IE and Edge */
+                scrollbar-width: none; /* Firefox */
+            }
+            .v-slide-group__wrapper::-webkit-scrollbar {
+                display: none; /* Chrome opera and Safary */
+                width: 0px;
+                background: transparent;
+            }
+        </style>
+
+    </head>
+    <body>
+        <!-- App entry -->
+        <div id="app">
+            <v-app class="d-flex">
+
+                <v-navigation-drawer 
+                app 
+                permanent 
+                :mini-variant.sync="hideNavbar"
+                class="flex-grow-0 flex-shrink-0"
+                :width="clicked?400:200">
+
+                    <!-- Slots for Title, Settings -->
+                    <!-- Placeholder for app brand -->
+                    <v-list-item>
+                        <v-list-item-icon>
+                            <v-icon>mdi-iframe-outline</v-icon>
+                        </v-list-item-icon> 
+                        <v-list-item-title>App name here</v-list-item-title>
+                        <v-btn icon @click.stop="adjustNavbar">
+                            <v-icon>mdi-chevron-left</v-icon>
+                        </v-btn>
+                    </v-list-item>
+
+                    <v-list-item @click.stop.prevent="clicked=!clicked">
+                        <v-list-item-icon>
+                            <v-icon>mdi-tune</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Settings</v-list-item-title>
+                    </v-list-item>
+                    <v-divider></v-divider>
+
+                    <!-- Slots for TODO, Calendars, etc -->
+                    <!-- Activator for TODO board -->
+                    <v-list-item @click="adjustTODO">
+                        <v-list-item-icon>
+                            <v-icon>mdi-checkbox-marked-outline</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Todo Board</v-list-item-title>
+                    </v-list-item>
+                    <v-divider></v-divider>
+                    
+                    <!-- Slots for File Systems, Tag Systems -->
+                    <v-list-item @click="adjustStorage">
+                        <v-list-item-icon>
+                            <v-icon>mdi-folder</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Folders</v-list-item-title>
+                        <v-btn icon @click.prevent.stop="createFolder">
+                            <v-icon>mdi-folder-plus-outline</v-icon>
+                        </v-btn>
+                        <v-btn icon @click.prevent.stop="createFile">
+                            <v-icon>mdi-file-plus-outline</v-icon>
+                        </v-btn>
+                    </v-list-item>
+                    <v-expand-transition>
+                        <fs-module :initfs="storage" @switch-note="switchNote" v-show="showFile()" @clear-editor="clearEditor" @bring-editor-to-front="bringEditorToFront"></fs-module>
+                    </v-expand-transition>
+                    <v-divider></v-divider>
+
+                    <!-- Tag 系统 -->
+                    <v-list-item @click="adjustTag">
+                        <v-list-item-icon>
+                            <v-icon>mdi-tag</v-icon>
+                        </v-list-item-icon>
+                        
+                        <v-list-item-title>Tags</v-list-item-title>
+                            <v-menu v-model="showCreateTag" offset-x @input="log" :close-on-content-click="false">
+                                <!-- 弹出新建tag菜单的按钮 -->
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-btn icon @click.prevent.stop="showCreateTag=!showCreateTag">
+                                        <v-icon>mdi-tag-plus-outline</v-icon>
+                                    </v-btn>
+                                </template>
+
+                                <!-- 新建tag的弹出菜单 -->
+                                <v-card max-width="300px">
+                                    <v-card-title>
+                                        <v-text-field
+                                            dense
+                                            label="Tag Name"
+                                            @change="log"
+                                            v-model="defaultTagName"
+                                            :rules="[ () => !!defaultTagName || 'Required.', ]"
+                                            :hint="'Tag name: ' + defaultTagName">
+    
+                                            <template v-slot:append>
+                                                <v-icon :color="defaultTagColor">{{defaultTagIcon}}</v-icon>
+                                            </template>
+    
+                                            <template v-slot:append-outer>
+                                                <v-icon 
+                                                    color="success" 
+                                                    @click.prevent.stop="createTag">
+                                                    mdi-check
+                                                </v-icon>
+                                            </template>
+                                        </v-text-field>
+                                    </v-card-title>
+
+                                    <v-color-picker
+                                        dot-size="25"
+                                        hide-canvas
+                                        hide-mode-switch
+                                        mode="rgba"
+                                        swatches-max-height="200"
+                                        v-model="defaultTagColor"></v-color-picker>
+                                    
+                                        <v-sheet 
+                                            max-height="10vh" 
+                                            min-height="100px" 
+                                            style="overflow:auto" class="mx-auto">
+                                            <icon-picker 
+                                                :chosen="defaultTagIcon" 
+                                                :color="defaultTagColor" 
+                                                @chosen-icon="defaultTagIcon=$event">
+                                            </icon-picker>
+                                        </v-sheet>
+                                </v-card>
+                            </v-menu>
+                        
+                    </v-list-item>
+                    <v-expand-transition>
+                        <tab-manager v-show="showTag()" 
+                            :manager="tabManager"
+                            @relocate-node="tagFileRelocationHandler"
+                            @delete-node="tagFileDeletionHandler"
+                            @click-node="tagFileClickHandler"></tab-manager>
+                    </v-expand-transition>
+                </v-navigation-drawer>
+                
+                <v-main app class="flex-grow-1 flex-shrink-1">
+                    <v-container fluid style="padding:0px;height:100vh">
+                        <todo-lists 
+                            :todonodes="collectTODOS()" 
+                            v-if="showTODO" 
+                            @update-editor-content="updateCurrentEditor"
+                            @editor-switch-to-file="tagFileClickHandler"></todo-lists>
+
+                        <editor-control 
+                            :estore="emstore" 
+                            :editable="editable" 
+                            @store-to-system="storeToSystem" 
+                            id="editor" 
+                            v-if="showEditor"
+                            @add-tag="addTag"
+                            @delete-tag="deleteTag"></editor-control>
+                    </v-container>
+                </v-main>
+            </v-app>
+        </div>
+
+        <script src="./index.js"></script>
+    </body>
+</html>

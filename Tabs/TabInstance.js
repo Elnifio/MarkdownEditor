@@ -1,28 +1,10 @@
-let Icons = [
-    'mdi-tag',
-    "mdi-leaf",
-    "mdi-rocket",
-    "mdi-robot-mower",
-    "mdi-robot-vacuum",
-    "mdi-water",
-    "mdi-eye-circle",
-    "mdi-calculator",
-    "mdi-calendar-blank",
-    "mdi-call-merge",
-    "mdi-face-woman",
-    "mdi-face-profile",
-    "mdi-fan",
-    "mdi-camera",
-    "mdi-lightning-bolt",
-    "mdi-link",
-    "mdi-lightbulb-on-outline",
-    "mdi-feather",
-    "mdi-safe",
-    "mdi-link-box-variant",
-    "mdi-linux",
-    "mdi-lock",
-    "mdi-saw-blade",
-]
+let PresetColors = [
+    ["#FF1744", "#F44336", "#D32F2F"], // red accent-3, red, red darken-2
+    // ["#FF80AB", "#E91E63", "#C2185B"], // pink accent-1, pink, pink darken-2
+    ["#CE93D8", "#9C27B0", "#6A1B9A"], // purple lighten-3, purple, purple darken-3
+    ["#90CAF9", "#2196F3", "#1565C0"], // blue lighten-3, blue, blue darken-3
+    ["#80DEEA", "#00BCD4", "#0097A7"], // cyan lighten-3, cyan, cyan darken-2
+];
 
 class TabInstanceError {
     constructor(msg) {
@@ -36,7 +18,7 @@ class TabInstanceError {
 }
 
 class TabInstance {
-    constructor(name, children=[], icon="mdi-tag", color="#62C6F2FF", opened=false) {
+    constructor(name, children=[], icon="mdi-tag", color="#2196F3", opened=false) {
         this.name = name;
         this.children= children;
         this.icon = icon;
@@ -121,7 +103,7 @@ Vue.component("tab-list-item", {
         }
     },
     template: `
-    <v-sheet elevation="0" class="pl-2">
+    <v-sheet elevation="0">
 
         <v-menu
             v-model="menu"
@@ -167,6 +149,7 @@ Vue.component("tab-editor", {
             tab: this.givenTab,
             tabname: this.givenTab.name,
             confirm: false,
+            colors: PresetColors,
         }
     },
     methods: {
@@ -215,12 +198,12 @@ Vue.component("tab-editor", {
         </v-card-title> 
 
         <v-color-picker
-            dot-size="25"
+            v-model="tab.color"
+            :swatches="colors"
+            show-swatches
             hide-canvas
-            hide-mode-switch
-            mode="rgba"
-            swatches-max-height="200"
-            v-model="tab.color">
+            hide-inputs
+            hide-sliders>
         </v-color-picker>
 
         <v-sheet max-height="10vh" min-height="100px" style="overflow:auto" class="mx-auto">
@@ -238,4 +221,15 @@ Vue.component("tab-editor", {
                 v-for="icon in icons" 
                 class="ma-2" 
                 :color="icon==tab.icon?tab.color:''"
-                @click.prevent.stop="tab.icon=icon">{{icon}}</v-icon> */}
+                @click.prevent.stop="tab.icon=icon">{{icon}}</v-icon> */
+/*
+<v-color-picker
+            dot-size="25"
+            hide-canvas
+            hide-mode-switch
+            mode="rgba"
+            swatches-max-height="200"
+            v-model="tab.color">
+        </v-color-picker>
+*/
+            }
